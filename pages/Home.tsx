@@ -244,7 +244,7 @@ export const Home = () => {
                                   {formatDate(article.date)}
                                 </span>
                               </motion.div>
-                              <h2 title={article.title} className="text-xl sm:text-3xl md:text-4xl font-black text-white uppercase italic leading-tight mb-3 sm:mb-4 drop-shadow-md max-w-2xl group-hover:text-white/90 transition-colors line-clamp-2">{article.title}</h2>
+                              <h2 title={article.title} className="text-xl sm:text-3xl md:text-4xl font-black text-white uppercase italic leading-tight mb-3 sm:mb-4 drop-shadow-md max-w-2xl group-hover:text-white/90 transition-colors">{article.title}</h2>
                               <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                                   <div className="flex items-center gap-2 group-hover:text-white transition-colors">
                                       <User size={12} />

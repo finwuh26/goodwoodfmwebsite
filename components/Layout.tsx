@@ -272,7 +272,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col font-sans text-sm selection:bg-white selection:text-black overflow-x-hidden">
+    <div className="min-h-screen flex flex-col font-sans text-sm selection:bg-white selection:text-black">
       {/* Background Ambience */}
       <div className="fixed inset-0 z-[-1] bg-goodwood-dark" />
       
