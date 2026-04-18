@@ -9,8 +9,13 @@ const app = initializeApp(firebaseConfig);
 // Allow overriding the Firestore database via an env variable so a persistent
 // production database (set in Vercel environment settings) is used instead of
 // the AI Studio database that gets reset whenever the AI Studio project rebuilds.
-const envFirestoreDatabaseId = import.meta.env.VITE_FIRESTORE_DATABASE_ID?.trim();
-const configFirestoreDatabaseId = firebaseConfig.firestoreDatabaseId?.trim();
+const normalizeFirestoreDatabaseId = (databaseId?: string): string | undefined => {
+  const trimmedDatabaseId = databaseId?.trim();
+  return trimmedDatabaseId || undefined;
+};
+
+const envFirestoreDatabaseId = normalizeFirestoreDatabaseId(import.meta.env.VITE_FIRESTORE_DATABASE_ID);
+const configFirestoreDatabaseId = normalizeFirestoreDatabaseId(firebaseConfig.firestoreDatabaseId);
 const hasNamedConfigDatabase =
   Boolean(configFirestoreDatabaseId) && configFirestoreDatabaseId !== '(default)';
 const isUnsafeDefaultOverride =
@@ -24,7 +29,7 @@ if (isUnsafeDefaultOverride) {
 
 const firestoreDatabaseId = isUnsafeDefaultOverride
   ? configFirestoreDatabaseId
-  : envFirestoreDatabaseId || configFirestoreDatabaseId;
+  : envFirestoreDatabaseId ?? configFirestoreDatabaseId;
 
 export const db = firestoreDatabaseId
   ? getFirestore(app, firestoreDatabaseId)
