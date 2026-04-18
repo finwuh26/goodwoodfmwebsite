@@ -13,13 +13,14 @@ import Cropper from 'react-easy-crop';
 import { AVAILABLE_BADGES } from '../components/BadgeSelector';
 import { useRadio } from '../context/RadioContext';
 
-const normalizeAzuraName = (value: string) => value.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+const normalizeForComparison = (value: string) => value.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
 
 const matchesAzuraName = (left: string, right: string) => {
-    const leftNormalized = normalizeAzuraName(left);
-    const rightNormalized = normalizeAzuraName(right);
+    const leftNormalized = normalizeForComparison(left);
+    const rightNormalized = normalizeForComparison(right);
     if (!leftNormalized || !rightNormalized) return false;
     if (leftNormalized === rightNormalized) return true;
+    // Keep fuzzy matching limited to longer values to reduce false positives on short names.
     return (
         (leftNormalized.length >= 4 && rightNormalized.includes(leftNormalized)) ||
         (rightNormalized.length >= 4 && leftNormalized.includes(rightNormalized))
@@ -182,7 +183,7 @@ export const ProfilePage = () => {
                 <div className="relative pt-32 px-8 pb-0 flex flex-col md:flex-row items-end gap-6 translate-y-16">
                     <div className="relative shrink-0">
                         {isOnAirProfile && (
-                            <div className="absolute -inset-1 rounded-full border-4 border-red-500 animate-pulse z-10 pointer-events-none" />
+                            <div aria-hidden="true" className="absolute -inset-1 rounded-full border-4 border-red-500 animate-pulse z-10 pointer-events-none" />
                         )}
                         {userProfile.avatar ? (
                             <img 
@@ -200,6 +201,7 @@ export const ProfilePage = () => {
                                 <Shield size={16} className="text-white" />
                             </div>
                         )}
+                        {isOnAirProfile && <span className="sr-only">Currently broadcasting live</span>}
                     </div>
                     <div className="mb-4">
                         <h1 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter drop-shadow-2xl flex items-center gap-3">
