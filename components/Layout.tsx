@@ -120,6 +120,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const streamerName = radioData?.live?.streamer_name || "";
   const nextSong = radioData?.playing_next?.song;
   const history = radioData?.song_history || [];
+  const hasStaffAccess = Boolean(userProfile && ['admin', 'staff', 'manager', 'dj', 'journalist', 'owner'].includes(userProfile.role || ''));
 
   // Check if current song is liked by user
   useEffect(() => {
@@ -544,7 +545,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                           <Link to="/settings" className="w-full text-left px-4 py-2 text-xs text-gray-400 hover:bg-white/5 flex items-center gap-2">
                               <Settings size={12} /> Settings
                           </Link>
-                          {(userProfile.role === 'admin' || userProfile.role === 'staff' || userProfile.role === 'manager' || userProfile.role === 'dj' || userProfile.role === 'journalist' || userProfile.role === 'owner') && (
+                          {hasStaffAccess && (
                               <Link to="/staff/dashboard" className="w-full text-left px-4 py-2 text-xs text-emerald-400 hover:bg-white/5 flex items-center gap-2">
                                   <Shield size={12} /> Staff Dashboard
                               </Link>
@@ -616,7 +617,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                       {userProfile ? (
                         <div className="space-y-1">
                           <Link to="/settings" className="block px-3 py-2 text-xs text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Settings</Link>
-                          {(userProfile.role === 'admin' || userProfile.role === 'staff' || userProfile.role === 'manager' || userProfile.role === 'dj' || userProfile.role === 'journalist' || userProfile.role === 'owner') && (
+                          {hasStaffAccess && (
                             <Link to="/staff/dashboard" className="block px-3 py-2 text-xs text-emerald-400 hover:bg-white/5 rounded-md">Staff Dashboard</Link>
                           )}
                           <button onClick={logout} className="w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-white/5 rounded-md">Sign Out</button>
