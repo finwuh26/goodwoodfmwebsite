@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Award, Users, ExternalLink, MessageSquare } from 'lucide-react';
 import { motion } from 'motion/react';
-import { collection, onSnapshot, query, limit } from 'firebase/firestore';
+import { collection, onSnapshot, query, limit, orderBy } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 
 const RECENT_ACTIVITY_QUERY_LIMIT = 25;
@@ -35,31 +35,34 @@ export const DiscordWidget = () => (
 
 export const StaffOfTheMonth = () => {
     const [staffMember, setStaffMember] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onSnapshot(collection(db, 'staff'), (snapshot) => {
-            if (snapshot.empty) {
-                setStaffMember(null);
-                return;
-            }
-
-            const allStaff = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
-            const flagged = allStaff.find((member: any) => member.isStaffOfMonth);
-            const sorted = [...allStaff].sort((a: any, b: any) => {
-                const aTs = a?.updatedAt?.seconds || a?.createdAt?.seconds || 0;
-                const bTs = b?.updatedAt?.seconds || b?.createdAt?.seconds || 0;
-                if (bTs !== aTs) return bTs - aTs;
-                return (a.username || '').localeCompare(b.username || '');
-            });
-
-            setStaffMember(flagged || sorted[0] || null);
-        }, (err) => handleFirestoreError(err, OperationType.GET, 'staff'));
+        const STAFF_ROLES = ['staff', 'dj', 'journalist', 'manager', 'admin', 'owner'];
+        // Fetch the top 50 users by reputationScore; filter client-side for staff roles
+        // (Firestore requires a composite index for a where+orderBy, so we filter after fetch)
+        const q = query(collection(db, 'users'), orderBy('reputationScore', 'desc'), limit(50));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+            const topStaff = users.find((u: any) => STAFF_ROLES.includes(u.role)) || null;
+            setStaffMember(topStaff);
+            setLoading(false);
+        }, (err) => {
+            setLoading(false);
+            handleFirestoreError(err, OperationType.GET, 'users');
+        });
         return () => unsubscribe();
     }, []);
 
-    if (!staffMember) return (
+    if (loading) return (
         <div className="bg-goodwood-card border border-goodwood-border rounded-xl p-8 flex items-center justify-center h-48">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white/20"></div>
+        </div>
+    );
+
+    if (!staffMember) return (
+        <div className="bg-goodwood-card border border-goodwood-border rounded-xl p-8 flex items-center justify-center h-48">
+            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">No staff found</p>
         </div>
     );
 
@@ -99,6 +102,13 @@ export const StaffOfTheMonth = () => {
                      {staffMember.username}
                  </h4>
                  <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">Staff of the Month</p>
+                 {staffMember.role && (
+                     <p className="text-emerald-400 text-[10px] font-black uppercase tracking-widest mt-1">{staffMember.role}</p>
+                 )}
+                 <div className="mt-3 flex items-center gap-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded-full px-3 py-1">
+                     <Award size={10} className="text-yellow-400 fill-current" />
+                     <span className="text-yellow-400 text-[10px] font-black uppercase tracking-widest">{(staffMember.reputationScore ?? 0).toLocaleString()} rep</span>
+                 </div>
             </div>
         </motion.div>
     );

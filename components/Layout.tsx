@@ -7,7 +7,7 @@ import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useRadio } from '../context/RadioContext';
 import { useAuth } from '../context/AuthContext';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, deleteDoc, limit } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 
 import { Marquee } from './Marquee';
@@ -113,29 +113,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const streamerName = radioData?.live?.streamer_name || "";
   const nextSong = radioData?.playing_next?.song;
   const history = radioData?.song_history || [];
-
-  const [streamerAvatar, setStreamerAvatar] = useState<string | null>(null);
-
-  useEffect(() => {
-      if (isLive && streamerName) {
-          const fetchStreamer = async () => {
-              try {
-                  const q = query(collection(db, 'users'), where('username', '==', streamerName), limit(1));
-                  const snapshot = await getDocs(q);
-                  if (!snapshot.empty) {
-                      setStreamerAvatar(snapshot.docs[0].data().avatar || null);
-                  } else {
-                      setStreamerAvatar(null);
-                  }
-              } catch (e) {
-                  console.error(e);
-              }
-          };
-          fetchStreamer();
-      } else {
-          setStreamerAvatar(null);
-      }
-  }, [isLive, streamerName]);
 
   // Check if current song is liked by user
   useEffect(() => {
@@ -309,21 +286,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             >
                 <div className="w-48 h-48 md:w-60 md:h-60 rounded-lg shadow-2xl shadow-black/50 overflow-hidden border border-white/10 bg-goodwood-card relative">
                    <AnimatePresence mode="wait">
-                     {(isLive && streamerAvatar) ? (
-                         <motion.img 
-                           key={streamerAvatar}
-                           src={streamerAvatar} 
-                           alt="DJ Avatar" 
-                           initial={{ opacity: 0 }}
-                           animate={{ opacity: 1 }}
-                           exit={{ opacity: 0 }}
-                           transition={{ duration: 0.5 }}
-                           className="w-full h-full object-cover"
-                         />
-                     ) : albumArt ? (
-                         <motion.img 
-                           key={albumArt}
-                           src={albumArt} 
+                     {albumArt ? (
+                          <motion.img 
+                            key={albumArt}
+                            src={albumArt} 
                            alt="Album Art" 
                            initial={{ opacity: 0 }}
                            animate={{ opacity: 1 }}
@@ -601,9 +567,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                       {/* Song Info */}
                       <div className="flex items-center gap-4 flex-1 min-w-0">
                           <div className="w-12 h-12 rounded bg-goodwood-dark border border-white/10 overflow-hidden shrink-0 flex items-center justify-center shadow-lg">
-                              {(isLive && streamerAvatar) ? (
-                                  <img src={streamerAvatar} alt="DJ Avatar" className="w-full h-full object-cover" />
-                              ) : albumArt ? (
+                              {albumArt ? (
                                   <img src={albumArt} alt="Art" className="w-full h-full object-cover" />
                               ) : (
                                   <Radio size={20} className="text-gray-500" />
