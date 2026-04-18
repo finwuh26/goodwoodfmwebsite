@@ -11,6 +11,24 @@ import { motion } from 'motion/react';
 import clsx from 'clsx';
 import Cropper from 'react-easy-crop';
 import { AVAILABLE_BADGES } from '../components/BadgeSelector';
+import { useRadio } from '../context/RadioContext';
+
+// Normalize names for reliable live-name matching across casing, accents, and separators.
+const normalizeForComparison = (value: string) =>
+    value
+        .normalize('NFKD')
+        .toLowerCase()
+        .trim()
+        .replace(/[^\p{L}\p{N}]/gu, '');
+
+// AzuraCast streamer names sometimes include a "DJ" prefix while profiles store just the username.
+const normalizeAzuraIdentity = (value: string) => {
+    const normalized = normalizeForComparison(value);
+    if (normalized.startsWith('dj') && normalized.length > 2) {
+        return normalized.slice(2);
+    }
+    return normalized;
+};
 
 const getCroppedImg = async (imageSrc: string, pixelCrop: any): Promise<Blob> => {
     const image = new Image();
@@ -47,6 +65,7 @@ const getCroppedImg = async (imageSrc: string, pixelCrop: any): Promise<Blob> =>
 export const ProfilePage = () => {
     const { uid } = useParams();
     const { userProfile: currentUser } = useAuth();
+    const { radioData } = useRadio();
     const [userProfile, setUserProfile] = useState<any>(null);
     const [likes, setLikes] = useState<any[]>([]);
     const [posts, setPosts] = useState<any[]>([]);
@@ -123,6 +142,23 @@ export const ProfilePage = () => {
     if (!userProfile) return <Navigate to="/" replace />;
 
     const isOwnProfile = currentUser?.uid === uid;
+    const azuraStreamerName = radioData?.live?.streamer_name || '';
+    const normalizedAzuraStreamerName = normalizeAzuraIdentity(azuraStreamerName);
+    // Support existing profile fields used as possible AzuraCast identity sources.
+    const normalizedAzuraNameCandidates = [
+        userProfile?.username,
+        userProfile?.azuracastName,
+        userProfile?.encoderName,
+        ...(Array.isArray(userProfile?.azuracastNames) ? userProfile.azuracastNames : []),
+    ]
+        .filter((name): name is string => typeof name === 'string')
+        .map((name) => normalizeAzuraIdentity(name))
+        .filter((name) => name.length > 0);
+    const isOnAirProfile = Boolean(
+        radioData?.live?.is_live &&
+        normalizedAzuraStreamerName &&
+        normalizedAzuraNameCandidates.includes(normalizedAzuraStreamerName)
+    );
 
     return (
         <div className="container mx-auto max-w-5xl">
@@ -154,6 +190,12 @@ export const ProfilePage = () => {
                 </div>
                 <div className="relative pt-32 px-8 pb-0 flex flex-col md:flex-row items-end gap-6 translate-y-16">
                     <div className="relative shrink-0">
+                        {isOnAirProfile && (
+                            <>
+                                <div aria-hidden="true" className="absolute -inset-1 rounded-full border-4 border-red-500 animate-pulse z-10 pointer-events-none" />
+                                <span className="sr-only">Currently broadcasting live</span>
+                            </>
+                        )}
                         {userProfile.avatar ? (
                             <img 
                                 src={userProfile.avatar || undefined} 
@@ -181,6 +223,11 @@ export const ProfilePage = () => {
                             )}
                         </h1>
                         <div className="flex flex-wrap items-center gap-3 mt-2">
+                            {isOnAirProfile && (
+                                <span className="px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase border bg-red-500/15 text-red-400 border-red-500/40 flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> On Air
+                                </span>
+                            )}
                             <span className={clsx("px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase border", userProfile.role === 'owner' || userProfile.role === 'admin' ? "bg-red-500/10 text-red-500 border-red-500/30" : userProfile.role === 'vip' ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/30" : "bg-white/10 text-white/60 border-white/10")}>
                                 {userProfile.role || 'Member'}
                             </span>
