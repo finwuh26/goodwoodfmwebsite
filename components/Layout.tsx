@@ -751,7 +751,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-[#12141a] w-full max-w-md rounded-lg shadow-2xl border border-goodwood-border max-h-[90vh] sm:max-h-[85vh] overflow-hidden relative z-10 flex flex-col"
+              className="bg-[#12141a] w-full max-w-md rounded-lg shadow-2xl border border-goodwood-border max-h-[90vh] sm:max-h-[85vh] relative z-10 flex flex-col"
             >
                <div className="p-4 sm:p-8 overflow-y-auto">
                   <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 uppercase tracking-tighter italic">Send a Request</h2>
@@ -847,7 +847,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-[#12141a] w-full max-w-md rounded-lg shadow-2xl border border-goodwood-border max-h-[90vh] sm:max-h-[85vh] overflow-hidden relative z-10 flex flex-col"
+              className="bg-[#12141a] w-full max-w-md rounded-lg shadow-2xl border border-goodwood-border max-h-[90vh] sm:max-h-[85vh] relative z-10 flex flex-col"
             >
                
                <div className="p-4 sm:p-8 overflow-y-auto">

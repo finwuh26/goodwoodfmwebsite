@@ -200,7 +200,7 @@ export const ProfilePage = () => {
                         )}
                     </div>
                     <div className="mb-4">
-                        <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter drop-shadow-2xl flex items-center gap-3 break-all sm:break-normal">
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter drop-shadow-2xl flex items-center gap-3 break-words">
                             {userProfile.username}
                             {userProfile.isVerified && (
                                 <svg className="w-8 h-8 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
