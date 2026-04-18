@@ -87,6 +87,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   useEffect(() => {
     if (audioRef.current) {
       if (isPlaying) {
+        audioRef.current.load();
         audioRef.current.play().catch(e => {
             console.error("Audio play failed:", e);
             setIsPlaying(false);
@@ -249,6 +250,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         ref={audioRef}
         src={streamUrl || undefined}
         crossOrigin="anonymous"
+        preload="none"
       />
 
       {/* Header Section */}
