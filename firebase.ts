@@ -11,7 +11,9 @@ const app = initializeApp(firebaseConfig);
 // the AI Studio database that gets reset whenever the AI Studio project rebuilds.
 const normalizeFirestoreDatabaseId = (databaseId?: string): string | undefined => {
   const trimmedDatabaseId = databaseId?.trim();
-  return trimmedDatabaseId || undefined;
+  return trimmedDatabaseId && trimmedDatabaseId.length > 0
+    ? trimmedDatabaseId
+    : undefined;
 };
 
 const envFirestoreDatabaseId = normalizeFirestoreDatabaseId(import.meta.env.VITE_FIRESTORE_DATABASE_ID);
