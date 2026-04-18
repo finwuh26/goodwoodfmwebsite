@@ -93,12 +93,12 @@ export const ApplicationForm = ({ role }: { role: string }) => {
 
     if (isSubmitted) {
         return (
-            <div className="container mx-auto max-w-2xl py-20 text-center animate-in fade-in zoom-in duration-300">
-                <div className="bg-[#16191f] border border-[#2a2f3a] rounded-lg p-12 shadow-2xl">
+            <div className="container mx-auto max-w-2xl py-12 sm:py-20 text-center animate-in fade-in zoom-in duration-300">
+                <div className="bg-[#16191f] border border-[#2a2f3a] rounded-lg p-6 sm:p-12 shadow-2xl">
                     <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
                         <CheckCircle size={40} className="text-green-500" />
                     </div>
-                    <h2 className="text-3xl font-bold text-white mb-4">Application Sent!</h2>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">Application Sent!</h2>
                     <p className="text-gray-400 mb-8">Thanks for applying for the {role} position. Our team will review your application and get back to you via Discord within 48 hours.</p>
                     <button onClick={() => setIsSubmitted(false)} className="bg-[#0f1014] border border-[#2a2f3a] text-white px-6 py-2 rounded hover:bg-[#1a1d26] transition-colors">
                         Return to Forms
@@ -110,8 +110,8 @@ export const ApplicationForm = ({ role }: { role: string }) => {
 
     return (
         <div className="container mx-auto max-w-3xl">
-            <div className="text-center mb-10">
-                <h2 className="text-3xl font-bold text-white flex items-center justify-center gap-3 mb-2 uppercase">
+            <div className="text-center mb-8 sm:mb-10">
+                <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center justify-center gap-3 mb-2 uppercase">
                     {role === 'presenter' && <Mic className="text-blue-500" />}
                     {role === 'reporter' && <Edit3 className="text-green-500" />}
                     {role === 'staff' && <Briefcase className="text-emerald-500" />}
@@ -120,7 +120,7 @@ export const ApplicationForm = ({ role }: { role: string }) => {
                 <p className="text-gray-400">Join the best team on the internet. Apply below.</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="bg-[#16191f] border border-[#2a2f3a] rounded-lg p-8 shadow-2xl relative overflow-hidden">
+            <form onSubmit={handleSubmit} className="bg-[#16191f] border border-[#2a2f3a] rounded-lg p-4 sm:p-8 shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-emerald-500 to-pink-500" />
                 
                 {!user && (
@@ -130,7 +130,7 @@ export const ApplicationForm = ({ role }: { role: string }) => {
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6">
                     <FormInput label="Username" name="username" value={formData.username} onChange={handleChange} placeholder="Your Goodwood FM username" required />
                     <FormInput label="Discord ID" name="discordId" value={formData.discordId} onChange={handleChange} placeholder="user#1234" required />
                 </div>
@@ -151,15 +151,15 @@ export const ApplicationForm = ({ role }: { role: string }) => {
                     <FormInput label="Previous Work" name="additionalInfo" value={formData.additionalInfo} onChange={handleChange} rows={3} placeholder="Links to any articles you have written..." required />
                 )}
 
-                <div className="mt-8 pt-6 border-t border-[#2a2f3a] flex items-center justify-between">
+                <div className="mt-8 pt-6 border-t border-[#2a2f3a] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                      <p className="text-xs text-gray-500 flex items-center gap-1">
                         <AlertCircle size={12} />
                         Applications are reviewed within 48 hours.
                      </p>
-                     <button 
+                      <button 
                         type="submit" 
                         disabled={isSubmitting || !user}
-                        className="bg-white text-black font-bold px-8 py-3 rounded hover:bg-gray-200 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full sm:w-auto bg-white text-black font-bold px-6 sm:px-8 py-3 rounded hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} 
                         {isSubmitting ? 'Sending...' : 'Submit Application'}
@@ -228,12 +228,12 @@ export const ContactForm = ({ type }: { type: string }) => {
 
     if (isSubmitted) {
         return (
-            <div className="container mx-auto max-w-2xl py-20 text-center animate-in fade-in zoom-in duration-300">
-                <div className="bg-[#16191f] border border-[#2a2f3a] rounded-lg p-12 shadow-2xl">
+            <div className="container mx-auto max-w-2xl py-12 sm:py-20 text-center animate-in fade-in zoom-in duration-300">
+                <div className="bg-[#16191f] border border-[#2a2f3a] rounded-lg p-6 sm:p-12 shadow-2xl">
                     <div className="w-20 h-20 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
                         <CheckCircle size={40} className="text-orange-500" />
                     </div>
-                    <h2 className="text-3xl font-bold text-white mb-4">Message Sent!</h2>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">Message Sent!</h2>
                     <p className="text-gray-400 mb-8">We have received your enquiry. Someone from the team will respond to your email shortly.</p>
                     <button onClick={() => setIsSubmitted(false)} className="bg-[#0f1014] border border-[#2a2f3a] text-white px-6 py-2 rounded hover:bg-[#1a1d26] transition-colors">
                         Send Another
@@ -245,14 +245,14 @@ export const ContactForm = ({ type }: { type: string }) => {
 
     return (
         <div className="container mx-auto max-w-3xl">
-            <div className="text-center mb-10">
-                <h2 className="text-3xl font-bold text-white flex items-center justify-center gap-3 mb-2 uppercase">
+            <div className="text-center mb-8 sm:mb-10">
+                <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center justify-center gap-3 mb-2 uppercase">
                     <Mail className="text-orange-500" /> {type}
                 </h2>
                 <p className="text-gray-400">We'd love to hear from you. Fill out the form below.</p>
             </div>
 
-             <form onSubmit={handleSubmit} className="bg-[#16191f] border border-[#2a2f3a] rounded-lg p-8 shadow-xl">
+             <form onSubmit={handleSubmit} className="bg-[#16191f] border border-[#2a2f3a] rounded-lg p-4 sm:p-8 shadow-xl">
                 {!user && (
                     <div className="mb-6 p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg text-orange-400 text-sm flex items-center gap-3">
                         <AlertCircle size={18} />
@@ -260,7 +260,7 @@ export const ContactForm = ({ type }: { type: string }) => {
                     </div>
                 )}
 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6">
                     <FormInput label="Name" name="name" value={formData.name} onChange={handleChange} placeholder="Your Name" required />
                     <FormInput label="Email Address" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="you@example.com" required />
                 </div>

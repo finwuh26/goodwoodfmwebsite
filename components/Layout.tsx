@@ -739,7 +739,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Request Modal */}
       <AnimatePresence>
         {showRequestModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-2 sm:p-4">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -751,10 +751,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-[#12141a] w-full max-w-md rounded-lg shadow-2xl border border-goodwood-border overflow-hidden relative z-10"
-            >                <div className="p-8">
-                  <h2 className="text-2xl font-bold text-white mb-6 uppercase tracking-tighter italic">Send a Request</h2>
-                  <form className="space-y-4" onSubmit={handleRequestSubmit}>
+              className="bg-[#12141a] w-full max-w-md rounded-lg shadow-2xl border border-goodwood-border max-h-[90vh] sm:max-h-[85vh] overflow-hidden relative z-10 flex flex-col"
+            >
+               <div className="p-4 sm:p-8 overflow-y-auto">
+                  <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 uppercase tracking-tighter italic">Send a Request</h2>
+                  <form className="space-y-3 sm:space-y-4" onSubmit={handleRequestSubmit}>
                     <div>
                       <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Message Type</label>
                       <select 
@@ -779,7 +780,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         />
                         {isSearchingSongs && <p className="text-xs text-gray-500 italic px-2">Searching...</p>}
                         {songSearchResults.length > 0 && (
-                          <div className="bg-goodwood-dark border border-goodwood-border rounded-lg overflow-hidden absolute z-20 w-full shadow-2xl">
+                          <div className="bg-goodwood-dark border border-goodwood-border rounded-lg overflow-y-auto max-h-56 absolute z-20 w-full shadow-2xl">
                             {songSearchResults.map((song, idx) => (
                               <button
                                 key={idx}
@@ -809,23 +810,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                       <textarea 
                         value={requestMessage}
                         onChange={(e) => setRequestMessage(e.target.value)}
-                        className="w-full bg-goodwood-dark border border-goodwood-border rounded-lg px-4 py-3 text-white text-sm focus:border-white/20 transition-colors outline-none h-32 resize-none"
+                        className="w-full bg-goodwood-dark border border-goodwood-border rounded-lg px-4 py-3 text-white text-sm focus:border-white/20 transition-colors outline-none h-28 sm:h-32 resize-none"
                         placeholder="Type your message here..."
                         required
                       ></textarea>
                     </div>
                     <button 
                       disabled={submittingRequest || !userProfile}
-                      className="w-full bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-white/5 disabled:opacity-50"
+                      className="w-full bg-white text-black py-3 sm:py-4 rounded-xl font-black uppercase tracking-widest text-xs sm:text-sm hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-white/5 disabled:opacity-50"
                     >
                       {submittingRequest ? 'Sending...' : userProfile ? 'Send Request' : 'Login to Send'}
                     </button>
                   </form>
                </div>
 
-               <div className="bg-goodwood-dark py-4 px-8 border-t border-goodwood-border flex justify-center items-center">
-                   <button onClick={() => setShowRequestModal(false)} className="text-gray-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors">Close</button>
-               </div>
+               <div className="bg-goodwood-dark py-3 sm:py-4 px-4 sm:px-8 border-t border-goodwood-border flex justify-center items-center">
+                    <button onClick={() => setShowRequestModal(false)} className="text-gray-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors">Close</button>
+                </div>
             </motion.div>
           </div>
         )}
@@ -834,7 +835,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Auth Modal (Login/Signup) */}
       <AnimatePresence>
         {showLogin && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-2 sm:p-4">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -846,15 +847,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-[#12141a] w-full max-w-md rounded-lg shadow-2xl border border-goodwood-border overflow-hidden relative z-10"
+              className="bg-[#12141a] w-full max-w-md rounded-lg shadow-2xl border border-goodwood-border max-h-[90vh] sm:max-h-[85vh] overflow-hidden relative z-10 flex flex-col"
             >
                
-               <div className="p-8">
-                  <div className="text-center mb-8">
+               <div className="p-4 sm:p-8 overflow-y-auto">
+                  <div className="text-center mb-6 sm:mb-8">
                      <div className="w-16 h-16 bg-[#1a1d26] rounded-full mx-auto flex items-center justify-center mb-4 border border-goodwood-border">
                         <UserIcon size={32} className="text-white" />
                      </div>
-                     <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">
+                     <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 tracking-tight">
                        Welcome to Goodwood FM
                      </h2>
                      <p className="text-gray-400 text-sm">
@@ -929,9 +930,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                      </p>
                   </div>
                </div>
-               <div className="bg-goodwood-dark py-4 px-8 border-t border-goodwood-border flex justify-center items-center">
-                   <button onClick={() => setShowLogin(false)} className="text-gray-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors">Cancel</button>
-               </div>
+                <div className="bg-goodwood-dark py-3 sm:py-4 px-4 sm:px-8 border-t border-goodwood-border flex justify-center items-center">
+                    <button onClick={() => setShowLogin(false)} className="text-gray-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors">Cancel</button>
+                </div>
             </motion.div>
           </div>
         )}
