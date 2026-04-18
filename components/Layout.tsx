@@ -7,8 +7,9 @@ import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useRadio } from '../context/RadioContext';
 import { useAuth } from '../context/AuthContext';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, deleteDoc, onSnapshot, doc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
+import { makeLikeReadKey, readFirestoreWithGuard, seedFirestoreReadCache } from '../utils/firestoreReadGuards';
 
 import { Marquee } from './Marquee';
 
@@ -35,6 +36,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isSearchingSongs, setIsSearchingSongs] = useState(false);
   const [submittingRequest, setSubmittingRequest] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [likeDocId, setLikeDocId] = useState<string | null>(null);
   
   // UI State
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -119,25 +121,55 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   useEffect(() => {
     if (!userProfile || !songTitle || !songArtist || songTitle === "Loading...") {
         setIsLiked(false);
+        setLikeDocId(null);
         return;
     }
 
-    const checkLike = async () => {
-        try {
-            const q = query(
-                collection(db, 'likes'), 
-                where('userId', '==', userProfile.uid),
-                where('songTitle', '==', songTitle),
-                where('songArtist', '==', songArtist)
-            );
-            const snapshot = await getDocs(q);
-            setIsLiked(!snapshot.empty);
-        } catch (err) {
-            console.error("Error checking like:", err);
-        }
+    let unsubscribe = () => {};
+    let isActive = true;
+
+    const q = query(
+      collection(db, 'likes'),
+      where('userId', '==', userProfile.uid),
+      where('songTitle', '==', songTitle),
+      where('songArtist', '==', songArtist)
+    );
+    const likeReadKey = makeLikeReadKey(userProfile.uid, songTitle, songArtist);
+
+    const applyLikeSnapshot = (snapshot: Awaited<ReturnType<typeof getDocs>>) => {
+      if (!snapshot.empty) {
+        setLikeDocId(snapshot.docs[0].id);
+        setIsLiked(true);
+        return;
+      }
+      setLikeDocId(null);
+      setIsLiked(false);
     };
 
-    checkLike();
+    const subscribeToLike = async () => {
+      try {
+        // Cache + throttling prevents remount bursts from re-reading Firestore inside 10s.
+        const cachedOrFreshSnapshot = await readFirestoreWithGuard(likeReadKey, () => getDocs(q));
+        applyLikeSnapshot(cachedOrFreshSnapshot);
+      } catch (err) {
+        console.warn("Like read was throttled or failed; waiting for live updates.", err);
+      }
+
+      if (!isActive) return;
+
+      // Real-time listener replaces repeated polling reads and keeps UI near real-time.
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        seedFirestoreReadCache(likeReadKey, snapshot);
+        applyLikeSnapshot(snapshot);
+      }, (err) => handleFirestoreError(err, OperationType.GET, 'likes'));
+    };
+
+    subscribeToLike();
+
+    return () => {
+      isActive = false;
+      unsubscribe();
+    };
   }, [userProfile, songTitle, songArtist]);
 
   const handleLike = async () => {
@@ -146,20 +178,29 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         return;
     }
 
-    try {
-        const q = query(
-            collection(db, 'likes'), 
-            where('userId', '==', userProfile.uid),
-            where('songTitle', '==', songTitle),
-            where('songArtist', '==', songArtist)
-        );
-        const snapshot = await getDocs(q);
+    const likeReadKey = makeLikeReadKey(userProfile.uid, songTitle, songArtist);
 
-        if (!snapshot.empty) {
+    try {
+        if (likeDocId) {
             // Unlike
-            await deleteDoc(snapshot.docs[0].ref);
+            await deleteDoc(doc(db, 'likes', likeDocId));
             setIsLiked(false);
+            setLikeDocId(null);
         } else {
+            const q = query(
+                collection(db, 'likes'), 
+                where('userId', '==', userProfile.uid),
+                where('songTitle', '==', songTitle),
+                where('songArtist', '==', songArtist)
+            );
+            const snapshot = await readFirestoreWithGuard(likeReadKey, () => getDocs(q));
+            if (!snapshot.empty) {
+                await deleteDoc(snapshot.docs[0].ref);
+                setIsLiked(false);
+                setLikeDocId(null);
+                return;
+            }
+
             // Like
             await addDoc(collection(db, 'likes'), {
                 userId: userProfile.uid,
