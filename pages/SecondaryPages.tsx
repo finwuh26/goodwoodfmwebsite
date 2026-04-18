@@ -59,9 +59,9 @@ export const Timetable = () => {
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                     <h1 className="text-4xl sm:text-6xl font-black text-white italic tracking-tighter uppercase drop-shadow-2xl">Timetable</h1>
                     <div className="flex flex-wrap gap-2">
-                        <button aria-label="Previous week" onClick={() => setWeekOffset(w => w - 1)} className="px-3 sm:px-4 py-2 bg-goodwood-dark border border-goodwood-border rounded-lg text-[10px] sm:text-xs font-bold text-gray-400 hover:text-white uppercase tracking-widest">&larr; Previous</button>
-                        <button aria-label="Current week" onClick={() => setWeekOffset(0)} className="px-3 sm:px-4 py-2 bg-goodwood-dark border border-goodwood-border rounded-lg text-[10px] sm:text-xs font-bold text-white hover:text-white uppercase tracking-widest">This Week</button>
-                        <button aria-label="Next week" onClick={() => setWeekOffset(w => w + 1)} className="px-3 sm:px-4 py-2 bg-goodwood-dark border border-goodwood-border rounded-lg text-[10px] sm:text-xs font-bold text-gray-400 hover:text-white uppercase tracking-widest">Next &rarr;</button>
+                        <button onClick={() => setWeekOffset(w => w - 1)} className="px-3 sm:px-4 py-2 bg-goodwood-dark border border-goodwood-border rounded-lg text-[10px] sm:text-xs font-bold text-gray-400 hover:text-white uppercase tracking-widest">&larr; Previous</button>
+                        <button onClick={() => setWeekOffset(0)} className="px-3 sm:px-4 py-2 bg-goodwood-dark border border-goodwood-border rounded-lg text-[10px] sm:text-xs font-bold text-white hover:text-white uppercase tracking-widest">This Week</button>
+                        <button onClick={() => setWeekOffset(w => w + 1)} className="px-3 sm:px-4 py-2 bg-goodwood-dark border border-goodwood-border rounded-lg text-[10px] sm:text-xs font-bold text-gray-400 hover:text-white uppercase tracking-widest">Next &rarr;</button>
                     </div>
                 </div>
                 
@@ -142,7 +142,7 @@ export const Timetable = () => {
                                         <Radio className="text-white/50" size={20} />
                                     )}
                                 </div>
-                                <span className="text-base sm:text-lg font-black text-white uppercase italic tracking-tight truncate">{slot.showName}</span>
+                                <span title={slot.showName} className="text-base sm:text-lg font-black text-white uppercase italic tracking-tight line-clamp-2 leading-tight">{slot.showName}</span>
                             </div>
                             <span className="text-xs sm:text-sm font-black text-white/40 tracking-widest self-start sm:self-auto">{slot.time}</span>
                         </div>

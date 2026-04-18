@@ -200,7 +200,7 @@ export const ProfilePage = () => {
                         )}
                     </div>
                     <div className="mb-4">
-                        <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter drop-shadow-2xl flex items-center gap-3 break-words">
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter drop-shadow-2xl flex items-center gap-3 max-w-full [overflow-wrap:anywhere]">
                             {userProfile.username}
                             {userProfile.isVerified && (
                                 <svg className="w-8 h-8 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
@@ -755,7 +755,7 @@ export const SettingsPage = () => {
                                             {profile.avatarHistory && profile.avatarHistory.length > 0 && (
                                                 <div>
                                                     <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Previous Avatars</p>
-                                                    <div className="flex gap-3 overflow-x-auto pb-2">
+                                                    <div className="flex gap-3 overflow-x-auto pb-2" tabIndex={0} aria-label="Previous avatars list">
                                                         {profile.avatarHistory.map((histUrl: string, idx: number) => (
                                                             <button 
                                                                 key={idx}
