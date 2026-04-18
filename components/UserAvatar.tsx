@@ -43,17 +43,18 @@ const subscribeToSharedUserAvatar = (
   entry.subscribers.add(callback);
 
   // Immediate cache hit prevents duplicate mount bursts from triggering extra reads.
-  if (entry.data && Date.now() - entry.lastUpdatedAt < USER_AVATAR_CACHE_TTL_MS) {
+  if (entry.data && entry.lastUpdatedAt > 0 && Date.now() - entry.lastUpdatedAt < USER_AVATAR_CACHE_TTL_MS) {
     callback(entry.data);
   }
 
   if (!entry.unsubscribe) {
     // Exactly one Firestore listener per userId in this tab, regardless of component count.
     entry.unsubscribe = onSnapshot(doc(db, 'users', userId), (docSnap) => {
+      const data = docSnap.exists() ? docSnap.data() : null;
       entry!.data = docSnap.exists()
         ? {
-            avatar: (docSnap.data().avatar as string) || null,
-            username: (docSnap.data().username as string) || null
+            avatar: (data?.avatar as string) || null,
+            username: (data?.username as string) || null
           }
         : null;
       entry!.lastUpdatedAt = Date.now();

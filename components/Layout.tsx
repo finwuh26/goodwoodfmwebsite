@@ -21,6 +21,8 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
+type LikeQuerySnapshot = Awaited<ReturnType<typeof getDocs>>;
+
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { radioData, isPlaying, setIsPlaying, volume, setVolume } = useRadio();
   const { userProfile, login, logout, loginWithEmail, signupWithEmail } = useAuth();
@@ -136,7 +138,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     );
     const likeReadKey = makeLikeReadKey(userProfile.uid, songTitle, songArtist);
 
-    const applyLikeSnapshot = (snapshot: Awaited<ReturnType<typeof getDocs>>) => {
+    const applyLikeSnapshot = (snapshot: LikeQuerySnapshot) => {
       if (!snapshot.empty) {
         setLikeDocId(snapshot.docs[0].id);
         setIsLiked(true);
@@ -178,8 +180,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         return;
     }
 
-    const likeReadKey = makeLikeReadKey(userProfile.uid, songTitle, songArtist);
-
     try {
         if (likeDocId) {
             // Unlike
@@ -187,20 +187,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             setIsLiked(false);
             setLikeDocId(null);
         } else {
-            const q = query(
-                collection(db, 'likes'), 
-                where('userId', '==', userProfile.uid),
-                where('songTitle', '==', songTitle),
-                where('songArtist', '==', songArtist)
-            );
-            const snapshot = await readFirestoreWithGuard(likeReadKey, () => getDocs(q));
-            if (!snapshot.empty) {
-                await deleteDoc(snapshot.docs[0].ref);
-                setIsLiked(false);
-                setLikeDocId(null);
-                return;
-            }
-
             // Like
             await addDoc(collection(db, 'likes'), {
                 userId: userProfile.uid,

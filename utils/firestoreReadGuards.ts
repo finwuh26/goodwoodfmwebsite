@@ -53,7 +53,10 @@ export const readFirestoreWithGuard = async <T>(
       return value;
     })
     .catch((error) => {
-      if (cached) return cached.value;
+      if (cached) {
+        console.warn(`Firestore read failed for key "${key}", serving cached value.`, error);
+        return cached.value;
+      }
       throw error;
     })
     .finally(() => {
