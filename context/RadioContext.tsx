@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 
+const AZURACAST_ART_PLACEHOLDERS = ['/static/img/albumart', '/static/uploads/art'];
+
 export interface RadioData {
   station: {
     listen_url: string;
@@ -90,8 +92,7 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const currentSong = data?.now_playing?.song;
         const hasPlaceholderArt =
           !currentSong?.art ||
-          currentSong.art.includes('/static/img/albumart') ||
-          currentSong.art.includes('/static/uploads/art');
+          AZURACAST_ART_PLACEHOLDERS.some((placeholder) => currentSong.art.includes(placeholder));
 
         if (currentSong && hasPlaceholderArt) {
           const fallbackArt = await fetchLastFmAlbumArt(currentSong.artist, currentSong.title);

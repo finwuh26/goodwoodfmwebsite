@@ -4,6 +4,8 @@ import { motion } from 'motion/react';
 import { collection, onSnapshot, query, limit } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 
+const RECENT_ACTIVITY_QUERY_LIMIT = 25;
+
 export const DiscordWidget = () => (
   <motion.div 
     initial={{ opacity: 0, scale: 0.95 }}
@@ -162,7 +164,7 @@ export const RecentlyActiveWidget = () => {
     const [activeStaff, setActiveStaff] = useState<any[]>([]);
 
     useEffect(() => {
-        const q = query(collection(db, 'users'), limit(50));
+        const q = query(collection(db, 'users'), limit(RECENT_ACTIVITY_QUERY_LIMIT));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const usersList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as any);
             // Filter distinct users by username to prevent showing multiple of the same person

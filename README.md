@@ -17,5 +17,6 @@ View your app in AI Studio: https://ai.studio/apps/8344bcaa-0bfd-4b39-8a01-5d144
    `npm install`
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. (Optional) Set `LASTFM_API_KEY` in `.env.local` and in Vercel environment variables for album-art fallback
-4. Run the app:
+4. (Optional) Set `VITE_OWNER_EMAIL` to enable automatic owner-role assignment for that email
+5. Run the app:
    `npm run dev`

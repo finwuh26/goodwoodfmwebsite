@@ -54,6 +54,8 @@ const DEPARTMENT_OPTIONS = [
     { value: 'Development', label: 'Development Department' },
 ];
 
+const USERS_DASHBOARD_LIMIT = 200;
+
 export const StaffDashboard = () => {
     const { user, userProfile } = useAuth();
     const { radioData, isPlaying, setIsPlaying, volume, setVolume } = useRadio();
@@ -178,7 +180,7 @@ export const StaffDashboard = () => {
         }, (err) => handleFirestoreError(err, OperationType.GET, 'staff'));
 
         // Fetch Users (Recently Active)
-        const qUsers = query(collection(db, 'users'));
+        const qUsers = query(collection(db, 'users'), limit(USERS_DASHBOARD_LIMIT));
         const unsubUsers = onSnapshot(qUsers, (snap) => {
             const usersList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
             usersList.sort((a: any, b: any) => {
@@ -432,7 +434,9 @@ export const StaffDashboard = () => {
             }
 
             if (staffForm.uid) {
-                await updateDoc(doc(db, 'users', staffForm.uid), { role: staffForm.role }).catch(() => {});
+                await updateDoc(doc(db, 'users', staffForm.uid), { role: staffForm.role }).catch((err) => {
+                    console.warn(`Could not sync staff role for user ${staffForm.uid} back to users collection:`, err);
+                });
             }
 
             setShowStaffModal(false);
@@ -448,6 +452,7 @@ export const StaffDashboard = () => {
         if (!selectedUser) return;
         try {
             const elevatedRoles = ['staff', 'dj', 'journalist', 'manager', 'admin', 'owner'];
+            const staffUsername = selectedUser.username || selectedUser.email || 'Staff';
             await updateDoc(doc(db, 'users', selectedUser.id), {
                 role: userForm.role,
                 isVerified: userForm.isVerified,
@@ -460,7 +465,7 @@ export const StaffDashboard = () => {
             if (elevatedRoles.includes(userForm.role)) {
                 if (!staffSnap.empty) {
                     await updateDoc(staffSnap.docs[0].ref, {
-                        username: selectedUser.username || selectedUser.email || 'Staff',
+                        username: staffUsername,
                         avatar: selectedUser.avatar || '',
                         role: userForm.role,
                         uid: selectedUser.id
@@ -468,7 +473,7 @@ export const StaffDashboard = () => {
                 } else {
                     await addDoc(collection(db, 'staff'), {
                         uid: selectedUser.id,
-                        username: selectedUser.username || selectedUser.email || 'Staff',
+                        username: staffUsername,
                         avatar: selectedUser.avatar || '',
                         role: userForm.role,
                         position: userForm.role,

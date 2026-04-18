@@ -40,8 +40,10 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const LAST_ACTIVE_UPDATE_INTERVAL_MS = 5 * 60 * 1000;
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const ownerEmail = import.meta.env.VITE_OWNER_EMAIL?.trim();
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (docSnap.exists()) {
             const data = docSnap.data() as UserProfile;
             // Upgrade role if needed
-            if (data.email === 'radiodjmra@gmail.com' && data.role !== 'owner') {
+            if (ownerEmail && data.email === ownerEmail && data.role !== 'owner') {
                 updateDoc(userDocRef, { role: 'owner' }).catch(console.error);
             }
             setUserProfile(data);
@@ -95,13 +97,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               createdAt: serverTimestamp(),
               lastActive: serverTimestamp()
             }).then(() => {
-              if (firebaseUser.email === 'radiodjmra@gmail.com') {
-                updateDoc(userDocRef, { role: 'owner', isVerified: true, badges: ['owner'], reputationScore: 9999 }).catch(console.error);
+              if (ownerEmail && firebaseUser.email === ownerEmail) {
+                updateDoc(userDocRef, { role: 'owner', isVerified: true, badges: ['owner'], reputationScore: 9999 }).catch((err) => {
+                  console.error('Failed to upgrade user to owner role:', err);
+                });
               }
             }).catch(err => handleFirestoreError(err, OperationType.CREATE, `users/${firebaseUser.uid}`));
           }
         }, (err) => handleFirestoreError(err, OperationType.GET, `users/${firebaseUser.uid}`));
-        updateDoc(userDocRef, { lastActive: serverTimestamp() }).catch(() => {});
+        updateDoc(userDocRef, { lastActive: serverTimestamp() }).catch((err) => {
+          console.warn('Unable to update lastActive on auth state change:', err);
+        });
         setLoading(false);
       } else {
         setUserProfile(null);
@@ -123,11 +129,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const userDocRef = doc(db, 'users', user.uid);
 
     const touch = () => {
-      updateDoc(userDocRef, { lastActive: serverTimestamp() }).catch(() => {});
+      updateDoc(userDocRef, { lastActive: serverTimestamp() }).catch((err) => {
+        console.warn('Unable to update lastActive heartbeat:', err);
+      });
     };
 
     touch();
-    const interval = setInterval(touch, 5 * 60 * 1000);
+    const interval = setInterval(touch, LAST_ACTIVE_UPDATE_INTERVAL_MS);
 
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') touch();

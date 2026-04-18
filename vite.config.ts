@@ -27,7 +27,15 @@ const vercelApiMock = (env: Record<string, string>) => {
             const artist = parsedUrl.searchParams.get('artist');
             const track = parsedUrl.searchParams.get('track');
 
-            if (!artist || !track || !env.LASTFM_API_KEY) {
+            if (!artist || !track) {
+              console.warn('Missing Last.fm artist/track query params. Returning null album art.');
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ art: null }));
+              return;
+            }
+
+            if (!env.LASTFM_API_KEY) {
+              console.warn('LASTFM_API_KEY is not set. Returning null album art.');
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify({ art: null }));
               return;
@@ -52,8 +60,9 @@ const vercelApiMock = (env: Record<string, string>) => {
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ art: largestImage }));
           } catch (e) {
+            console.error('Last.fm mock route failed:', e);
             res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({ art: null, error: e.message }));
+            res.end(JSON.stringify({ art: null }));
           }
           return;
         }
