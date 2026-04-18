@@ -54,14 +54,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
+    let unsubProfile: (() => void) | null = null;
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (unsubProfile) {
+        unsubProfile();
+        unsubProfile = null;
+      }
+
       setUser(firebaseUser);
       
       if (firebaseUser) {
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         
         // Listen to profile changes
-        const unsubProfile = onSnapshot(userDocRef, (docSnap) => {
+        unsubProfile = onSnapshot(userDocRef, (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data() as UserProfile;
             // Upgrade role if needed
@@ -70,40 +76,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
             setUserProfile(data);
           } else {
-            const isOwner = firebaseUser.email === 'radiodjmra@gmail.com';
             // Create initial profile if it doesn't exist
             const newProfile: UserProfile = {
               uid: firebaseUser.uid,
               username: firebaseUser.displayName || 'User',
               email: firebaseUser.email || '',
               avatar: firebaseUser.photoURL || '',
-              role: isOwner ? 'owner' : 'user',
-              isVerified: isOwner,
-              badges: isOwner ? ['owner'] : [],
-              reputationScore: isOwner ? 9999 : 0,
+              role: 'user',
+              isVerified: false,
+              badges: [],
+              reputationScore: 0,
               bio: '',
               avatarHistory: [firebaseUser.photoURL || '']
             };
             
             setDoc(userDocRef, {
               ...newProfile,
-              createdAt: serverTimestamp()
+              createdAt: serverTimestamp(),
+              lastActive: serverTimestamp()
+            }).then(() => {
+              if (firebaseUser.email === 'radiodjmra@gmail.com') {
+                updateDoc(userDocRef, { role: 'owner', isVerified: true, badges: ['owner'], reputationScore: 9999 }).catch(console.error);
+              }
             }).catch(err => handleFirestoreError(err, OperationType.CREATE, `users/${firebaseUser.uid}`));
           }
         }, (err) => handleFirestoreError(err, OperationType.GET, `users/${firebaseUser.uid}`));
-
-        return () => unsubProfile();
+        updateDoc(userDocRef, { lastActive: serverTimestamp() }).catch(() => {});
+        setLoading(false);
       } else {
         setUserProfile(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => {
+      if (unsubProfile) {
+        unsubProfile();
+      }
       unsubscribe();
       unsubSettings();
     };
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const userDocRef = doc(db, 'users', user.uid);
+
+    const touch = () => {
+      updateDoc(userDocRef, { lastActive: serverTimestamp() }).catch(() => {});
+    };
+
+    touch();
+    const interval = setInterval(touch, 5 * 60 * 1000);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') touch();
+    };
+
+    window.addEventListener('focus', touch);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', touch);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [user]);
 
   const login = async () => {
     const provider = new GoogleAuthProvider();
@@ -132,7 +170,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     await setDoc(userDocRef, {
       ...newProfile,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
+      lastActive: serverTimestamp()
     });
   };
 

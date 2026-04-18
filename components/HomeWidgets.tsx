@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Award, Users, ExternalLink, MessageSquare } from 'lucide-react';
 import { motion } from 'motion/react';
-import { collection, onSnapshot, query, limit, where, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query, limit } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 
 export const DiscordWidget = () => (
@@ -35,11 +35,22 @@ export const StaffOfTheMonth = () => {
     const [staffMember, setStaffMember] = useState<any>(null);
 
     useEffect(() => {
-        const q = query(collection(db, 'staff'), limit(1));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            if (!snapshot.empty) {
-                setStaffMember({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
+        const unsubscribe = onSnapshot(collection(db, 'staff'), (snapshot) => {
+            if (snapshot.empty) {
+                setStaffMember(null);
+                return;
             }
+
+            const allStaff = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+            const flagged = allStaff.find((member: any) => member.isStaffOfMonth);
+            const sorted = [...allStaff].sort((a: any, b: any) => {
+                const aTs = a?.updatedAt?.seconds || a?.createdAt?.seconds || 0;
+                const bTs = b?.updatedAt?.seconds || b?.createdAt?.seconds || 0;
+                if (bTs !== aTs) return bTs - aTs;
+                return (a.username || '').localeCompare(b.username || '');
+            });
+
+            setStaffMember(flagged || sorted[0] || null);
         }, (err) => handleFirestoreError(err, OperationType.GET, 'staff'));
         return () => unsubscribe();
     }, []);
@@ -151,12 +162,17 @@ export const RecentlyActiveWidget = () => {
     const [activeStaff, setActiveStaff] = useState<any[]>([]);
 
     useEffect(() => {
-        const q = query(collection(db, 'users'), orderBy('lastActive', 'desc'), limit(15));
+        const q = query(collection(db, 'users'), limit(50));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const usersList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as any);
             // Filter distinct users by username to prevent showing multiple of the same person
-            const uniqueUsers = Array.from(new Map(usersList.map((u: any) => [u.username || u.id, u])).values());
-            setActiveStaff(uniqueUsers);
+            const uniqueUsers = Array.from(new Map(usersList.map((u: any) => [u.username || u.id, u])).values()) as any[];
+            const sortedUsers = uniqueUsers.sort((a: any, b: any) => {
+                const aTs = a?.lastActive?.seconds || a?.createdAt?.seconds || 0;
+                const bTs = b?.lastActive?.seconds || b?.createdAt?.seconds || 0;
+                return bTs - aTs;
+            });
+            setActiveStaff(sortedUsers.slice(0, 15));
         }, (err) => handleFirestoreError(err, OperationType.GET, 'users'));
         return () => unsubscribe();
     }, []);

@@ -21,6 +21,43 @@ const vercelApiMock = () => {
           return;
         }
 
+        if (req.url?.startsWith('/api/lastfm/art') && req.method === 'GET') {
+          try {
+            const parsedUrl = new URL(req.url, 'http://localhost');
+            const artist = parsedUrl.searchParams.get('artist');
+            const track = parsedUrl.searchParams.get('track');
+
+            if (!artist || !track || !env.LASTFM_API_KEY) {
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ art: null }));
+              return;
+            }
+
+            const params = new URLSearchParams({
+              method: 'track.getInfo',
+              artist,
+              track,
+              autocorrect: '1',
+              format: 'json',
+              api_key: env.LASTFM_API_KEY
+            });
+
+            const response = await fetch(`https://ws.audioscrobbler.com/2.0/?${params.toString()}`);
+            const data = await response.json();
+            const images = data?.track?.album?.image;
+            const largestImage = Array.isArray(images)
+              ? images.map((image: any) => image?.['#text']).filter(Boolean).pop() || null
+              : null;
+
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ art: largestImage }));
+          } catch (e) {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ art: null, error: e.message }));
+          }
+          return;
+        }
+
         if (req.url === '/api/fetch-article-metadata' && req.method === 'POST') {
           let body = '';
           req.on('data', chunk => { body += chunk; });

@@ -98,7 +98,7 @@ service cloud.firestore {
     // ===============================================================
 
     function isValidUser(data) {
-      return hasOnlyAllowedFields(['uid', 'username', 'email', 'avatar', 'bannerGradient', 'role', 'bio', 'createdAt', 'isVerified', 'badges', 'reputationScore', 'avatarHistory']) &&
+      return hasOnlyAllowedFields(['uid', 'username', 'email', 'avatar', 'bannerGradient', 'role', 'bio', 'createdAt', 'isVerified', 'badges', 'reputationScore', 'avatarHistory', 'lastActive', 'favoriteSong', 'twoFactorEnabled']) &&
              data.uid == request.auth.uid &&
              data.username is string && data.username.size() >= 3 && data.username.size() <= 30 &&
              isValidEmail(data.email) &&
@@ -110,6 +110,16 @@ service cloud.firestore {
              (!('badges' in data) || data.badges is list) &&
              (!('reputationScore' in data) || data.reputationScore is number) &&
              (!('avatarHistory' in data) || data.avatarHistory is list) &&
+             (!('lastActive' in data) || data.lastActive is timestamp) &&
+             (!('twoFactorEnabled' in data) || data.twoFactorEnabled is bool) &&
+             (!('favoriteSong' in data) || data.favoriteSong == null || (
+               data.favoriteSong is map &&
+               data.favoriteSong.keys().hasOnly(['title', 'artist', 'art', 'url']) &&
+               (!('title' in data.favoriteSong) || data.favoriteSong.title is string) &&
+               (!('artist' in data.favoriteSong) || data.favoriteSong.artist is string) &&
+               (!('art' in data.favoriteSong) || data.favoriteSong.art is string) &&
+               (!('url' in data.favoriteSong) || data.favoriteSong.url is string)
+             )) &&
              data.createdAt is timestamp;
     }
 
