@@ -43,8 +43,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const LAST_ACTIVE_UPDATE_INTERVAL_MS = 5 * 60 * 1000;
 const normalizeUsername = (username?: string | null) => {
   const trimmed = username?.trim();
-  if (!trimmed) return 'User';
-  return trimmed.length >= 3 ? trimmed : trimmed.padEnd(3, '_');
+  if (!trimmed || trimmed.length < 3) return 'User';
+  return trimmed;
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

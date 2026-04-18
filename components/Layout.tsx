@@ -754,7 +754,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                           try {
                               if (isSignup) {
                                   if (username.length < 3 || username.length > 30) {
-                                      alert('Username must be between 3 and 30 characters.');
+                                      alert('Username must be between 3 and 30 characters after trimming spaces.');
                                       return;
                                   }
                                   if (signupWithEmail) await signupWithEmail(email, password, username);
@@ -776,7 +776,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                  }} />
                                  <label htmlFor="isSignup" className="text-xs text-gray-400">I need to create an account</label>
                              </div>
-                              <input type="text" name="username" id="usernameInput" placeholder="Username" minLength={3} maxLength={30} style={{display: 'none'}} className="w-full bg-goodwood-dark border border-goodwood-border rounded-lg px-4 py-3 text-white text-sm focus:border-white/20 transition-colors outline-none" />
+                              <input type="text" name="username" id="usernameInput" placeholder="Username" style={{display: 'none'}} className="w-full bg-goodwood-dark border border-goodwood-border rounded-lg px-4 py-3 text-white text-sm focus:border-white/20 transition-colors outline-none" />
                          </div>
                          <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg font-bold uppercase tracking-widest transition-all mb-4">
                              Continue with Email
