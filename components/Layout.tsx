@@ -206,7 +206,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             type: requestType,
             name: userProfile.username,
             email: userProfile.email,
-            avatar: userProfile.avatar || null,
             message: requestMessage,
             createdAt: serverTimestamp(),
             department: 'Radio'
