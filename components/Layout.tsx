@@ -753,8 +753,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                           const username = ((formData.get('username') as string) || '').trim();
                           try {
                               if (isSignup) {
-                                  if (username.length < 3) {
-                                      alert('Username must be at least 3 characters.');
+                                  if (username.length < 3 || username.length > 30) {
+                                      alert('Username must be between 3 and 30 characters.');
                                       return;
                                   }
                                   if (signupWithEmail) await signupWithEmail(email, password, username);

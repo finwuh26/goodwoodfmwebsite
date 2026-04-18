@@ -41,10 +41,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const LAST_ACTIVE_UPDATE_INTERVAL_MS = 5 * 60 * 1000;
-const getValidUsername = (username?: string | null) => {
+const normalizeUsername = (username?: string | null) => {
   const trimmed = username?.trim();
   if (!trimmed) return 'User';
-  return trimmed.length >= 3 ? trimmed : `User${Math.floor(Math.random() * 9000) + 1000}`;
+  return trimmed.length >= 3 ? trimmed : trimmed.padEnd(3, '_');
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -86,7 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Create initial profile if it doesn't exist
             const newProfile: UserProfile = {
               uid: firebaseUser.uid,
-              username: getValidUsername(firebaseUser.displayName),
+              username: normalizeUsername(firebaseUser.displayName),
               email: firebaseUser.email || '',
               avatar: firebaseUser.photoURL || '',
               role: 'user',
@@ -171,7 +171,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signupWithEmail = async (email: string, pass: string, username: string) => {
     const res = await createUserWithEmailAndPassword(auth, email, pass);
-    const safeUsername = getValidUsername(username);
+    const safeUsername = normalizeUsername(username);
     await updateProfile(res.user, { displayName: safeUsername });
     await res.user.getIdToken(true);
     
