@@ -1,0 +1,306 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {uid}
+    // Fields:
+    //   - uid: string (required)
+    //   - username: string (required, 3-30 chars)
+    //   - email: string (required)
+    //   - avatar: string (optional)
+    //   - role: string (required, ['admin', 'staff', 'user'])
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: articles
+    // Document ID: {articleId}
+    // Fields:
+    //   - title: string (required, 5-200 chars)
+    //   - summary: string (optional)
+    //   - content: string (required)
+    //   - authorId: string (required)
+    //   - authorName: string (required)
+    //   - image: string (required)
+    //   - category: string (required)
+    //   - date: timestamp (required)
+    //
+    // Collection: staff
+    // Document ID: {staffId}
+    // Fields:
+    //   - username: string (required)
+    //   - avatar: string (required)
+    //   - role: string (required)
+    //   - position: string (required)
+    //   - department: string (required)
+    //
+    // Collection: applications
+    // Document ID: {appId}
+    // Fields:
+    //   - role: string (required)
+    //   - username: string (required)
+    //   - discordId: string (required)
+    //   - timezone: string (optional)
+    //   - reason: string (required)
+    //   - additionalInfo: string (optional)
+    //   - status: string (required, ['pending', 'reviewed', 'accepted', 'rejected'])
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: enquiries
+    // Document ID: {enquiryId}
+    // Fields:
+    //   - type: string (required)
+    //   - name: string (required)
+    //   - email: string (required)
+    //   - department: string (required)
+    //   - message: string (required)
+    //   - createdAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'owner', 'manager']) ||
+         (request.auth.token.email == "radiodjmra@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isStaff() {
+      return isAuthenticated() && 
+        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'staff', 'owner', 'manager']) ||
+        (request.auth.token.email == "radiodjmra@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return hasOnlyAllowedFields(['uid', 'username', 'email', 'avatar', 'bannerGradient', 'role', 'bio', 'createdAt', 'isVerified', 'badges', 'reputationScore', 'avatarHistory']) &&
+             data.uid == request.auth.uid &&
+             data.username is string && data.username.size() >= 3 && data.username.size() <= 30 &&
+             isValidEmail(data.email) &&
+             data.role in ['admin', 'staff', 'user', 'vip', 'member', 'owner', 'manager', 'dj', 'journalist'] &&
+             (!('bio' in data) || (data.bio is string && data.bio.size() <= 500)) &&
+             (!('avatar' in data) || data.avatar is string) &&
+             (!('bannerGradient' in data) || data.bannerGradient is string) &&
+             (!('isVerified' in data) || data.isVerified is bool) &&
+             (!('badges' in data) || data.badges is list) &&
+             (!('reputationScore' in data) || data.reputationScore is number) &&
+             (!('avatarHistory' in data) || data.avatarHistory is list) &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidLike(data) {
+      return hasOnlyAllowedFields(['userId', 'songTitle', 'songArtist', 'timestamp']) &&
+             data.userId == request.auth.uid &&
+             data.songTitle is string &&
+             data.songArtist is string &&
+             data.timestamp is timestamp;
+    }
+
+    function isValidArticle(data) {
+      return hasOnlyAllowedFields(['title', 'summary', 'content', 'authorId', 'authorName', 'authorAvatar', 'image', 'category', 'date', 'status', 'managerFeedback', 'claimedById', 'claimedByName', 'url', 'originalTitle', 'originalSummary']) &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+             data.content is string &&
+             data.authorId is string &&
+             data.authorName is string &&
+             (!('authorAvatar' in data) || data.authorAvatar is string) &&
+             (!('summary' in data) || data.summary is string) &&
+             (!('image' in data) || data.image is string) &&
+             (!('category' in data) || data.category is string) &&
+             (!('url' in data) || data.url is string) &&
+             (!('originalTitle' in data) || data.originalTitle is string) &&
+             (!('originalSummary' in data) || data.originalSummary is string) &&
+             data.status in ['idea', 'draft', 'pending', 'review', 'published', 'rejected'] &&
+             (!('managerFeedback' in data) || data.managerFeedback is string) &&
+             (!('claimedById' in data) || data.claimedById is string) &&
+             (!('claimedByName' in data) || data.claimedByName is string) &&
+             data.date is timestamp;
+    }
+
+    function isValidProfileComment(data) {
+      return hasOnlyAllowedFields(['targetUserId', 'authorId', 'authorName', 'authorAvatar', 'content', 'timestamp']) &&
+             data.targetUserId is string &&
+             data.authorId == request.auth.uid &&
+             data.authorName is string &&
+             (!('authorAvatar' in data) || data.authorAvatar is string) &&
+             data.content is string && data.content.size() > 0 && data.content.size() <= 1000 &&
+             data.timestamp is timestamp;
+    }
+
+    function isValidArticleComment(data) {
+      return hasOnlyAllowedFields(['articleId', 'authorId', 'authorName', 'authorAvatar', 'content', 'timestamp']) &&
+             data.articleId is string &&
+             data.authorId == request.auth.uid &&
+             data.authorName is string &&
+             (!('authorAvatar' in data) || data.authorAvatar is string) &&
+             data.content is string && data.content.size() > 0 && data.content.size() <= 1000 &&
+             data.timestamp is timestamp;
+    }
+
+    function isValidArticleReaction(data) {
+      return hasOnlyAllowedFields(['articleId', 'userId', 'reaction']) &&
+             data.articleId is string &&
+             data.userId == request.auth.uid &&
+             data.reaction is string && data.reaction.size() > 0 && data.reaction.size() <= 20;
+    }
+
+    function isValidReputationLog(data) {
+      return hasOnlyAllowedFields(['userId', 'points', 'reason', 'source', 'timestamp']) &&
+             data.userId is string &&
+             data.points is number &&
+             data.reason is string &&
+             (!('source' in data) || data.source is string) &&
+             data.timestamp is timestamp;
+    }
+
+    function isValidApplication(data) {
+      return hasOnlyAllowedFields(['uid', 'avatar', 'role', 'username', 'discordId', 'timezone', 'reason', 'additionalInfo', 'audioUrl', 'status', 'createdAt']) &&
+             data.role is string &&
+             data.username is string &&
+             data.discordId is string &&
+             data.reason is string &&
+             data.status in ['pending', 'reviewed', 'accepted', 'rejected', 'approved'] &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidEnquiry(data) {
+      return hasOnlyAllowedFields(['type', 'name', 'email', 'department', 'message', 'createdAt']) &&
+             data.type is string &&
+             data.name is string &&
+             isValidEmail(data.email) &&
+             data.department is string &&
+             data.message is string &&
+             data.createdAt is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == 'user';
+      allow update: if isAuthenticated() && ((isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role && request.resource.data.get('isVerified', false) == resource.data.get('isVerified', false) && request.resource.data.get('badges', []) == resource.data.get('badges', [])) || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    match /articles/{articleId} {
+      allow read: if true;
+      allow create: if isStaff() && isValidArticle(request.resource.data) && request.resource.data.authorId == request.auth.uid;
+      allow update: if isStaff() && isValidArticle(request.resource.data) && (
+        resource.data.authorId == request.auth.uid || 
+        isAdmin() || 
+        (resource.data.status == 'idea' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['authorId', 'authorName', 'status']) && request.resource.data.authorId == request.auth.uid) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'managerFeedback']))
+      );
+      allow delete: if isAdmin() || (isStaff() && resource.data.authorId == request.auth.uid);
+    }
+
+    match /staff/{staffId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /applications/{appId} {
+      allow read: if isStaff();
+      allow create: if isAuthenticated() && isValidApplication(request.resource.data);
+      allow update, delete: if isAdmin();
+    }
+
+    match /enquiries/{enquiryId} {
+      allow read: if isStaff();
+      allow create: if isAuthenticated() && isValidEnquiry(request.resource.data);
+      allow update, delete: if isAdmin();
+    }
+
+    match /tracks/{trackId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /schedule/{scheduleId} {
+      allow read: if true;
+      allow write: if isAdmin();
+      allow update: if isStaff() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'claimedBy', 'showName']) && request.resource.data.claimedBy == request.auth.uid;
+    }
+
+    match /reputationLogs/{logId} {
+      allow read: if isStaff() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow write: if isAdmin();
+      allow create: if isAdmin() || (isStaff() && request.resource.data.userId == request.auth.uid);
+    }
+
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /partners/{partnerId} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    match /banners/{bannerId} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    match /likes/{likeId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidLike(request.resource.data);
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow update: if false;
+    }
+
+    match /profileComments/{commentId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidProfileComment(request.resource.data);
+      allow delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || resource.data.targetUserId == request.auth.uid || isAdmin());
+      allow update: if false;
+    }
+
+    match /articleComments/{commentId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidArticleComment(request.resource.data);
+      allow delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isAdmin());
+      allow update: if false;
+    }
+
+    match /articleReactions/{reactionId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidArticleReaction(request.resource.data);
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow update: if false;
+    }
+
+    match /reputationLogs/{logId} {
+      allow read: if true;
+      allow create: if isAdmin();
+      allow update, delete: if false;
+    }
+  }
+}

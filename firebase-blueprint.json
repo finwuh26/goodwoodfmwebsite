@@ -1,0 +1,242 @@
+{
+  "entities": {
+    "users": {
+      "title": "User Profile",
+      "description": "Stores user profile information and roles.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "username": { "type": "string", "description": "Display name" },
+        "email": { "type": "string", "description": "User email" },
+        "avatar": { "type": "string", "description": "URL to avatar image" },
+        "bannerGradient": { "type": "string", "description": "CSS gradient string for user profile banner" },
+        "role": { "type": "string", "enum": ["admin", "staff", "user", "vip"], "description": "User role" },
+        "bio": { "type": "string", "description": "User biography" },
+        "reputationScore": { "type": "number", "description": "User's reputation points" },
+        "avatarHistory": { "type": "array", "items": { "type": "string" }, "description": "List of previous avatar URLs" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "username", "email", "role"]
+    },
+    "profileComments": {
+      "title": "Profile Comment",
+      "description": "Comments left by users on other users' profiles.",
+      "type": "object",
+      "properties": {
+        "targetUserId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorAvatar": { "type": "string" },
+        "content": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["targetUserId", "authorId", "authorName", "content", "timestamp"]
+    },
+    "articleComments": {
+      "title": "Article Comment",
+      "description": "Comments left on articles.",
+      "type": "object",
+      "properties": {
+        "articleId": { "type": "string", "description": "ID of the article being commented on" },
+        "authorId": { "type": "string", "description": "ID of the user who wrote the comment" },
+        "authorName": { "type": "string", "description": "Name of the user who wrote the comment" },
+        "authorAvatar": { "type": "string", "description": "Avatar of the user who wrote the comment" },
+        "content": { "type": "string", "description": "The comment text" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the comment was posted" }
+      },
+      "required": ["articleId", "authorId", "authorName", "content", "timestamp"]
+    },
+    "articleReactions": {
+      "title": "Article Reaction",
+      "description": "Reactions left on articles.",
+      "type": "object",
+      "properties": {
+        "articleId": { "type": "string", "description": "ID of the article" },
+        "userId": { "type": "string", "description": "ID of the user who reacted" },
+        "reaction": { "type": "string", "description": "The reaction type (e.g., like, fire, heart)" }
+      },
+      "required": ["articleId", "userId", "reaction"]
+    },
+    "reputationLogs": {
+      "title": "Reputation Log",
+      "description": "Logs of reputation points awarded or deducted.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "points": { "type": "number" },
+        "reason": { "type": "string" },
+        "source": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "points", "reason", "timestamp"]
+    },
+    "articles": {
+      "title": "Article",
+      "description": "News articles and blog posts.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "summary": { "type": "string" },
+        "content": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "image": { "type": "string" },
+        "category": { "type": "string" },
+        "status": { "type": "string", "enum": ["idea", "draft", "pending", "published", "rejected"] },
+        "managerFeedback": { "type": "string" },
+        "claimedById": { "type": "string" },
+        "claimedByName": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "authorId", "date", "status"]
+    },
+    "staff": {
+      "title": "Staff Member",
+      "description": "Information about staff members.",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string" },
+        "avatar": { "type": "string" },
+        "role": { "type": "string" },
+        "position": { "type": "string" },
+        "department": { "type": "string" }
+      },
+      "required": ["username", "role", "position", "department"]
+    },
+    "applications": {
+      "title": "Job Application",
+      "description": "Staff applications for various roles.",
+      "type": "object",
+      "properties": {
+        "role": { "type": "string" },
+        "username": { "type": "string" },
+        "discordId": { "type": "string" },
+        "timezone": { "type": "string" },
+        "reason": { "type": "string" },
+        "additionalInfo": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "reviewed", "accepted", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["role", "username", "discordId", "reason", "status", "createdAt"]
+    },
+    "enquiries": {
+      "title": "Contact Enquiry",
+      "description": "General contact form submissions.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "department": { "type": "string" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "name", "email", "message", "createdAt"]
+    },
+    "tracks": {
+      "title": "Track",
+      "description": "Music tracks for leaderboard.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "artist": { "type": "string" },
+        "likes": { "type": "number" },
+        "plays": { "type": "number" }
+      },
+      "required": ["title", "artist", "likes", "plays"]
+    },
+    "schedule": {
+      "title": "Schedule Item",
+      "description": "Radio show schedule entry.",
+      "type": "object",
+      "properties": {
+        "time": { "type": "string" },
+        "showName": { "type": "string" },
+        "cover": { "type": "string" },
+        "day": { "type": "string" },
+        "status": { "type": "string", "enum": ["open", "claimed", "completed"] },
+        "djId": { "type": "string" },
+        "djName": { "type": "string" }
+      },
+      "required": ["time", "showName", "day", "status"]
+    },
+    "partners": {
+      "title": "Partner",
+      "description": "Site partner information.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "url": { "type": "string" },
+        "description": { "type": "string" },
+        "image": { "type": "string" }
+      },
+      "required": ["name", "url"]
+    },
+    "likes": {
+      "title": "Song Like",
+      "description": "User likes for songs.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "songTitle": { "type": "string" },
+        "songArtist": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "songTitle", "songArtist", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "users",
+      "description": "User profile documents"
+    },
+    "/articles/{articleId}": {
+      "schema": "articles",
+      "description": "News articles"
+    },
+    "/staff/{staffId}": {
+      "schema": "staff",
+      "description": "Staff member list"
+    },
+    "/applications/{appId}": {
+      "schema": "applications",
+      "description": "Job applications"
+    },
+    "/enquiries/{enquiryId}": {
+      "schema": "enquiries",
+      "description": "Contact enquiries"
+    },
+    "/tracks/{trackId}": {
+      "schema": "tracks",
+      "description": "Music tracks"
+    },
+    "/schedule/{scheduleId}": {
+      "schema": "schedule",
+      "description": "Radio schedule"
+    },
+    "/partners/{partnerId}": {
+      "schema": "partners",
+      "description": "Site partners"
+    },
+    "/likes/{likeId}": {
+      "schema": "likes",
+      "description": "User likes for songs"
+    },
+    "/profileComments/{commentId}": {
+      "schema": "profileComments",
+      "description": "Comments on user profiles"
+    },
+    "/articleComments/{commentId}": {
+      "schema": "articleComments",
+      "description": "Comments on articles"
+    },
+    "/articleReactions/{reactionId}": {
+      "schema": "articleReactions",
+      "description": "Reactions on articles"
+    },
+    "/reputationLogs/{logId}": {
+      "schema": "reputationLogs",
+      "description": "Logs of reputation changes"
+    }
+  }
+}

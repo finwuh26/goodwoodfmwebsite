@@ -1,0 +1,43 @@
+{
+  "name": "rave-radio-clone",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx server.ts",
+    "build": "vite build",
+    "lint": "tsc --noEmit",
+    "start": "node server.ts",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@google/genai": "^1.50.1",
+    "@tailwindcss/vite": "^4.2.2",
+    "axios": "^1.15.0",
+    "cheerio": "^1.2.0",
+    "clsx": "^2.1.1",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "firebase": "^12.12.0",
+    "lucide-react": "^0.562.0",
+    "motion": "^12.38.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-easy-crop": "^5.5.7",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.12.0",
+    "remark-gfm": "^4.0.1",
+    "rss-parser": "^3.13.0",
+    "tailwind-merge": "^3.5.0",
+    "tailwindcss": "^4.2.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}

@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@theme {
+  --color-goodwood-dark: #0f1014;
+  --color-goodwood-card: #16191f;
+  --color-goodwood-card-hover: #1c2029;
+  --color-goodwood-text: #9ca3af;
+  --color-goodwood-accent: #ffffff;
+  --color-goodwood-border: #2a2f3a;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-goodwood-dark text-slate-200 font-sans;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0f1014; 
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2a2f3a; 
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3f4656; 
+  }
+}
+
+.mask-image-gradient {
+  mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+}
+
+.marquee-container {
+  overflow: hidden;
+  white-space: nowrap;
+  position: relative;
+  width: 100%;
+}
+
+.marquee-content {
+  display: inline-block;
+  padding-left: 100%;
+  animation: marquee 15s linear infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+.marquee-container:hover .marquee-content {
+  animation-play-state: paused;
+}
