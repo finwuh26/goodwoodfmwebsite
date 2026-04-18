@@ -12,23 +12,7 @@ import clsx from 'clsx';
 import Cropper from 'react-easy-crop';
 import { AVAILABLE_BADGES } from '../components/BadgeSelector';
 import { useRadio } from '../context/RadioContext';
-
-// Normalize names for reliable live-name matching across casing, accents, and separators.
-const normalizeForComparison = (value: string) =>
-    value
-        .normalize('NFKD')
-        .toLowerCase()
-        .trim()
-        .replace(/[^\p{L}\p{N}]/gu, '');
-
-// AzuraCast streamer names sometimes include a "DJ" prefix while profiles store just the username.
-const normalizeAzuraIdentity = (value: string) => {
-    const normalized = normalizeForComparison(value);
-    if (normalized.startsWith('dj') && normalized.length > 2) {
-        return normalized.slice(2);
-    }
-    return normalized;
-};
+import { normalizeAzuraIdentity } from '../utils/azuraIdentity';
 
 const getCroppedImg = async (imageSrc: string, pixelCrop: any): Promise<Blob> => {
     const image = new Image();
@@ -159,6 +143,8 @@ export const ProfilePage = () => {
         normalizedAzuraStreamerName &&
         normalizedAzuraNameCandidates.includes(normalizedAzuraStreamerName)
     );
+    const visibleBadges = Array.from(new Set(Array.isArray(userProfile.badges) ? userProfile.badges : []))
+        .filter((badgeId) => !(badgeId === 'owner' && userProfile.role === 'owner'));
 
     return (
         <div className="container mx-auto max-w-5xl">
@@ -231,7 +217,7 @@ export const ProfilePage = () => {
                             <span className={clsx("px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase border", userProfile.role === 'owner' || userProfile.role === 'admin' ? "bg-red-500/10 text-red-500 border-red-500/30" : userProfile.role === 'vip' ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/30" : "bg-white/10 text-white/60 border-white/10")}>
                                 {userProfile.role || 'Member'}
                             </span>
-                            {userProfile.badges?.map((badgeId: string, i: number) => {
+                            {visibleBadges.map((badgeId: string, i: number) => {
                                 const badgeInfo = AVAILABLE_BADGES.find(b => b.id === badgeId);
                                 if (!badgeInfo) return null;
                                 const Icon = badgeInfo.icon;
