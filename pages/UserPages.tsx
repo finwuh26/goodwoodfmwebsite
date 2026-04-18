@@ -13,7 +13,13 @@ import Cropper from 'react-easy-crop';
 import { AVAILABLE_BADGES } from '../components/BadgeSelector';
 import { useRadio } from '../context/RadioContext';
 
-const normalizeForComparison = (value: string) => value.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+const MIN_FUZZY_MATCH_LENGTH = 4;
+const normalizeForComparison = (value: string) =>
+    value
+        .normalize('NFKD')
+        .toLowerCase()
+        .trim()
+        .replace(/[^\p{L}\p{N}]/gu, '');
 
 const matchesAzuraName = (left: string, right: string) => {
     const leftNormalized = normalizeForComparison(left);
@@ -22,8 +28,8 @@ const matchesAzuraName = (left: string, right: string) => {
     if (leftNormalized === rightNormalized) return true;
     // Keep fuzzy matching limited to longer values to reduce false positives on short names.
     return (
-        (leftNormalized.length >= 4 && rightNormalized.includes(leftNormalized)) ||
-        (rightNormalized.length >= 4 && leftNormalized.includes(rightNormalized))
+        (leftNormalized.length >= MIN_FUZZY_MATCH_LENGTH && rightNormalized.includes(leftNormalized)) ||
+        (rightNormalized.length >= MIN_FUZZY_MATCH_LENGTH && leftNormalized.includes(rightNormalized))
     );
 };
 
@@ -145,7 +151,7 @@ export const ProfilePage = () => {
         userProfile?.azuracastName,
         userProfile?.encoderName,
         ...(Array.isArray(userProfile?.azuracastNames) ? userProfile.azuracastNames : []),
-    ].filter((name): name is string => typeof name === 'string' && name.trim().length > 0);
+    ].filter((name): name is string => typeof name === 'string' && normalizeForComparison(name).length > 0);
     const isOnAirProfile = Boolean(
         radioData?.live?.is_live &&
         azuraStreamerName &&
@@ -183,7 +189,10 @@ export const ProfilePage = () => {
                 <div className="relative pt-32 px-8 pb-0 flex flex-col md:flex-row items-end gap-6 translate-y-16">
                     <div className="relative shrink-0">
                         {isOnAirProfile && (
-                            <div aria-hidden="true" className="absolute -inset-1 rounded-full border-4 border-red-500 animate-pulse z-10 pointer-events-none" />
+                            <>
+                                <div aria-hidden="true" className="absolute -inset-1 rounded-full border-4 border-red-500 animate-pulse z-10 pointer-events-none" />
+                                <span className="sr-only">Currently broadcasting live</span>
+                            </>
                         )}
                         {userProfile.avatar ? (
                             <img 
@@ -201,7 +210,6 @@ export const ProfilePage = () => {
                                 <Shield size={16} className="text-white" />
                             </div>
                         )}
-                        {isOnAirProfile && <span className="sr-only">Currently broadcasting live</span>}
                     </div>
                     <div className="mb-4">
                         <h1 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter drop-shadow-2xl flex items-center gap-3">
