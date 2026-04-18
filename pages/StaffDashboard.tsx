@@ -119,6 +119,7 @@ export const StaffDashboard = () => {
     useEffect(() => {
         if (audioRef.current) {
             if (isPlaying) {
+                audioRef.current.load();
                 audioRef.current.play().catch(e => {
                     console.error("Audio play failed:", e);
                     setIsPlaying(false);
@@ -612,7 +613,7 @@ export const StaffDashboard = () => {
 
     return (
         <div className="min-h-screen bg-[#0a0b0f] flex flex-col font-sans text-sm selection:bg-white selection:text-black">
-            <audio ref={audioRef} src={streamUrl || undefined} crossOrigin="anonymous" />
+            <audio ref={audioRef} src={streamUrl || undefined} crossOrigin="anonymous" preload="none" />
             
             {/* Top Navigation */}
             <div className="bg-goodwood-card border-b border-goodwood-border px-6 py-4 flex items-center justify-between sticky top-0 z-40 shadow-xl">
