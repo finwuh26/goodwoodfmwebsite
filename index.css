@@ -12,6 +12,12 @@
 }
 
 @layer base {
+  html, body, #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
   body {
     @apply bg-goodwood-dark text-slate-200 font-sans;
   }
