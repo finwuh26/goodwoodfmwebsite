@@ -13,7 +13,6 @@ import Cropper from 'react-easy-crop';
 import { AVAILABLE_BADGES } from '../components/BadgeSelector';
 import { useRadio } from '../context/RadioContext';
 
-const MIN_FUZZY_MATCH_LENGTH = 4;
 const normalizeForComparison = (value: string) =>
     value
         .normalize('NFKD')
@@ -21,16 +20,12 @@ const normalizeForComparison = (value: string) =>
         .trim()
         .replace(/[^\p{L}\p{N}]/gu, '');
 
-const matchesAzuraName = (left: string, right: string) => {
-    const leftNormalized = normalizeForComparison(left);
-    const rightNormalized = normalizeForComparison(right);
-    if (!leftNormalized || !rightNormalized) return false;
-    if (leftNormalized === rightNormalized) return true;
-    // Keep fuzzy matching limited to longer values to reduce false positives on short names.
-    return (
-        (leftNormalized.length >= MIN_FUZZY_MATCH_LENGTH && rightNormalized.includes(leftNormalized)) ||
-        (rightNormalized.length >= MIN_FUZZY_MATCH_LENGTH && leftNormalized.includes(rightNormalized))
-    );
+const normalizeAzuraIdentity = (value: string) => {
+    const normalized = normalizeForComparison(value);
+    if (normalized.startsWith('dj') && normalized.length > 2) {
+        return normalized.slice(2);
+    }
+    return normalized;
 };
 
 const getCroppedImg = async (imageSrc: string, pixelCrop: any): Promise<Blob> => {
@@ -146,16 +141,20 @@ export const ProfilePage = () => {
 
     const isOwnProfile = currentUser?.uid === uid;
     const azuraStreamerName = radioData?.live?.streamer_name || '';
-    const azuraNameCandidates = [
+    const normalizedAzuraStreamerName = normalizeAzuraIdentity(azuraStreamerName);
+    const normalizedAzuraNameCandidates = [
         userProfile?.username,
         userProfile?.azuracastName,
         userProfile?.encoderName,
         ...(Array.isArray(userProfile?.azuracastNames) ? userProfile.azuracastNames : []),
-    ].filter((name): name is string => typeof name === 'string' && normalizeForComparison(name).length > 0);
+    ]
+        .filter((name): name is string => typeof name === 'string')
+        .map((name) => normalizeAzuraIdentity(name))
+        .filter((name) => name.length > 0);
     const isOnAirProfile = Boolean(
         radioData?.live?.is_live &&
-        azuraStreamerName &&
-        azuraNameCandidates.some((candidate) => matchesAzuraName(candidate, azuraStreamerName))
+        normalizedAzuraStreamerName &&
+        normalizedAzuraNameCandidates.includes(normalizedAzuraStreamerName)
     );
 
     return (
