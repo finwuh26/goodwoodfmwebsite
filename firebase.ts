@@ -5,7 +5,17 @@ import { getStorage } from 'firebase/storage';
 import firebaseConfig from './firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+// Allow overriding the Firestore database via an env variable so a persistent
+// production database (set in Vercel environment settings) is used instead of
+// the AI Studio database that gets reset whenever the AI Studio project rebuilds.
+const firestoreDatabaseId =
+  import.meta.env.VITE_FIRESTORE_DATABASE_ID?.trim() ||
+  firebaseConfig.firestoreDatabaseId;
+
+export const db = firestoreDatabaseId
+  ? getFirestore(app, firestoreDatabaseId)
+  : getFirestore(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 

@@ -96,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               ...newProfile,
               createdAt: serverTimestamp(),
               lastActive: serverTimestamp()
-            }).then(() => {
+            }, { merge: true }).then(() => {
               if (ownerEmail && firebaseUser.email === ownerEmail) {
                 updateDoc(userDocRef, { role: 'owner', isVerified: true, badges: ['owner'], reputationScore: 9999 }).catch((err) => {
                   console.error('Failed to upgrade user to owner role:', err);
