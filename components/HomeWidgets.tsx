@@ -3,8 +3,33 @@ import { Shield, Award, Users, ExternalLink, MessageSquare } from 'lucide-react'
 import { motion } from 'motion/react';
 import { collection, onSnapshot, query, limit, orderBy } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
+import { useRadio } from '../context/RadioContext';
 
 const RECENT_ACTIVITY_QUERY_LIMIT = 25;
+const ONLINE_WINDOW_MS = 7 * 60 * 1000;
+
+const normalizeForComparison = (value: string) =>
+    value
+        .normalize('NFKD')
+        .toLowerCase()
+        .trim()
+        .replace(/[^\p{L}\p{N}]/gu, '');
+
+const normalizeAzuraIdentity = (value: string) => {
+    const normalized = normalizeForComparison(value);
+    if (normalized.startsWith('dj') && normalized.length > 2) {
+        return normalized.slice(2);
+    }
+    return normalized;
+};
+
+const toDate = (value: any): Date | null => {
+    if (!value) return null;
+    if (value?.seconds) return new Date(value.seconds * 1000);
+    if (value instanceof Date) return value;
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
 
 export const DiscordWidget = () => (
   <motion.div 
@@ -172,6 +197,7 @@ export const PartnersWidget = () => {
 
 export const RecentlyActiveWidget = () => {
     const [activeStaff, setActiveStaff] = useState<any[]>([]);
+    const { radioData } = useRadio();
 
     useEffect(() => {
         const q = query(collection(db, 'users'), limit(RECENT_ACTIVITY_QUERY_LIMIT));
@@ -206,6 +232,26 @@ export const RecentlyActiveWidget = () => {
             </h3>
             <div className="grid grid-cols-5 gap-3">
                 {activeStaff.map((staff, i) => (
+                    (() => {
+                        const lastActiveDate = toDate(staff.lastActive || staff.createdAt);
+                        const isOnline = Boolean(lastActiveDate && Date.now() - lastActiveDate.getTime() <= ONLINE_WINDOW_MS);
+                        const normalizedAzuraStreamerName = normalizeAzuraIdentity(radioData?.live?.streamer_name || '');
+                        const normalizedAzuraNameCandidates = [
+                            staff?.username,
+                            staff?.azuracastName,
+                            staff?.encoderName,
+                            ...(Array.isArray(staff?.azuracastNames) ? staff.azuracastNames : []),
+                        ]
+                            .filter((name): name is string => typeof name === 'string')
+                            .map((name) => normalizeAzuraIdentity(name))
+                            .filter((name) => name.length > 0);
+                        const isOnAirProfile = Boolean(
+                            radioData?.live?.is_live &&
+                            normalizedAzuraStreamerName &&
+                            normalizedAzuraNameCandidates.includes(normalizedAzuraStreamerName)
+                        );
+
+                        return (
                     <motion.div 
                       key={staff.id} 
                       initial={{ opacity: 0, scale: 0.8 }}
@@ -215,14 +261,21 @@ export const RecentlyActiveWidget = () => {
                       whileHover={{ scale: 1.1, zIndex: 10 }}
                       className="aspect-square relative group cursor-pointer"
                     >
+                        {isOnAirProfile && (
+                            <div aria-hidden="true" className="absolute -inset-1 rounded-lg border-2 border-red-500 animate-pulse pointer-events-none" />
+                        )}
                         <img src={staff.avatar || undefined} alt={staff.username} className="w-full h-full rounded-lg object-cover border border-goodwood-border group-hover:border-white/50 transition-colors shadow-lg" />
-                        <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-goodwood-dark rounded-full shadow-lg"></div>
+                        {isOnline && (
+                            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-goodwood-dark rounded-full shadow-lg"></div>
+                        )}
                         
                         {/* Tooltip */}
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-white text-black text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                            {staff.username}
+                            {staff.username}{isOnline ? ' • Online' : ''}
                         </div>
                     </motion.div>
+                        );
+                    })()
                 ))}
             </div>
         </motion.div>

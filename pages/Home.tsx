@@ -9,9 +9,11 @@ import { motion } from 'motion/react';
 import { useRadio } from '../context/RadioContext';
 import { collection, onSnapshot, query, orderBy, limit, where } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
+import { useAuth } from '../context/AuthContext';
 
 export const Home = () => {
   const { radioData } = useRadio();
+  const { user } = useAuth();
   const history = radioData?.song_history || [];
   const [articles, setArticles] = useState<any[]>([]);
   const [schedule, setSchedule] = useState<any[]>([]);
@@ -102,6 +104,16 @@ export const Home = () => {
     <div className="flex flex-col lg:flex-row gap-8">
       {/* Left Column (Content) */}
       <div className="flex-1 min-w-0">
+        {!user && (
+          <div className="mb-6 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-5 py-4">
+            <p className="text-xs md:text-sm text-emerald-200 font-bold tracking-wide">
+              Sign in to unlock your profile, activity status, comments, and more community features.
+            </p>
+            <Link to="/login" className="inline-flex mt-3 text-xs font-black uppercase tracking-widest text-black bg-emerald-400 px-4 py-2 rounded hover:bg-emerald-300 transition-colors">
+              Sign In
+            </Link>
+          </div>
+        )}
         
         {/* Timetable Overview Strip */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">

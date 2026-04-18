@@ -100,6 +100,7 @@ export const StaffDashboard = () => {
     const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState<{isOpen: boolean, collectionName: string | null, docId: string | null}>({isOpen: false, collectionName: null, docId: null});
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [editingBannerId, setEditingBannerId] = useState<string | null>(null);
 
     // Form States
     const [articleForm, setArticleForm] = useState({ title: '', summary: '', content: '', image: '', category: 'News', status: 'idea', url: '', originalTitle: '', originalSummary: '' });
@@ -510,16 +511,16 @@ export const StaffDashboard = () => {
     const handleSaveBanner = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            if (editingId) {
-                await updateDoc(doc(db, 'banners', editingId), bannerForm);
+            if (editingBannerId) {
+                await updateDoc(doc(db, 'banners', editingBannerId), bannerForm);
             } else {
                 await addDoc(collection(db, 'banners'), bannerForm);
             }
             setShowBannerModal(false);
-            setEditingId(null);
+            setEditingBannerId(null);
             setBannerForm({ title: '', topic: '', image: '', link: '', active: true });
         } catch (err) {
-            handleFirestoreError(err, editingId ? OperationType.UPDATE : OperationType.CREATE, 'banners');
+            handleFirestoreError(err, editingBannerId ? OperationType.UPDATE : OperationType.CREATE, 'banners');
         }
     };
 
@@ -1280,7 +1281,7 @@ export const StaffDashboard = () => {
                             <div className="mb-10">
                                 <div className="flex justify-between items-center mb-6">
                                     <h2 className="text-2xl font-bold text-white">Banners Management</h2>
-                                    <button onClick={() => { setEditingId(null); setBannerForm({ title: '', topic: '', image: '', link: '', active: true }); setShowBannerModal(true); }} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold"><Plus size={18}/> Add Banner</button>
+                                    <button onClick={() => { setEditingBannerId(null); setBannerForm({ title: '', topic: '', image: '', link: '', active: true }); setShowBannerModal(true); }} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold"><Plus size={18}/> Add Banner</button>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {banners.map(b => (
@@ -1295,7 +1296,7 @@ export const StaffDashboard = () => {
                                                     <span className={`px-2 py-1 rounded text-xs font-bold ${b.active ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
                                                         {b.active ? 'ACTIVE' : 'INACTIVE'}
                                                     </span>
-                                                    <button onClick={() => { setEditingId(b.id); setBannerForm({ title: b.title, topic: b.topic || '', image: b.image, link: b.link, active: b.active }); setShowBannerModal(true); }} className="p-2 text-emerald-400 hover:text-emerald-300"><Edit3 size={16} /></button>
+                                                    <button onClick={() => { setEditingBannerId(b.id); setBannerForm({ title: b.title || '', topic: b.topic || '', image: b.image || '', link: b.link || '', active: Boolean(b.active) }); setShowBannerModal(true); }} className="p-2 text-emerald-400 hover:text-emerald-300"><Edit3 size={16} /></button>
                                                     <button onClick={() => handleDeleteDoc('banners', b.id)} className="p-2 text-red-400 hover:text-red-300"><Trash2 size={16} /></button>
                                                 </div>
                                             </div>
@@ -1842,8 +1843,8 @@ export const StaffDashboard = () => {
 
             <Modal
                 isOpen={showBannerModal}
-                onClose={() => setShowBannerModal(false)}
-                title={editingId ? 'Edit Banner' : 'Add Banner'}
+                onClose={() => { setShowBannerModal(false); setEditingBannerId(null); }}
+                title={editingBannerId ? 'Edit Banner' : 'Add Banner'}
                 maxWidth="max-w-md"
             >
                 <form onSubmit={handleSaveBanner} className="space-y-6">
@@ -1884,9 +1885,9 @@ export const StaffDashboard = () => {
                         </label>
                     </div>
                     <div className="flex justify-end gap-3 pt-4 border-t border-goodwood-border">
-                        <button type="button" onClick={() => setShowBannerModal(false)} className="px-6 py-2 text-gray-400 hover:text-white font-bold transition-colors">Cancel</button>
+                        <button type="button" onClick={() => { setShowBannerModal(false); setEditingBannerId(null); }} className="px-6 py-2 text-gray-400 hover:text-white font-bold transition-colors">Cancel</button>
                         <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2 rounded-lg font-bold transition-all active:scale-95 flex items-center gap-2">
-                            <CheckCircle size={18} /> {editingId ? 'Save Changes' : 'Add Banner'}
+                            <CheckCircle size={18} /> {editingBannerId ? 'Save Changes' : 'Add Banner'}
                         </button>
                     </div>
                 </form>
