@@ -13,6 +13,7 @@ import Cropper from 'react-easy-crop';
 import { AVAILABLE_BADGES } from '../components/BadgeSelector';
 import { useRadio } from '../context/RadioContext';
 
+// Normalize names for reliable live-name matching across casing, accents, and separators.
 const normalizeForComparison = (value: string) =>
     value
         .normalize('NFKD')
@@ -20,6 +21,7 @@ const normalizeForComparison = (value: string) =>
         .trim()
         .replace(/[^\p{L}\p{N}]/gu, '');
 
+// AzuraCast streamer names sometimes include a "DJ" prefix while profiles store just the username.
 const normalizeAzuraIdentity = (value: string) => {
     const normalized = normalizeForComparison(value);
     if (normalized.startsWith('dj') && normalized.length > 2) {
@@ -142,6 +144,7 @@ export const ProfilePage = () => {
     const isOwnProfile = currentUser?.uid === uid;
     const azuraStreamerName = radioData?.live?.streamer_name || '';
     const normalizedAzuraStreamerName = normalizeAzuraIdentity(azuraStreamerName);
+    // Support existing profile fields used as possible AzuraCast identity sources.
     const normalizedAzuraNameCandidates = [
         userProfile?.username,
         userProfile?.azuracastName,
