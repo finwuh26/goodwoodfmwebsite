@@ -272,7 +272,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col font-sans text-sm selection:bg-white selection:text-black">
+    <div className="min-h-screen flex flex-col font-sans text-sm selection:bg-white selection:text-black overflow-x-hidden">
       {/* Background Ambience */}
       <div className="fixed inset-0 z-[-1] bg-goodwood-dark" />
       
@@ -444,6 +444,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="lg:hidden flex items-center justify-between px-2 py-2">
               <button
                 onClick={() => setMobileNavOpen(prev => !prev)}
+                aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
                 className="inline-flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-widest text-gray-300 hover:text-white hover:bg-white/5 rounded-md transition-colors"
               >
                 {mobileNavOpen ? <X size={16} /> : <Menu size={16} />}
