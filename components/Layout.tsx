@@ -748,15 +748,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                          e.preventDefault();
                          const formData = new FormData(e.currentTarget);
                          const email = formData.get('email') as string;
-                         const password = formData.get('password') as string;
-                         const isSignup = formData.get('isSignup') === 'true';
-                         const username = formData.get('username') as string;
-                         try {
-                             if (isSignup) {
-                                 if (signupWithEmail) await signupWithEmail(email, password, username);
-                             } else {
-                                 if (loginWithEmail) await loginWithEmail(email, password);
-                             }
+                          const password = formData.get('password') as string;
+                          const isSignup = formData.get('isSignup') === 'true';
+                          const username = ((formData.get('username') as string) || '').trim();
+                          try {
+                              if (isSignup) {
+                                  if (username.length < 3) {
+                                      alert('Username must be at least 3 characters.');
+                                      return;
+                                  }
+                                  if (signupWithEmail) await signupWithEmail(email, password, username);
+                              } else {
+                                  if (loginWithEmail) await loginWithEmail(email, password);
+                              }
                              setShowLogin(false);
                          } catch (err: any) {
                              alert(err.message);
@@ -772,7 +776,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                  }} />
                                  <label htmlFor="isSignup" className="text-xs text-gray-400">I need to create an account</label>
                              </div>
-                             <input type="text" name="username" id="usernameInput" placeholder="Username" style={{display: 'none'}} className="w-full bg-goodwood-dark border border-goodwood-border rounded-lg px-4 py-3 text-white text-sm focus:border-white/20 transition-colors outline-none" />
+                              <input type="text" name="username" id="usernameInput" placeholder="Username" minLength={3} maxLength={30} style={{display: 'none'}} className="w-full bg-goodwood-dark border border-goodwood-border rounded-lg px-4 py-3 text-white text-sm focus:border-white/20 transition-colors outline-none" />
                          </div>
                          <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg font-bold uppercase tracking-widest transition-all mb-4">
                              Continue with Email

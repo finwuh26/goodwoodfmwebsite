@@ -9,7 +9,7 @@ import {
   signInWithEmailAndPassword,
   updateProfile
 } from 'firebase/auth';
-import { doc, onSnapshot, setDoc, serverTimestamp, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, serverTimestamp, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { auth, db, handleFirestoreError, OperationType } from '../firebase';
 
 interface UserProfile {
@@ -41,6 +41,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const LAST_ACTIVE_UPDATE_INTERVAL_MS = 5 * 60 * 1000;
+const getValidUsername = (username?: string | null) => {
+  const trimmed = username?.trim();
+  if (!trimmed) return 'User';
+  return trimmed.length >= 3 ? trimmed : `User${Math.floor(Math.random() * 9000) + 1000}`;
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const ownerEmail = import.meta.env.VITE_OWNER_EMAIL?.trim();
@@ -81,7 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Create initial profile if it doesn't exist
             const newProfile: UserProfile = {
               uid: firebaseUser.uid,
-              username: firebaseUser.displayName || 'User',
+              username: getValidUsername(firebaseUser.displayName),
               email: firebaseUser.email || '',
               avatar: firebaseUser.photoURL || '',
               role: 'user',
@@ -94,8 +99,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             setDoc(userDocRef, {
               ...newProfile,
-              createdAt: serverTimestamp(),
-              lastActive: serverTimestamp()
+              createdAt: Timestamp.now(),
+              lastActive: Timestamp.now()
             }, { merge: true }).then(() => {
               if (ownerEmail && firebaseUser.email === ownerEmail) {
                 updateDoc(userDocRef, { role: 'owner', isVerified: true, badges: ['owner'], reputationScore: 9999 }).catch((err) => {
@@ -166,21 +171,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signupWithEmail = async (email: string, pass: string, username: string) => {
     const res = await createUserWithEmailAndPassword(auth, email, pass);
-    await updateProfile(res.user, { displayName: username });
+    const safeUsername = getValidUsername(username);
+    await updateProfile(res.user, { displayName: safeUsername });
+    await res.user.getIdToken(true);
     
     const userDocRef = doc(db, 'users', res.user.uid);
     const newProfile: UserProfile = {
       uid: res.user.uid,
-      username: username,
+      username: safeUsername,
       email: email,
       avatar: '',
       role: 'user'
     };
     await setDoc(userDocRef, {
       ...newProfile,
-      createdAt: serverTimestamp(),
-      lastActive: serverTimestamp()
-    });
+      createdAt: Timestamp.now(),
+      lastActive: Timestamp.now()
+    }, { merge: true });
   };
 
   const logout = async () => {
