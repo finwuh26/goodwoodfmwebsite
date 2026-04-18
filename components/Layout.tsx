@@ -346,15 +346,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                      )}
                    </AnimatePresence>
                    
-                   {/* Live Badge */}
-                   {isLive && (
-                     <div className="absolute top-3 left-3 flex items-center gap-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg animate-pulse">
-                       <div className="w-1.5 h-1.5 bg-white rounded-full" />
-                       LIVE
-                     </div>
-                   )}
-                </div>
-            </motion.div>
+                 </div>
+             </motion.div>
 
             {/* Track Info & Controls */}
             <div className="flex-1 w-full min-w-0 mb-2">
@@ -364,12 +357,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   transition={{ delay: 0.1 }}
                 >
                   <div className="flex items-center gap-3 mb-2">
-                    {isLive && (
-                      <span className="text-red-500 flex items-center gap-1 text-xs font-bold tracking-tighter uppercase">
-                        <Radio size={14} />
-                        {streamerName || "Live Stream"}
-                      </span>
-                    )}
                     <span className="text-gray-500 text-xs font-bold tracking-widest uppercase">Now Playing</span>
                   </div>
                   <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-none mb-2 drop-shadow-lg w-full overflow-hidden">
@@ -384,10 +371,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     className="flex items-center gap-2 mb-8"
                   >
                      <span className="bg-white/10 px-1.5 py-0.5 rounded text-[8px] font-black text-white/60 tracking-widest uppercase">ON AIR</span>
-                     <span className="text-white/30 text-[10px] font-bold uppercase tracking-widest truncate">
-                       AutoDJ
-                     </span>
-                  </motion.div>
+                      <span className="text-white/30 text-[10px] font-bold uppercase tracking-widest truncate">
+                        {isLive && streamerName ? streamerName : 'AutoDJ'}
+                      </span>
+                   </motion.div>
                 </motion.div>
 
                 <motion.div 

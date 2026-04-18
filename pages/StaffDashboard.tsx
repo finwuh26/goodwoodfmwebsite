@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useRadio } from '../context/RadioContext';
 import { Navigate, Link, useNavigate } from 'react-router-dom';
-import { collection, query, onSnapshot, doc, updateDoc, deleteDoc, addDoc, serverTimestamp, getDocs, getDoc, orderBy, limit } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, updateDoc, deleteDoc, addDoc, serverTimestamp, getDocs, getDoc, orderBy, limit, where } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { Users, FileText, Calendar, MessageSquare, Settings, CheckCircle, XCircle, Plus, Trash2, Shield, Play, Pause, Volume2, Radio, Edit3, Check, Filter, Layers, Zap, Clock, UserPlus, ExternalLink, Activity, Info, AlertTriangle, Loader2, X, ChevronDown, Headphones } from 'lucide-react';
 import { Marquee } from '../components/Marquee';
@@ -53,6 +53,8 @@ const DEPARTMENT_OPTIONS = [
     { value: 'Community', label: 'Community Department' },
     { value: 'Development', label: 'Development Department' },
 ];
+
+const USERS_DASHBOARD_LIMIT = 200;
 
 export const StaffDashboard = () => {
     const { user, userProfile } = useAuth();
@@ -178,9 +180,15 @@ export const StaffDashboard = () => {
         }, (err) => handleFirestoreError(err, OperationType.GET, 'staff'));
 
         // Fetch Users (Recently Active)
-        const qUsers = query(collection(db, 'users'), orderBy('lastActive', 'desc'));
+        const qUsers = query(collection(db, 'users'), limit(USERS_DASHBOARD_LIMIT));
         const unsubUsers = onSnapshot(qUsers, (snap) => {
-            setUsers(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            const usersList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+            usersList.sort((a: any, b: any) => {
+                const aTs = a?.lastActive?.seconds || a?.createdAt?.seconds || 0;
+                const bTs = b?.lastActive?.seconds || b?.createdAt?.seconds || 0;
+                return bTs - aTs;
+            });
+            setUsers(usersList);
         }, (err) => handleFirestoreError(err, OperationType.GET, 'users'));
 
         // Fetch Partners
@@ -424,6 +432,13 @@ export const StaffDashboard = () => {
             } else {
                 await addDoc(collection(db, 'staff'), staffForm);
             }
+
+            if (staffForm.uid) {
+                await updateDoc(doc(db, 'users', staffForm.uid), { role: staffForm.role }).catch((err) => {
+                    console.warn(`Could not sync staff role for user ${staffForm.uid} back to users collection:`, err);
+                });
+            }
+
             setShowStaffModal(false);
             setEditingId(null);
             setStaffForm({ uid: '', username: '', avatar: '', role: 'staff', position: '', department: '' });
@@ -436,11 +451,39 @@ export const StaffDashboard = () => {
         e.preventDefault();
         if (!selectedUser) return;
         try {
+            const elevatedRoles = ['staff', 'dj', 'journalist', 'manager', 'admin', 'owner'];
+            const staffUsername = selectedUser.username || selectedUser.email || 'Staff';
             await updateDoc(doc(db, 'users', selectedUser.id), {
                 role: userForm.role,
                 isVerified: userForm.isVerified,
                 badges: userForm.badges
             });
+
+            const staffQuery = query(collection(db, 'staff'), where('uid', '==', selectedUser.id), limit(1));
+            const staffSnap = await getDocs(staffQuery);
+
+            if (elevatedRoles.includes(userForm.role)) {
+                if (!staffSnap.empty) {
+                    await updateDoc(staffSnap.docs[0].ref, {
+                        username: staffUsername,
+                        avatar: selectedUser.avatar || '',
+                        role: userForm.role,
+                        uid: selectedUser.id
+                    });
+                } else {
+                    await addDoc(collection(db, 'staff'), {
+                        uid: selectedUser.id,
+                        username: staffUsername,
+                        avatar: selectedUser.avatar || '',
+                        role: userForm.role,
+                        position: userForm.role,
+                        department: 'General'
+                    });
+                }
+            } else if (!staffSnap.empty) {
+                await deleteDoc(staffSnap.docs[0].ref);
+            }
+
             setShowUserModal(false);
             setSelectedUser(null);
         } catch (err) {

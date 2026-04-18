@@ -3,7 +3,7 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
-const vercelApiMock = () => {
+const vercelApiMock = (env: Record<string, string>) => {
   return {
     name: 'vercel-api-mock',
     configureServer(server) {
@@ -17,6 +17,52 @@ const vercelApiMock = () => {
           } catch (e) {
             res.statusCode = 500;
             res.end(JSON.stringify({error: e.message}));
+          }
+          return;
+        }
+
+        if (req.url?.startsWith('/api/lastfm/art') && req.method === 'GET') {
+          try {
+            const parsedUrl = new URL(req.url, 'http://localhost');
+            const artist = parsedUrl.searchParams.get('artist');
+            const track = parsedUrl.searchParams.get('track');
+
+            if (!artist || !track) {
+              console.warn('Missing Last.fm artist/track query params. Returning null album art.');
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ art: null }));
+              return;
+            }
+
+            if (!env.LASTFM_API_KEY) {
+              console.warn('LASTFM_API_KEY is not set. Returning null album art.');
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ art: null }));
+              return;
+            }
+
+            const params = new URLSearchParams({
+              method: 'track.getInfo',
+              artist,
+              track,
+              autocorrect: '1',
+              format: 'json',
+              api_key: env.LASTFM_API_KEY
+            });
+
+            const response = await fetch(`https://ws.audioscrobbler.com/2.0/?${params.toString()}`);
+            const data = await response.json();
+            const images = data?.track?.album?.image;
+            const largestImage = Array.isArray(images)
+              ? images.map((image: any) => image?.['#text']).filter(Boolean).pop() || null
+              : null;
+
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ art: largestImage }));
+          } catch (e) {
+            console.error('Last.fm mock route failed:', e);
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ art: null }));
           }
           return;
         }
@@ -61,7 +107,7 @@ export default defineConfig(({ mode }) => {
       plugins: [
         react(),
         tailwindcss(),
-        vercelApiMock(),
+        vercelApiMock(env),
       ],
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),

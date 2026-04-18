@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+
+const AZURACAST_ART_PLACEHOLDERS = ['/static/img/albumart', '/static/uploads/art'];
 
 export interface RadioData {
   station: {
@@ -52,14 +54,52 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [radioData, setRadioData] = useState<RadioData | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(50);
+  const lastFmCacheRef = useRef<Record<string, string | null>>({});
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
+
+    const fetchLastFmAlbumArt = async (artist?: string, track?: string) => {
+      if (!artist || !track) return null;
+
+      const cacheKey = `${artist}::${track}`.toLowerCase();
+      if (cacheKey in lastFmCacheRef.current) {
+        return lastFmCacheRef.current[cacheKey];
+      }
+
+      try {
+        const response = await fetch(`/api/lastfm/art?artist=${encodeURIComponent(artist)}&track=${encodeURIComponent(track)}`);
+        if (!response.ok) {
+          lastFmCacheRef.current[cacheKey] = null;
+          return null;
+        }
+
+        const data = await response.json();
+        const art = typeof data?.art === 'string' && data.art.trim() ? data.art : null;
+        lastFmCacheRef.current[cacheKey] = art;
+        return art;
+      } catch {
+        lastFmCacheRef.current[cacheKey] = null;
+        return null;
+      }
+    };
 
     const fetchRadioData = async () => {
       try {
         const response = await fetch('/api/azuracast/nowplaying');
         const data = await response.json();
+
+        const currentSong = data?.now_playing?.song;
+        const hasPlaceholderArt =
+          !currentSong?.art ||
+          AZURACAST_ART_PLACEHOLDERS.some((placeholder) => currentSong.art.includes(placeholder));
+
+        if (currentSong && hasPlaceholderArt) {
+          const fallbackArt = await fetchLastFmAlbumArt(currentSong.artist, currentSong.title);
+          if (fallbackArt) {
+            data.now_playing.song.art = fallbackArt;
+          }
+        }
         
         if (data && data.now_playing) {
            setRadioData(data);
