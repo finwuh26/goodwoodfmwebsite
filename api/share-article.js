@@ -58,8 +58,12 @@ const getFirestoreDocument = async (articleId) => {
   const configRaw = await readFile(configPath, 'utf8');
   const config = JSON.parse(configRaw);
 
-  const envDatabaseId = (process.env.FIRESTORE_DATABASE_ID || '').trim();
-  const configDatabaseId = config.firestoreDatabaseId?.trim() || '';
+  // Prefer server var, but fall back to VITE_FIRESTORE_DATABASE_ID because this project
+  // commonly sets the Firestore DB only via Vercel envs used at frontend build time.
+  const envDatabaseId = (
+    process.env.FIRESTORE_DATABASE_ID || process.env.VITE_FIRESTORE_DATABASE_ID || ''
+  ).trim();
+  const configDatabaseId = (config.firestoreDatabaseId || '').trim();
   const isProduction = process.env.VERCEL_ENV
     ? process.env.VERCEL_ENV === 'production'
     : process.env.NODE_ENV === 'production';
@@ -86,7 +90,10 @@ export default async function handler(req, res) {
     return res.status(405).send('Method not allowed');
   }
 
-  const articleId = typeof req.query?.id === 'string' ? req.query.id.trim() : '';
+  const articleIdParam = Array.isArray(req.query?.id)
+    ? req.query.id.find((idPart) => typeof idPart === 'string') || ''
+    : req.query?.id;
+  const articleId = typeof articleIdParam === 'string' ? articleIdParam.trim() : '';
   const origin = buildOrigin(req);
   const fallbackTarget = `${origin}/#/content`;
 
