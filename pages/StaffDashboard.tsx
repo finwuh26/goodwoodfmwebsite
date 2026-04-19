@@ -12,6 +12,7 @@ import { BadgeSelector } from '../components/BadgeSelector';
 import { checkPlagiarism } from '../services/geminiService';
 import { getDatesForThisWeek, formatDate } from '../utils';
 import { toast } from 'react-hot-toast';
+import { readFirestoreWithGuard } from '../utils/firestoreReadGuards';
 
 import { ConfirmModal } from '../components/ConfirmModal';
 import { UserAvatar } from '../components/UserAvatar';
@@ -56,7 +57,8 @@ const DEPARTMENT_OPTIONS = [
 ];
 
 const USERS_DASHBOARD_LIMIT = 200;
-const DASHBOARD_POLL_INTERVAL_MS = 2 * 60 * 1000;
+const DASHBOARD_POLL_INTERVAL_MS = 10 * 60 * 1000;
+const DASHBOARD_READ_TTL_MS = 10 * 60 * 1000;
 const createEmptyBannerForm = () => ({ title: '', topic: '', image: '', link: '', active: true });
 
 export const StaffDashboard = () => {
@@ -157,36 +159,69 @@ export const StaffDashboard = () => {
             }
         });
 
-        const qUsers = query(collection(db, 'users'), limit(USERS_DASHBOARD_LIMIT));
-        const unsubUsers = onSnapshot(qUsers, (snap) => {
-            const usersList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
-            usersList.sort((a: any, b: any) => {
-                const aTs = a?.lastActive?.seconds || a?.createdAt?.seconds || 0;
-                const bTs = b?.lastActive?.seconds || b?.createdAt?.seconds || 0;
-                return bTs - aTs;
-            });
-            setUsers(usersList);
-        }, (err) => handleFirestoreError(err, OperationType.GET, 'users'));
-
         let isMounted = true;
         const fetchLowPriorityData = async () => {
             try {
                 const requests = [
-                    getDocs(query(collection(db, 'applications'), limit(200))),
-                    getDocs(query(collection(db, 'enquiries'), limit(300))),
-                    getDocs(query(collection(db, 'articles'), limit(300))),
-                    getDocs(query(collection(db, 'schedule'), limit(300))),
-                    getDocs(query(collection(db, 'staff'), limit(300))),
-                    getDocs(query(collection(db, 'partners'), limit(100))),
-                    getDocs(query(collection(db, 'banners'), limit(100))),
-                    getDocs(query(collection(db, 'reputationLogs'), orderBy('timestamp', 'desc'), limit(50))),
+                    readFirestoreWithGuard(
+                        'staffDashboard:users',
+                        () => getDocs(query(collection(db, 'users'), limit(USERS_DASHBOARD_LIMIT))),
+                        { ttlMs: DASHBOARD_READ_TTL_MS }
+                    ),
+                    readFirestoreWithGuard(
+                        'staffDashboard:applications',
+                        () => getDocs(query(collection(db, 'applications'), limit(200))),
+                        { ttlMs: DASHBOARD_READ_TTL_MS }
+                    ),
+                    readFirestoreWithGuard(
+                        'staffDashboard:enquiries',
+                        () => getDocs(query(collection(db, 'enquiries'), limit(300))),
+                        { ttlMs: DASHBOARD_READ_TTL_MS }
+                    ),
+                    readFirestoreWithGuard(
+                        'staffDashboard:articles',
+                        () => getDocs(query(collection(db, 'articles'), limit(300))),
+                        { ttlMs: DASHBOARD_READ_TTL_MS }
+                    ),
+                    readFirestoreWithGuard(
+                        'staffDashboard:schedule',
+                        () => getDocs(query(collection(db, 'schedule'), limit(300))),
+                        { ttlMs: DASHBOARD_READ_TTL_MS }
+                    ),
+                    readFirestoreWithGuard(
+                        'staffDashboard:staff',
+                        () => getDocs(query(collection(db, 'staff'), limit(300))),
+                        { ttlMs: DASHBOARD_READ_TTL_MS }
+                    ),
+                    readFirestoreWithGuard(
+                        'staffDashboard:partners',
+                        () => getDocs(query(collection(db, 'partners'), limit(100))),
+                        { ttlMs: DASHBOARD_READ_TTL_MS }
+                    ),
+                    readFirestoreWithGuard(
+                        'staffDashboard:banners',
+                        () => getDocs(query(collection(db, 'banners'), limit(100))),
+                        { ttlMs: DASHBOARD_READ_TTL_MS }
+                    ),
+                    readFirestoreWithGuard(
+                        'staffDashboard:reputationLogs',
+                        () => getDocs(query(collection(db, 'reputationLogs'), orderBy('timestamp', 'desc'), limit(50))),
+                        { ttlMs: DASHBOARD_READ_TTL_MS }
+                    ),
                 ];
 
                 if (includeCodes) {
-                    requests.push(getDocs(query(collection(db, 'redeemCodes'), orderBy('createdAt', 'desc'), limit(200))));
+                    requests.push(
+                        readFirestoreWithGuard(
+                            'staffDashboard:redeemCodes',
+                            () => getDocs(query(collection(db, 'redeemCodes'), orderBy('createdAt', 'desc'), limit(200))),
+                            { ttlMs: DASHBOARD_READ_TTL_MS }
+                        )
+                    );
                 }
 
                 const [
+                    usersSnap,
                     appsSnap,
                     msgsSnap,
                     articlesSnap,
@@ -200,6 +235,13 @@ export const StaffDashboard = () => {
 
                 if (!isMounted) return;
 
+                const usersList = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+                usersList.sort((a: any, b: any) => {
+                    const aTs = a?.lastActive?.seconds || a?.createdAt?.seconds || 0;
+                    const bTs = b?.lastActive?.seconds || b?.createdAt?.seconds || 0;
+                    return bTs - aTs;
+                });
+                setUsers(usersList);
                 setApplications(appsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
                 setMessages(msgsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
                 setArticles(articlesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -218,14 +260,23 @@ export const StaffDashboard = () => {
             }
         };
 
+        const onVisibilityOrFocus = () => {
+            if (document.visibilityState === 'visible') {
+                fetchLowPriorityData();
+            }
+        };
+
         fetchLowPriorityData();
         const pollingInterval = window.setInterval(fetchLowPriorityData, DASHBOARD_POLL_INTERVAL_MS);
+        document.addEventListener('visibilitychange', onVisibilityOrFocus);
+        window.addEventListener('focus', onVisibilityOrFocus);
 
         return () => {
             isMounted = false;
             window.clearInterval(pollingInterval);
+            document.removeEventListener('visibilitychange', onVisibilityOrFocus);
+            window.removeEventListener('focus', onVisibilityOrFocus);
             unsubSettings();
-            unsubUsers();
         };
     }, [user, userProfile?.role]);
 
