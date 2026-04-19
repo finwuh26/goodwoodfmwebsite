@@ -70,9 +70,6 @@ const subscribeToSharedUserAvatar = (
       const current = sharedUserAvatarListeners.get(userId);
       if (!current) return;
       current.loadingPromise = null;
-      if (current.subscribers.size === 0) {
-        sharedUserAvatarListeners.delete(userId);
-      }
     });
   }
 
@@ -80,7 +77,6 @@ const subscribeToSharedUserAvatar = (
     const current = sharedUserAvatarListeners.get(userId);
     if (!current) return;
     current.subscribers.delete(callback);
-    if (current.subscribers.size === 0 && !current.loadingPromise) sharedUserAvatarListeners.delete(userId);
   };
 };
 

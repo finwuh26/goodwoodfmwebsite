@@ -65,7 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let isMounted = true;
     let profileRefreshInterval: number | null = null;
-    let currentProfileLoader: (() => Promise<void>) | null = null;
+    let activeProfileLoader: (() => Promise<void>) | null = null;
 
     const refreshSystemSettings = async () => {
       try {
@@ -89,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         window.clearInterval(profileRefreshInterval);
         profileRefreshInterval = null;
       }
-      currentProfileLoader = null;
+      activeProfileLoader = null;
       setUser(firebaseUser);
       
       if (firebaseUser) {
@@ -148,10 +148,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         };
 
-        currentProfileLoader = loadUserProfile;
+        activeProfileLoader = loadUserProfile;
         await loadUserProfile();
         profileRefreshInterval = window.setInterval(() => {
-          currentProfileLoader?.().catch((err) => {
+          activeProfileLoader?.().catch((err) => {
             console.warn('User profile refresh failed:', err);
           });
         }, USER_PROFILE_READ_TTL_MS);

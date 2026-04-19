@@ -71,7 +71,7 @@ export const ArticlePage = () => {
         if (!id || !qComments) return;
         try {
             const snap = await readFirestoreWithGuard(
-                `articlePage:${id}:comments:manual`,
+                `articlePage:${id}:comments:refresh`,
                 () => getDocs(qComments),
                 { ttlMs: 10_000 }
             );
@@ -85,7 +85,7 @@ export const ArticlePage = () => {
         if (!id || !qReactions) return;
         try {
             const snap = await readFirestoreWithGuard(
-                `articlePage:${id}:reactions:manual`,
+                `articlePage:${id}:reactions:refresh`,
                 () => getDocs(qReactions),
                 { ttlMs: 10_000 }
             );
@@ -116,7 +116,7 @@ export const ArticlePage = () => {
                     authorName: userProfile?.username || 'Anonymous',
                     authorAvatar: userProfile?.avatar || '',
                     content: commentContent,
-                    timestamp: new Date()
+                    timestamp: null
                 },
                 ...prev
             ]);
