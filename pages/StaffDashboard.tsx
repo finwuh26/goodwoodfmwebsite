@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useRadio } from '../context/RadioContext';
 import { Navigate, Link, useNavigate } from 'react-router-dom';
-import { collection, query, onSnapshot, doc, updateDoc, deleteDoc, addDoc, serverTimestamp, getDocs, getDoc, orderBy, limit, where } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, updateDoc, deleteDoc, addDoc, serverTimestamp, getDocs, getDoc, orderBy, limit, where, setDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { Users, FileText, Calendar, MessageSquare, Settings, CheckCircle, XCircle, Plus, Trash2, Shield, Play, Pause, Volume2, Radio, Edit3, Check, Filter, Layers, Zap, Clock, UserPlus, ExternalLink, Activity, Info, AlertTriangle, Loader2, X, ChevronDown, Headphones } from 'lucide-react';
 import { Marquee } from '../components/Marquee';
@@ -546,7 +546,6 @@ export const StaffDashboard = () => {
 
     const handleToggleSystemSetting = async (setting: string, value: boolean) => {
         try {
-            const { setDoc } = await import('firebase/firestore');
             await setDoc(doc(db, 'settings', 'global'), { [setting]: value }, { merge: true });
         } catch (err) {
             handleFirestoreError(err, OperationType.UPDATE, 'settings/global');
@@ -555,7 +554,6 @@ export const StaffDashboard = () => {
 
     const handleUpdateSystemSettingString = async (setting: string, value: string) => {
         try {
-            const { setDoc } = await import('firebase/firestore');
             await setDoc(doc(db, 'settings', 'global'), { [setting]: value }, { merge: true });
         } catch (err) {
             handleFirestoreError(err, OperationType.UPDATE, 'settings/global');
