@@ -2,6 +2,8 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+const MAX_OG_DESCRIPTION_LENGTH = 280;
+
 const escapeHtml = (value = '') =>
   value
     .replace(/&/g, '&amp;')
@@ -93,7 +95,7 @@ export default async function handler(req, res) {
     const title = normalizeWhitespace(getString(fields, 'title')) || 'Goodwood FM Article';
     const summary = normalizeWhitespace(getString(fields, 'summary'));
     const content = stripMarkdown(getString(fields, 'content'));
-    const description = (summary || content || 'Read this article on Goodwood FM.').slice(0, 280);
+    const description = (summary || content || 'Read this article on Goodwood FM.').slice(0, MAX_OG_DESCRIPTION_LENGTH);
     const image = resolveImageUrl(origin, getString(fields, 'image'));
     const canonicalUrl = `${origin}/share/article/${encodeURIComponent(articleId)}`;
     const redirectTarget = `${origin}/#/article/${encodeURIComponent(articleId)}`;
