@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { doc, onSnapshot, updateDoc, collection, query, orderBy, addDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
+import { 
+    doc, onSnapshot, updateDoc, collection, query, orderBy, 
+    addDoc, serverTimestamp, deleteDoc 
+} from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage, handleFirestoreError, OperationType } from '../firebase';
+import { toast } from 'react-hot-toast';
 import { formatDate } from '../utils';
 import { UserAvatar } from '../components/UserAvatar';
 import { User as UserIcon, Settings, Shield, Clock, Calendar, Heart, MessageSquare, Star, LogOut, Trash2, Upload, X, Check, Image as ImageIcon, Music } from 'lucide-react';
@@ -601,7 +605,7 @@ export const SettingsPage = () => {
 
             await batch.commit();
 
-            alert("Settings saved successfully!");
+            toast.success("Settings saved successfully!");
         } catch (err) {
             handleFirestoreError(err, OperationType.WRITE, `users/${profile.uid}`);
         } finally {
@@ -877,7 +881,7 @@ export const SettingsPage = () => {
                                                     const { getAuth, sendPasswordResetEmail } = await import('firebase/auth');
                                                     const auth = getAuth();
                                                     if (profile.email) {
-                                                        sendPasswordResetEmail(auth, profile.email).then(() => alert("Password reset email sent to " + profile.email));
+                                                        sendPasswordResetEmail(auth, profile.email).then(() => toast.success("Password reset email sent to " + profile.email));
                                                     }
                                                 }}
                                                 className="bg-white/10 hover:bg-white text-white hover:text-black px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
@@ -893,7 +897,7 @@ export const SettingsPage = () => {
                                         <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Active Sessions</h3>
                                         <button 
                                             type="button"
-                                            onClick={() => alert("All other active sessions have been revoked.")}
+                                            onClick={() => toast.success("All other active sessions have been revoked.")}
                                             className="text-xs text-red-500 hover:text-red-400 font-bold"
                                         >
                                             Sign out all other sessions
@@ -950,7 +954,7 @@ export const SettingsPage = () => {
                                                         }
                                                         logout();
                                                     } catch (e) {
-                                                        alert("Error deleting account.");
+                                                        toast.error("Error deleting account.");
                                                     }
                                                 }
                                             }}
