@@ -3,6 +3,7 @@
   "appId": "1:210293554323:web:52c9a7b8dec3818bfde166",
   "apiKey": "AIzaSyDvBApX9nRltJjsUI374dzqF9vMXnFk4oI",
   "authDomain": "auth.goodwood.live",
+  "databaseURL": "https://radio-7376f-default-rtdb.firebaseio.com",
   "firestoreDatabaseId": "radio",
   "storageBucket": "radio-7376f.firebasestorage.app",
   "messagingSenderId": "210293554323",
