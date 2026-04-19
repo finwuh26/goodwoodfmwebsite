@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const ARTICLE_ID_PATTERN = /^[A-Za-z0-9_-]{1,200}$/;
 const ALLOWED_EDITOR_ROLES = new Set(['admin', 'manager', 'owner']);
+const FALLBACK_FIRESTORE_DATABASE_ID = 'radio';
 
 const getStringField = (fields, key) => fields?.[key]?.stringValue || '';
 const sanitizeLine = (value, fallback) => {
@@ -42,15 +43,18 @@ const buildOrigin = (req) => {
 };
 
 const resolveDatabaseId = (config) => {
-  const envDatabaseId = (
-    process.env.FIRESTORE_DATABASE_ID || process.env.VITE_FIRESTORE_DATABASE_ID || ''
-  ).trim();
+  const envDatabaseId = (process.env.FIRESTORE_DATABASE_ID || process.env.VITE_FIRESTORE_DATABASE_ID || '').trim();
   const configDatabaseId = (config.firestoreDatabaseId || '').trim();
-  const isProduction = process.env.VERCEL_ENV
-    ? process.env.VERCEL_ENV === 'production'
-    : process.env.NODE_ENV === 'production';
-  const bypassAiStudio = isProduction && !envDatabaseId && /^ai-studio-/i.test(configDatabaseId);
-  return bypassAiStudio ? '(default)' : (envDatabaseId || configDatabaseId || '(default)');
+  const selectedDatabaseId = envDatabaseId || configDatabaseId || FALLBACK_FIRESTORE_DATABASE_ID;
+
+  if (/^ai-studio-/i.test(selectedDatabaseId)) {
+    console.warn(
+      `Ignoring AI Studio Firestore database ID "${selectedDatabaseId}" and using "${FALLBACK_FIRESTORE_DATABASE_ID}" instead.`
+    );
+    return FALLBACK_FIRESTORE_DATABASE_ID;
+  }
+
+  return selectedDatabaseId;
 };
 
 const loadFirebaseConfig = async () => {
