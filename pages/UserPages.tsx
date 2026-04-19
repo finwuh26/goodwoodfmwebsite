@@ -152,12 +152,13 @@ export const ProfilePage = () => {
         .filter((badgeId) => !(badgeId === 'owner' && userProfile.role === 'owner'));
 
     return (
-        <div className="container mx-auto max-w-5xl">
-            {/* Header / Banner */}
-            <div className="relative mb-24">
-                <div className="absolute top-0 left-0 right-0 h-56 sm:h-64 rounded-3xl overflow-hidden">
-                    <div className={`absolute inset-0 ${userProfile.bannerGradient || 'bg-gradient-to-br from-emerald-900 via-goodwood-dark to-blue-900'} opacity-50`} />
-                    <div className="absolute inset-0 backdrop-blur-3xl" />
+        <div className={clsx("min-h-screen", userProfile.activeProfileBg ? `bg-gradient-to-br ${userProfile.activeProfileBg}` : "")}>
+            <div className="container mx-auto max-w-5xl">
+                {/* Header / Banner */}
+                <div className="relative mb-24">
+                    <div className="absolute top-0 left-0 right-0 h-56 sm:h-64 rounded-3xl overflow-hidden">
+                        <div className={`absolute inset-0 bg-gradient-to-br ${userProfile.bannerGradient || 'from-emerald-900 via-goodwood-dark to-blue-900'} opacity-50`} />
+                        <div className="absolute inset-0 backdrop-blur-3xl" />
                     
                     {userProfile.favoriteSong && (
                         <a 
@@ -179,27 +180,29 @@ export const ProfilePage = () => {
                         </a>
                     )}
                 </div>
-                <div className="relative pt-28 sm:pt-32 px-4 sm:px-8 pb-0 flex flex-col md:flex-row items-start md:items-end gap-6 translate-y-16">
-                    <div className="relative shrink-0">
-                        {isOnAirProfile && (
-                            <>
-                                <div aria-hidden="true" className="absolute -inset-1 rounded-full border-4 border-red-500 animate-pulse z-10 pointer-events-none" />
-                                <span className="sr-only">Currently broadcasting live</span>
-                            </>
-                        )}
-                        {userProfile.avatar ? (
-                            <img 
-                                src={userProfile.avatar || undefined} 
-                                className="w-32 h-32 md:w-40 md:h-40 rounded-full border-8 border-goodwood-dark shadow-2xl bg-goodwood-card object-cover" 
-                                alt={userProfile.username} 
-                            />
-                        ) : (
-                            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-8 border-goodwood-dark shadow-2xl bg-emerald-900 flex items-center justify-center">
-                                <span className="text-white font-black text-4xl sm:text-6xl">{userProfile.username?.charAt(0) || '?'}</span>
+                    <div className="relative pt-28 sm:pt-32 px-4 sm:px-8 pb-0 flex flex-col md:flex-row items-start md:items-end gap-6 translate-y-16">
+                        <div className={clsx("relative shrink-0 rounded-full transition-shadow duration-300", userProfile.activeRing ? `${userProfile.activeRing} ring-[6px]` : "")}>
+                            <div className={clsx("rounded-full", userProfile.activeRing ? "border-[8px] border-goodwood-card bg-goodwood-card" : "")}>
+                                {isOnAirProfile && (
+                                    <>
+                                        <div aria-hidden="true" className="absolute -inset-1 rounded-full border-4 border-red-500 animate-pulse z-10 pointer-events-none" />
+                                        <span className="sr-only">Currently broadcasting live</span>
+                                    </>
+                                )}
+                                {userProfile.avatar ? (
+                                    <img 
+                                        src={userProfile.avatar || undefined} 
+                                        className="w-32 h-32 md:w-40 md:h-40 rounded-full border-8 border-goodwood-dark shadow-2xl bg-goodwood-card object-cover relative z-0" 
+                                        alt={userProfile.username} 
+                                    />
+                                ) : (
+                                    <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-8 border-goodwood-dark shadow-2xl bg-emerald-900 flex items-center justify-center relative z-0">
+                                        <span className="text-white font-black text-4xl sm:text-6xl">{userProfile.username?.charAt(0) || '?'}</span>
+                                    </div>
+                                )}
                             </div>
-                        )}
                         {userProfile.role === 'admin' && (
-                            <div className="absolute bottom-2 right-2 bg-red-600 p-2 rounded-full border-4 border-goodwood-dark shadow-lg">
+                            <div className="absolute bottom-2 right-2 bg-red-600 p-2 rounded-full border-4 border-goodwood-dark shadow-lg z-20">
                                 <Shield size={16} className="text-white" />
                             </div>
                         )}
@@ -372,8 +375,16 @@ export const ProfilePage = () => {
 
                             <div className="space-y-6">
                                 {wallComments.length > 0 ? wallComments.map(comment => (
-                                    <div key={comment.id} className="flex gap-4 border-b border-goodwood-border pb-6 last:border-0 last:pb-0">
-                                        <Link to={`/profile/${comment.authorId}`} className="w-10 h-10 shrink-0 rounded-full hover:scale-105 transition-transform overflow-visible">
+                                    <div key={comment.id} className="flex gap-4 border-b border-goodwood-border pb-6 last:border-0 last:pb-0 relative group">
+                                        {(currentUser?.uid === uid || currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
+                                            <button 
+                                                onClick={() => handleDeleteComment(comment.id)} 
+                                                className="absolute top-0 right-0 text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
+                                        <Link to={`/profile/${comment.authorId}`} className="shrink-0">
                                             <UserAvatar
                                                 userId={comment.authorId}
                                                 fallbackAvatar={comment.authorAvatar}
@@ -464,6 +475,7 @@ export const ProfilePage = () => {
                     )}
                 </div>
             </div>
+        </div>
         </div>
     );
 };
