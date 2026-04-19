@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@source "./components";
+@source "./pages";
+@source "./context";
+@source "./App.tsx";
+@source "./index.tsx";
+
 @theme {
   --color-goodwood-dark: #0f1014;
   --color-goodwood-card: #16191f;
