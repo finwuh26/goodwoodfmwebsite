@@ -758,7 +758,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="fixed left-4 right-4 bottom-4 z-[70] sm:left-auto sm:max-w-md">
           <div className="bg-[#12141a] border border-goodwood-border rounded-xl p-4 shadow-2xl">
             <p className="text-xs text-gray-300 leading-relaxed">
-              We use essential cookies to keep Goodwood FM working properly. You can allow cookies to continue using sign-in and core features.
+              We use essential cookies to keep Goodwood FM working properly. To continue using sign-in and core features, please allow cookies.
             </p>
             <div className="mt-3 flex items-center justify-between gap-3">
               <Link to="/privacy" className="text-xs text-gray-400 hover:text-white transition-colors">
@@ -940,8 +940,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                  <label htmlFor="isSignup" className="text-xs text-gray-400">I need to create an account</label>
                               </div>
                                <input type="text" name="username" id="usernameInput" placeholder="Username" style={{display: 'none'}} className="w-full bg-goodwood-dark border border-goodwood-border rounded-lg px-4 py-3 text-white text-sm focus:border-white/20 transition-colors outline-none" />
-                              <label className="flex items-center gap-2 text-xs text-gray-400">
-                                  <input type="checkbox" name="agreeTerms" value="true" required className="rounded bg-goodwood-dark border-goodwood-border" />
+                              <label htmlFor="agreeTerms" className="flex items-center gap-2 text-xs text-gray-400">
+                                  <input id="agreeTerms" type="checkbox" name="agreeTerms" value="true" required className="rounded bg-goodwood-dark border-goodwood-border" />
                                   I agree to the <Link to="/terms" onClick={() => setShowLogin(false)} className="text-gray-300 hover:text-white transition-colors">Terms of Service</Link>
                               </label>
                           </div>
