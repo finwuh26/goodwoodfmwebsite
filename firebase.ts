@@ -30,9 +30,11 @@ if (shouldIgnoreConfigDatabase) {
   );
 }
 
-const firestoreDatabaseId = envFirestoreDatabaseId ?? (
-  shouldIgnoreConfigDatabase ? undefined : configFirestoreDatabaseId
-);
+let firestoreDatabaseId = envFirestoreDatabaseId;
+
+if (!firestoreDatabaseId && !shouldIgnoreConfigDatabase) {
+  firestoreDatabaseId = configFirestoreDatabaseId;
+}
 
 export const db = firestoreDatabaseId
   ? getFirestore(app, firestoreDatabaseId)
