@@ -153,7 +153,7 @@ export const Shop: React.FC = () => {
         <div className="w-full max-w-6xl mx-auto px-4 py-8 sm:py-12">
             <div className="flex items-center gap-3 mb-8">
                 <ShoppingBag className="text-emerald-500" size={32} />
-                <h1 className="text-3xl font-black text-white uppercase tracking-tight">Goodwood Shop</h1>
+                <h1 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight">Goodwood Shop</h1>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -173,7 +173,7 @@ export const Shop: React.FC = () => {
                          <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                             <KeyRound size={14} /> Redeem Code
                         </h2>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                             <input
                                 type="text"
                                 placeholder="Enter code..."
@@ -185,7 +185,7 @@ export const Shop: React.FC = () => {
                             <button
                                 type="submit"
                                 disabled={redeeming || !redeemCode.trim()}
-                                className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg font-bold text-sm tracking-wide transition-colors whitespace-nowrap"
+                                className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-4 py-3 sm:py-2 rounded-lg font-bold text-sm tracking-wide transition-colors whitespace-nowrap"
                             >
                                 {redeeming ? '...' : 'REDEEM'}
                             </button>
@@ -254,7 +254,7 @@ export const Shop: React.FC = () => {
                                             <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.description}</p>
                                         </div>
 
-                                        <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-auto pt-4 border-t border-white/5">
                                             <div className="text-yellow-500 font-bold text-sm flex items-center gap-1">
                                                 <Coins size={14} /> {item.price}
                                             </div>

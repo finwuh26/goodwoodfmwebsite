@@ -624,6 +624,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <li className="pt-2 mt-2 border-t border-goodwood-border">
                       {userProfile ? (
                         <div className="space-y-1">
+                          <Link to="/shop" className="flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wide text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/20 rounded-md transition-colors">
+                            <ShoppingCart size={14} />
+                            Shop
+                          </Link>
                           <Link to="/settings" className="block px-3 py-2 text-xs text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Settings</Link>
                           {hasStaffAccess && (
                             <Link to="/staff/dashboard" className="block px-3 py-2 text-xs text-emerald-400 hover:bg-white/5 rounded-md">Staff Dashboard</Link>
