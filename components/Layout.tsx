@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Play, Pause, ShoppingBag, User as UserIcon, ChevronDown, Heart, Volume2, LogOut, Mail, Maximize2, MoreHorizontal, Radio, Settings, Shield, Menu, X } from 'lucide-react';
+import { Play, Pause, ShoppingBag, User as UserIcon, ChevronDown, Heart, Volume2, LogOut, Mail, Maximize2, MoreHorizontal, Radio, Settings, Shield, Menu, X, ShoppingCart } from 'lucide-react';
 import { NAV_ITEMS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 import clsx from 'clsx';
@@ -525,7 +525,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             {/* Right Nav */}
             <div className="flex items-center border-l border-goodwood-border pl-2">
-               
+               {userProfile && (
+                   <Link to="/shop" className="hidden lg:flex items-center gap-2 px-4 py-4 text-emerald-400 hover:text-emerald-300 transition-colors text-xs font-bold uppercase hover:bg-emerald-900/20 border-r border-goodwood-border">
+                       <ShoppingCart size={14} /> Shop
+                   </Link>
+               )}
                {userProfile ? (
                    <div className="relative group">
                        <button className="flex items-center gap-2 px-4 py-4 text-white hover:bg-white/5 transition-colors text-xs font-bold uppercase">
@@ -545,6 +549,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                           </Link>
                           <Link to="/settings" className="w-full text-left px-4 py-2 text-xs text-gray-400 hover:bg-white/5 flex items-center gap-2">
                               <Settings size={12} /> Settings
+                          </Link>
+                          <Link to="/shop" className="w-full text-left px-4 py-2 text-xs text-emerald-400 hover:bg-emerald-900/20 flex items-center gap-2 lg:hidden">
+                              <ShoppingCart size={12} /> Shop
                           </Link>
                           {hasStaffAccess && (
                               <Link to="/staff/dashboard" className="w-full text-left px-4 py-2 text-xs text-emerald-400 hover:bg-white/5 flex items-center gap-2">
