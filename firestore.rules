@@ -91,6 +91,12 @@ service cloud.firestore {
         (request.auth.token.email == "radiodjmra@gmail.com" && request.auth.token.email_verified == true));
     }
 
+    function canClaimSchedule() {
+      return isAuthenticated() &&
+        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'staff', 'owner', 'manager', 'dj']) ||
+        (request.auth.token.email == "radiodjmra@gmail.com" && request.auth.token.email_verified == true));
+    }
+
     function isValidEmail(email) {
       return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
     }
@@ -232,7 +238,7 @@ service cloud.firestore {
              data.day is string &&
              data.time is string &&
              data.status in ['open', 'claimed', 'completed'] &&
-             (!('claimedBy' in data) || data.claimedBy == '' || data.claimedBy is string) &&
+             (!('claimedBy' in data) || data.claimedBy is string) &&
              (!('duration' in data) || data.duration is number) &&
              (!('authorName' in data) || data.authorName is string);
     }
@@ -285,14 +291,13 @@ service cloud.firestore {
     match /schedule/{scheduleId} {
       allow read: if true;
       allow write: if isAdmin();
-      allow create: if isStaff() && isValidSchedule(request.resource.data) && request.resource.data.status == 'claimed' && request.resource.data.claimedBy == request.auth.uid;
-      allow update: if isStaff() && isValidSchedule(request.resource.data) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'claimedBy', 'showName']) && request.resource.data.claimedBy == request.auth.uid;
+      allow create: if canClaimSchedule() && isValidSchedule(request.resource.data) && request.resource.data.status == 'claimed' && request.resource.data.claimedBy == request.auth.uid;
+      allow update: if canClaimSchedule() && isValidSchedule(request.resource.data) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'claimedBy', 'showName']) && request.resource.data.claimedBy == request.auth.uid;
     }
 
     match /reputationLogs/{logId} {
       allow read: if true;
-      allow create: if isStaff() && isValidReputationLog(request.resource.data) &&
-        request.resource.data.userId == request.auth.uid;
+      allow create: if (isStaff() || canWriteArticles()) && isValidReputationLog(request.resource.data);
       allow update, delete: if false;
     }
 

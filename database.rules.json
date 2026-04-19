@@ -23,7 +23,7 @@
     "schedule": {
       "$scheduleId": {
         ".read": true,
-        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() in ['admin', 'owner', 'manager', 'staff', 'dj'] || newData.child('claimedBy').val() === auth.uid)"
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() in ['admin', 'owner', 'manager', 'staff', 'dj'] || ((root.child('users').child(auth.uid).child('role').val() in ['staff', 'dj']) && data.exists() && data.child('status').val() === 'open' && newData.child('status').val() === 'claimed' && newData.child('claimedBy').val() === auth.uid && newData.child('showName').isString() && newData.child('day').val() === data.child('day').val() && newData.child('time').val() === data.child('time').val()))"
       }
     },
     "reputationLogs": {
@@ -35,7 +35,7 @@
     "redeemCodes": {
       "$codeId": {
         ".read": "auth != null",
-        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() in ['admin', 'owner', 'manager'] || (data.exists() && newData.hasChildren(['credits', 'usesLeft', 'isChanceCode', 'winProbability', 'attemptCooldownMinutes', 'createdAt', 'createdBy']) && newData.child('usesLeft').isNumber() && data.child('usesLeft').isNumber() && newData.child('usesLeft').val() === data.child('usesLeft').val() - 1))"
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() in ['admin', 'owner', 'manager'] || (data.exists() && data.hasChildren(['credits', 'usesLeft', 'isChanceCode', 'winProbability', 'attemptCooldownMinutes', 'createdAt', 'createdBy']) && newData.hasChildren(['credits', 'usesLeft', 'isChanceCode', 'winProbability', 'attemptCooldownMinutes', 'createdAt', 'createdBy']) && newData.child('credits').val() === data.child('credits').val() && newData.child('isChanceCode').val() === data.child('isChanceCode').val() && newData.child('winProbability').val() === data.child('winProbability').val() && newData.child('attemptCooldownMinutes').val() === data.child('attemptCooldownMinutes').val() && newData.child('createdAt').val() === data.child('createdAt').val() && newData.child('createdBy').val() === data.child('createdBy').val() && newData.child('usesLeft').isNumber() && data.child('usesLeft').isNumber() && newData.child('usesLeft').val() === data.child('usesLeft').val() - 1 && newData.child('usesLeft').val() >= 0))"
       }
     },
     "likes": {
