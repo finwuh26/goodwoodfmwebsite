@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Play, Pause, ShoppingBag, User as UserIcon, ChevronDown, Heart, Volume2, LogOut, Mail, Maximize2, MoreHorizontal, Radio, Settings, Shield, Menu, X, ShoppingCart } from 'lucide-react';
+import { Play, Pause, ShoppingBag, User as UserIcon, ChevronDown, Heart, Volume2, LogOut, Mail, Maximize2, MoreHorizontal, Radio, Settings, Shield, Menu, X, ShoppingCart, Check } from 'lucide-react';
 import { NAV_ITEMS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 import clsx from 'clsx';
@@ -31,7 +31,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Auth Modal State
   const [showLogin, setShowLogin] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [isSignupMode, setIsSignupMode] = useState(false);
   const [requestType, setRequestType] = useState('Song Request');
   const [requestMessage, setRequestMessage] = useState('');
   const [songSearchQuery, setSongSearchQuery] = useState('');
@@ -86,9 +88,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    const hasCookieConsent = localStorage.getItem('goodwood_cookie_consent') === 'accepted';
+    if (typeof window === 'undefined') return;
+    const hasCookieConsent = window.localStorage.getItem('goodwood_cookie_consent') === 'accepted';
     setShowCookieBanner(!hasCookieConsent);
   }, []);
+
+  useEffect(() => {
+    if (!showLogin) {
+      setIsSignupMode(false);
+      setTermsAccepted(false);
+    }
+  }, [showLogin]);
 
   // Reset dropdown on route change
   useEffect(() => {
@@ -669,7 +679,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-8">
            <div className="text-xs text-gray-500 space-y-2 text-center md:text-left">
               <div className="flex items-center gap-3 justify-center md:justify-start text-gray-400 font-bold">
-                <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+                <Link to="/terms" className="hover:text-white transition-colors">Terms & Conditions</Link>
                 <span>/</span>
                 <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
                 <span>/</span>
@@ -909,16 +919,20 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <div className="space-y-4">
                      <form onSubmit={async (e) => {
                          e.preventDefault();
-                         const formData = new FormData(e.currentTarget);
-                         const email = formData.get('email') as string;
-                          const password = formData.get('password') as string;
-                          const isSignup = formData.get('isSignup') === 'true';
-                          const username = ((formData.get('username') as string) || '').trim();
-                          try {
-                              if (isSignup) {
-                                  if (username.length < 3 || username.length > 30) {
-                                      toast.error('Username must be between 3 and 30 characters after trimming spaces.');
+                          const formData = new FormData(e.currentTarget);
+                          const email = formData.get('email') as string;
+                           const password = formData.get('password') as string;
+                           const isSignup = isSignupMode;
+                           const username = ((formData.get('username') as string) || '').trim();
+                           try {
+                               if (isSignup) {
+                                   if (!termsAccepted) {
+                                      toast.error('Please accept Terms & Conditions to create an account.');
                                       return;
+                                   }
+                                   if (username.length < 3 || username.length > 30) {
+                                       toast.error('Username must be between 3 and 30 characters after trimming spaces.');
+                                       return;
                                   }
                                   if (signupWithEmail) await signupWithEmail(email, password, username);
                               } else {
@@ -932,18 +946,40 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                           <div className="space-y-3 mb-4">
                               <input type="email" name="email" placeholder="Email Address" required className="w-full bg-goodwood-dark border border-goodwood-border rounded-lg px-4 py-3 text-white text-sm focus:border-white/20 transition-colors outline-none" />
                               <input type="password" name="password" placeholder="Password" required className="w-full bg-goodwood-dark border border-goodwood-border rounded-lg px-4 py-3 text-white text-sm focus:border-white/20 transition-colors outline-none" />
-                             <div className="flex items-center gap-2">
-                                 <input type="checkbox" name="isSignup" id="isSignup" value="true" className="rounded bg-goodwood-dark border-goodwood-border" onChange={(e) => {
-                                     const usernameInput = document.getElementById('usernameInput');
-                                     if (usernameInput) usernameInput.style.display = e.target.checked ? 'block' : 'none';
-                                 }} />
-                                 <label htmlFor="isSignup" className="text-xs text-gray-400">I need to create an account</label>
-                              </div>
-                               <input type="text" name="username" id="usernameInput" placeholder="Username" style={{display: 'none'}} className="w-full bg-goodwood-dark border border-goodwood-border rounded-lg px-4 py-3 text-white text-sm focus:border-white/20 transition-colors outline-none" />
-                              <label htmlFor="agreeTerms" className="flex items-center gap-2 text-xs text-gray-400">
-                                  <input id="agreeTerms" type="checkbox" name="agreeTerms" value="true" required className="rounded bg-goodwood-dark border-goodwood-border" />
-                                  I agree to the <Link to="/terms" onClick={() => setShowLogin(false)} className="text-gray-300 hover:text-white transition-colors">Terms of Service</Link>
-                              </label>
+                              <button
+                                type="button"
+                                role="checkbox"
+                                aria-checked={isSignupMode}
+                                onClick={() => setIsSignupMode(prev => !prev)}
+                                className="w-full flex items-center gap-2 text-xs text-gray-300 bg-goodwood-dark border border-goodwood-border rounded-lg px-3 py-2 hover:border-white/20 transition-colors"
+                              >
+                                <span className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isSignupMode ? 'bg-emerald-500 border-emerald-500 text-black' : 'border-goodwood-border'}`}>
+                                  {isSignupMode && <Check size={12} />}
+                                </span>
+                                I need to create an account
+                              </button>
+                              {isSignupMode && (
+                                <input type="text" name="username" id="usernameInput" placeholder="Username" className="w-full bg-goodwood-dark border border-goodwood-border rounded-lg px-4 py-3 text-white text-sm focus:border-white/20 transition-colors outline-none" />
+                              )}
+                              {isSignupMode && (
+                                <>
+                                  <button
+                                    type="button"
+                                    role="checkbox"
+                                    aria-checked={termsAccepted}
+                                    aria-describedby="agreeTermsDescription"
+                                    onClick={() => setTermsAccepted(prev => !prev)}
+                                    className="w-full flex items-center gap-2 text-xs text-gray-300 bg-goodwood-dark border border-goodwood-border rounded-lg px-3 py-2 hover:border-white/20 transition-colors text-left"
+                                  >
+                                    <span className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${termsAccepted ? 'bg-emerald-500 border-emerald-500 text-black' : 'border-goodwood-border'}`}>
+                                      {termsAccepted && <Check size={12} />}
+                                    </span>
+                                    <span>I agree to the Terms & Conditions</span>
+                                  </button>
+                                  <Link to="/terms" onClick={() => setShowLogin(false)} className="inline-block text-xs text-gray-400 hover:text-white transition-colors pl-1">Read Terms & Conditions</Link>
+                                  <span id="agreeTermsDescription" className="sr-only">You must agree to the Terms and Conditions to create an account.</span>
+                                </>
+                              )}
                           </div>
                          <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg font-bold uppercase tracking-widest transition-all mb-4">
                              Continue with Email
@@ -973,7 +1009,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                      
                      <p className="text-center text-gray-500 text-[10px] leading-relaxed uppercase tracking-wider mt-6">
                        By continuing, you agree to our <br/>
-                       <Link to="/terms" onClick={() => setShowLogin(false)} className="text-gray-400 hover:text-white transition-colors">Terms of Service</Link> & <Link to="/privacy" onClick={() => setShowLogin(false)} className="text-gray-400 hover:text-white transition-colors">Privacy Policy</Link>
+                       <Link to="/terms" onClick={() => setShowLogin(false)} className="text-gray-400 hover:text-white transition-colors">Terms & Conditions</Link> & <Link to="/privacy" onClick={() => setShowLogin(false)} className="text-gray-400 hover:text-white transition-colors">Privacy Policy</Link>
                      </p>
                   </div>
                </div>

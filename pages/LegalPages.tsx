@@ -5,7 +5,7 @@ export const TermsOfService = () => (
     <div className="container mx-auto max-w-4xl py-12">
         <div className="text-center mb-12">
             <h1 className="text-4xl font-black text-white italic tracking-tighter uppercase mb-4 flex items-center justify-center gap-3">
-                <FileText className="text-blue-500" size={40} /> Terms of Service
+                <FileText className="text-blue-500" size={40} /> Terms & Conditions
             </h1>
             <p className="text-gray-400">Last updated: {new Date().toLocaleDateString()}</p>
         </div>
