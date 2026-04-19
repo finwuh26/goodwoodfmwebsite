@@ -267,9 +267,7 @@ export const StaffDashboard = () => {
         };
 
         const onWindowFocus = () => {
-            if (document.visibilityState !== 'hidden') {
-                fetchLowPriorityData();
-            }
+            fetchLowPriorityData();
         };
 
         fetchLowPriorityData();
