@@ -47,7 +47,7 @@ const getFirestoreDocument = async (articleId) => {
   const configRaw = await readFile(configPath, 'utf8');
   const config = JSON.parse(configRaw);
 
-  const envDatabaseId = process.env.VITE_FIRESTORE_DATABASE_ID?.trim() || '';
+  const envDatabaseId = (process.env.FIRESTORE_DATABASE_ID || process.env.VITE_FIRESTORE_DATABASE_ID || '').trim();
   const configDatabaseId = config.firestoreDatabaseId?.trim() || '';
   const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
   const bypassAiStudio = isProduction && !envDatabaseId && /^ai-studio-/i.test(configDatabaseId);
@@ -102,7 +102,6 @@ export default async function handler(req, res) {
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${escapeHtml(title)} | Goodwood FM</title>
   <meta name="description" content="${escapeHtml(description)}" />
   <meta property="og:type" content="article" />
