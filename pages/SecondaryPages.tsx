@@ -3,10 +3,13 @@ import { Link } from 'react-router-dom';
 import { Calendar, User, Users, Clock, FileText, Music, Star, Heart, Settings, Shield, Code, Headphones, Twitter, Instagram, Facebook, Youtube, Twitch, Radio, ChevronDown } from 'lucide-react';
 import { StaffMember } from '../types';
 import clsx from 'clsx';
-import { collection, onSnapshot, query, orderBy, limit, where } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { formatDate, getDatesForThisWeek } from '../utils';
 import { UserAvatar } from '../components/UserAvatar';
+import { readFirestoreWithGuard } from '../utils/firestoreReadGuards';
+
+const SECONDARY_PAGE_READ_TTL_MS = 5 * 60 * 1000;
 
 /* --- TIMETABLE PAGE --- */
 export const Timetable = () => {
@@ -25,11 +28,23 @@ export const Timetable = () => {
         setActiveDay(today);
 
         const q = query(collection(db, 'schedule'), orderBy('time', 'asc'));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        let isMounted = true;
+        readFirestoreWithGuard(
+            'secondary:timetable:schedule',
+            () => getDocs(q),
+            { ttlMs: SECONDARY_PAGE_READ_TTL_MS }
+        ).then((snapshot) => {
+            if (!isMounted) return;
             setSchedule(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
             setLoading(false);
-        }, (err) => handleFirestoreError(err, OperationType.GET, 'schedule'));
-        return () => unsubscribe();
+        }).catch((err) => {
+            if (!isMounted) return;
+            setLoading(false);
+            handleFirestoreError(err, OperationType.GET, 'schedule');
+        });
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     const currentDaySchedule = schedule.filter(item => item.day === activeDay);
@@ -190,11 +205,22 @@ export const Partners = () => {
     const [partners, setPartners] = useState<any[]>([]);
 
     useEffect(() => {
+        let isMounted = true;
         const q = query(collection(db, 'partners'), orderBy('name', 'asc'));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        readFirestoreWithGuard(
+            'secondary:partners:list',
+            () => getDocs(q),
+            { ttlMs: SECONDARY_PAGE_READ_TTL_MS }
+        ).then((snapshot) => {
+            if (!isMounted) return;
             setPartners(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        }, (err) => handleFirestoreError(err, OperationType.GET, 'partners'));
-        return () => unsubscribe();
+        }).catch((err) => {
+            if (!isMounted) return;
+            handleFirestoreError(err, OperationType.GET, 'partners');
+        });
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     return (
@@ -298,17 +324,28 @@ export const Team = () => {
     const [staff, setStaff] = useState<StaffMember[]>([]);
 
     useEffect(() => {
+        let isMounted = true;
         const q = query(collection(db, 'staff'), orderBy('username', 'asc'));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        readFirestoreWithGuard(
+            'secondary:team:staff',
+            () => getDocs(q),
+            { ttlMs: SECONDARY_PAGE_READ_TTL_MS }
+        ).then((snapshot) => {
+            if (!isMounted) return;
             const staffData = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             } as unknown as StaffMember));
             
             setStaff(staffData);
-        }, (err) => handleFirestoreError(err, OperationType.GET, 'staff'));
+        }).catch((err) => {
+            if (!isMounted) return;
+            handleFirestoreError(err, OperationType.GET, 'staff');
+        });
 
-        return () => unsubscribe();
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     const departmentOrder = ['Leadership', 'Management', 'Development', 'Radio', 'Media'];
@@ -440,8 +477,14 @@ export const ContentList = () => {
     const [articles, setArticles] = useState<any[]>([]);
 
     useEffect(() => {
+        let isMounted = true;
         const q = query(collection(db, 'articles'), where('status', '==', 'published'), orderBy('date', 'desc'));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        readFirestoreWithGuard(
+            'secondary:contentList:published',
+            () => getDocs(q),
+            { ttlMs: SECONDARY_PAGE_READ_TTL_MS }
+        ).then((snapshot) => {
+            if (!isMounted) return;
             const articleData = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data(),
@@ -449,9 +492,14 @@ export const ContentList = () => {
             }));
             
             setArticles(articleData);
-        }, (err) => handleFirestoreError(err, OperationType.GET, 'articles'));
+        }).catch((err) => {
+            if (!isMounted) return;
+            handleFirestoreError(err, OperationType.GET, 'articles');
+        });
 
-        return () => unsubscribe();
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     return (
