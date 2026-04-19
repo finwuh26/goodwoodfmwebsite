@@ -845,8 +845,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </p>
                 <button
                   type="button"
-                  role="checkbox"
-                  aria-checked={legalConsentAccepted}
+                  aria-pressed={legalConsentAccepted}
                   onClick={() => setLegalConsentAccepted(prev => !prev)}
                   className="w-full flex items-center gap-2 text-xs text-gray-300 bg-goodwood-dark border border-goodwood-border rounded-lg px-3 py-2 hover:border-white/20 transition-colors text-left mb-3"
                 >
@@ -1012,13 +1011,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                           const formData = new FormData(e.currentTarget);
                           const email = formData.get('email') as string;
                            const password = formData.get('password') as string;
-                           const isSignup = isSignupMode;
                            const username = ((formData.get('username') as string) || '').trim();
                            try {
-                               if (isSignup) {
-                                   if (!termsAccepted) {
-                                      toast.error('Please accept Terms & Conditions to create an account.');
-                                      return;
+                               if (isSignupMode) {
+                                    if (!termsAccepted) {
+                                       toast.error('Please accept Terms & Conditions to create an account.');
+                                       return;
                                    }
                                    if (username.length < 3 || username.length > 30) {
                                        toast.error('Username must be between 3 and 30 characters after trimming spaces.');
@@ -1038,8 +1036,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                               <input type="password" name="password" placeholder="Password" required className="w-full bg-goodwood-dark border border-goodwood-border rounded-lg px-4 py-3 text-white text-sm focus:border-white/20 transition-colors outline-none" />
                               <button
                                 type="button"
-                                role="checkbox"
-                                aria-checked={isSignupMode}
+                                aria-pressed={isSignupMode}
                                 onClick={() => setIsSignupMode(prev => !prev)}
                                 className="w-full flex items-center gap-2 text-xs text-gray-300 bg-goodwood-dark border border-goodwood-border rounded-lg px-3 py-2 hover:border-white/20 transition-colors"
                               >
@@ -1055,8 +1052,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <>
                                   <button
                                     type="button"
-                                    role="checkbox"
-                                    aria-checked={termsAccepted}
+                                    aria-pressed={termsAccepted}
                                     aria-describedby="agreeTermsDescription"
                                     onClick={() => setTermsAccepted(prev => !prev)}
                                     className="w-full flex items-center gap-2 text-xs text-gray-300 bg-goodwood-dark border border-goodwood-border rounded-lg px-3 py-2 hover:border-white/20 transition-colors text-left"
