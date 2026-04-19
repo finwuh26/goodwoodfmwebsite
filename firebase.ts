@@ -21,9 +21,20 @@ const isAiStudioDatabaseId = (databaseId?: string) =>
 
 const envFirestoreDatabaseId = normalizeFirestoreDatabaseId(import.meta.env.VITE_FIRESTORE_DATABASE_ID);
 const configFirestoreDatabaseId = normalizeFirestoreDatabaseId(firebaseConfig.firestoreDatabaseId);
-const firestoreDatabaseId = envFirestoreDatabaseId ?? configFirestoreDatabaseId;
+const isProductionBuild = import.meta.env.PROD;
+const shouldBypassAiStudioFallback =
+  isProductionBuild && !envFirestoreDatabaseId && isAiStudioDatabaseId(configFirestoreDatabaseId);
+const firestoreDatabaseId = shouldBypassAiStudioFallback
+  ? undefined
+  : (envFirestoreDatabaseId ?? configFirestoreDatabaseId);
 
-if (!envFirestoreDatabaseId && isAiStudioDatabaseId(configFirestoreDatabaseId)) {
+if (shouldBypassAiStudioFallback) {
+  console.warn(
+    'Ignoring firebase-applet-config.json AI Studio Firestore database in production. Using default Firestore database; set VITE_FIRESTORE_DATABASE_ID to a persistent database ID.'
+  );
+}
+
+if (!shouldBypassAiStudioFallback && !envFirestoreDatabaseId && isAiStudioDatabaseId(configFirestoreDatabaseId)) {
   console.warn(
     'Using firebase-applet-config.json AI Studio Firestore database. Set VITE_FIRESTORE_DATABASE_ID to a persistent database ID for production.'
   );
