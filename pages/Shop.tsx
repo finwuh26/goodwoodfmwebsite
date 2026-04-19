@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db, handleFirestoreError, OperationType } from '../firebase';
-import { doc, updateDoc, increment, getDoc, arrayUnion, writeBatch } from 'firebase/firestore';
+import { doc, updateDoc, increment, getDoc, arrayUnion, writeBatch, runTransaction } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { ShoppingBag, Coins, KeyRound, Check, Star } from 'lucide-react';
 import { SHOP_ITEMS, ShopItem } from '../src/shopItems';
@@ -17,53 +17,141 @@ export const Shop: React.FC = () => {
     const [redeeming, setRedeeming] = useState(false);
     const [confirmItem, setConfirmItem] = useState<ShopItem | null>(null);
     const [activeTab, setActiveTab] = useState<'banner' | 'ring' | 'nameIcon'>('banner');
+    const DEFAULT_CHANCE_COOLDOWN_MINUTES = 10;
 
     if (!userProfile) return <Navigate to="/" />;
 
     const handleRedeem = async (e: React.FormEvent) => {
         e.preventDefault();
-        const code = redeemCode.trim();
+        const code = redeemCode.trim().toUpperCase();
         if (!code) return;
 
         setRedeeming(true);
         try {
-            if (userProfile.redeemedCodes?.includes(code)) {
-                toast.error('You have already redeemed this code.');
-                setRedeeming(false);
-                return;
-            }
-
             const codeRef = doc(db, 'redeemCodes', code);
-            const codeSnap = await getDoc(codeRef);
+            const userRef = doc(db, 'users', userProfile.uid);
+            const roll = Math.random() * 100;
 
-            if (!codeSnap.exists()) {
-                toast.error('Invalid or expired code.');
-                setRedeeming(false);
-                return;
-            }
+            let awardedCredits = 0;
+            let isChanceCode = false;
+            let didWin = false;
 
-            const codeData = codeSnap.data();
-            if (codeData.usesLeft <= 0) {
-                toast.error('This code has run out of uses.');
-                setRedeeming(false);
-                return;
-            }
+            await runTransaction(db, async (transaction) => {
+                const [codeSnap, userSnap] = await Promise.all([
+                    transaction.get(codeRef),
+                    transaction.get(userRef),
+                ]);
 
-            // Perform redemption using batch
-            const batch = writeBatch(db);
-            batch.update(codeRef, {
-                usesLeft: increment(-1)
+                if (!codeSnap.exists()) {
+                    throw new Error('invalid_code');
+                }
+                if (!userSnap.exists()) {
+                    throw new Error('user_not_found');
+                }
+
+                const codeData = codeSnap.data() as any;
+                const userData = userSnap.data() as any;
+                const credits = Math.max(0, Number(codeData?.credits) || 0);
+                const usesLeft = Number(codeData?.usesLeft) || 0;
+                const redeemedCodes = Array.isArray(userData?.redeemedCodes) ? userData.redeemedCodes : [];
+
+                if (redeemedCodes.includes(code)) {
+                    throw new Error('already_redeemed');
+                }
+
+                isChanceCode = Boolean(codeData?.isChanceCode);
+                if (!isChanceCode) {
+                    if (usesLeft <= 0) {
+                        throw new Error('no_uses_left');
+                    }
+                    transaction.update(codeRef, { usesLeft: increment(-1) });
+                    transaction.update(userRef, {
+                        credits: increment(credits),
+                        redeemedCodes: arrayUnion(code),
+                    });
+                    awardedCredits = credits;
+                    didWin = true;
+                    return;
+                }
+
+                const chanceAttempts = Array.isArray(userData?.chanceCodeAttempts) ? userData.chanceCodeAttempts : [];
+                if (chanceAttempts.includes(code)) {
+                    throw new Error('already_attempted');
+                }
+
+                const cooldownMinutes = Math.max(
+                    0,
+                    Number.isFinite(Number(codeData?.attemptCooldownMinutes))
+                        ? Number(codeData.attemptCooldownMinutes)
+                        : DEFAULT_CHANCE_COOLDOWN_MINUTES
+                );
+                const nowMs = Date.now();
+                const lastAttemptAtMs = Number(userData?.chanceCodeLastAttemptAtMs) || 0;
+                const cooldownMs = cooldownMinutes * 60 * 1000;
+                if (cooldownMs > 0 && lastAttemptAtMs > 0 && nowMs - lastAttemptAtMs < cooldownMs) {
+                    const remainingMinutes = Math.max(1, Math.ceil((cooldownMs - (nowMs - lastAttemptAtMs)) / (60 * 1000)));
+                    const error = new Error('cooldown_active') as Error & { remainingMinutes?: number };
+                    error.remainingMinutes = remainingMinutes;
+                    throw error;
+                }
+
+                transaction.update(userRef, {
+                    chanceCodeAttempts: arrayUnion(code),
+                    chanceCodeLastAttemptAtMs: nowMs,
+                });
+
+                const winProbability = Math.min(100, Math.max(1, Number(codeData?.winProbability) || 1));
+                didWin = roll < winProbability;
+                if (!didWin) return;
+
+                if (usesLeft <= 0) {
+                    throw new Error('no_uses_left');
+                }
+
+                transaction.update(codeRef, { usesLeft: increment(-1) });
+                transaction.update(userRef, {
+                    credits: increment(credits),
+                    redeemedCodes: arrayUnion(code),
+                });
+                awardedCredits = credits;
             });
 
-            batch.update(doc(db, 'users', userProfile.uid), {
-                credits: increment(codeData.credits),
-                redeemedCodes: arrayUnion(code)
-            });
-            await batch.commit();
-
-            toast.success(`Successfully redeemed ${codeData.credits} credits!`);
+            if (isChanceCode) {
+                if (didWin) {
+                    toast.success(`Winner! You earned ${awardedCredits} credits.`);
+                } else {
+                    toast.error('Not a winner this time. You have used your attempt for this code.');
+                }
+            } else {
+                toast.success(`Successfully redeemed ${awardedCredits} credits!`);
+            }
             setRedeemCode('');
         } catch (error) {
+            const redeemError = error as Error & { remainingMinutes?: number };
+            if (redeemError.message === 'already_redeemed') {
+                toast.error('You have already redeemed this code.');
+                return;
+            }
+            if (redeemError.message === 'already_attempted') {
+                toast.error('You already attempted this giveaway code.');
+                return;
+            }
+            if (redeemError.message === 'cooldown_active') {
+                toast.error(`Please wait ${redeemError.remainingMinutes || 1} minute(s) before trying another giveaway code.`);
+                return;
+            }
+            if (redeemError.message === 'invalid_code') {
+                toast.error('Invalid or expired code.');
+                return;
+            }
+            if (redeemError.message === 'no_uses_left') {
+                toast.error('This code has run out of uses.');
+                return;
+            }
+            if (redeemError.message === 'user_not_found') {
+                toast.error('Could not load your profile. Please re-login and try again.');
+                return;
+            }
             handleFirestoreError(error, OperationType.UPDATE, 'redeemCodes');
         } finally {
             setRedeeming(false);
