@@ -8,6 +8,7 @@ import { MembersList } from './pages/CommunityPages';
 import { ApplicationForm, ContactForm } from './pages/FormPages';
 import { ArticlePage } from './pages/ArticlePage';
 import { ProfilePage, SettingsPage } from './pages/UserPages';
+import { Shop } from './pages/Shop';
 import { StaffDashboard } from './pages/StaffDashboard';
 import { ArticleWriter } from './pages/ArticleWriter';
 import { TermsOfService, PrivacyPolicy, Safety } from './pages/LegalPages';
@@ -60,6 +61,7 @@ function App() {
                   {/* User */}
                   <Route path="/profile/:uid" element={<ProfilePage />} />
                   <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/shop" element={<Shop />} />
 
                   {/* Forms */}
                   <Route path="/apply/presenter" element={<ApplicationForm role="presenter" />} />
