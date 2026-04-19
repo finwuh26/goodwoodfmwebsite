@@ -8,7 +8,7 @@ const app = initializeApp(firebaseConfig);
 
 // Allow overriding the Firestore database via an env variable so a persistent
 // production database (set in Vercel environment settings) is used instead of
-// the AI Studio database that gets reset whenever the AI Studio project rebuilds.
+// AI Studio temporary databases.
 const normalizeFirestoreDatabaseId = (databaseId?: string): string | undefined => {
   const trimmedDatabaseId = databaseId?.trim();
   return trimmedDatabaseId && trimmedDatabaseId.length > 0
@@ -16,22 +16,25 @@ const normalizeFirestoreDatabaseId = (databaseId?: string): string | undefined =
     : undefined;
 };
 
+const isAiStudioDatabaseId = (databaseId?: string) =>
+  Boolean(databaseId && /^ai-studio-/i.test(databaseId));
+
 const envFirestoreDatabaseId = normalizeFirestoreDatabaseId(import.meta.env.VITE_FIRESTORE_DATABASE_ID);
 const configFirestoreDatabaseId = normalizeFirestoreDatabaseId(firebaseConfig.firestoreDatabaseId);
-const hasNamedConfigDatabase =
-  Boolean(configFirestoreDatabaseId) && configFirestoreDatabaseId !== '(default)';
-const isUnsafeDefaultOverride =
-  envFirestoreDatabaseId === '(default)' && hasNamedConfigDatabase;
+const shouldIgnoreConfigDatabase =
+  !envFirestoreDatabaseId && isAiStudioDatabaseId(configFirestoreDatabaseId);
 
-if (isUnsafeDefaultOverride) {
+if (shouldIgnoreConfigDatabase) {
   console.warn(
-    'Ignoring VITE_FIRESTORE_DATABASE_ID=(default) because firebase-applet-config.json defines a named Firestore database. Remove the override or set the correct database ID.'
+    'Ignoring firebase-applet-config.json Firestore database because it points to an AI Studio temporary database. Set VITE_FIRESTORE_DATABASE_ID to force a specific Firestore database.'
   );
 }
 
-const firestoreDatabaseId = isUnsafeDefaultOverride
-  ? configFirestoreDatabaseId
-  : envFirestoreDatabaseId ?? configFirestoreDatabaseId;
+let firestoreDatabaseId = envFirestoreDatabaseId;
+
+if (!firestoreDatabaseId && !shouldIgnoreConfigDatabase) {
+  firestoreDatabaseId = configFirestoreDatabaseId;
+}
 
 export const db = firestoreDatabaseId
   ? getFirestore(app, firestoreDatabaseId)
