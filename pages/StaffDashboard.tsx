@@ -72,6 +72,9 @@ export const StaffDashboard = () => {
     const [users, setUsers] = useState<any[]>([]);
     const [partners, setPartners] = useState<any[]>([]);
     const [banners, setBanners] = useState<any[]>([]);
+    const [redeemCodes, setRedeemCodes] = useState<any[]>([]);
+    const [codeForm, setCodeForm] = useState({ code: '', credits: 100, usesLeft: 1 });
+    const [showCodeModal, setShowCodeModal] = useState(false);
     const [reputationLogs, setReputationLogs] = useState<any[]>([]);
     const [weekOffset, setWeekOffset] = useState(0);
     const [systemSettings, setSystemSettings] = useState<any>({
@@ -212,6 +215,13 @@ export const StaffDashboard = () => {
             setReputationLogs(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         });
 
+        let unsubCodes = () => {};
+        if (['admin', 'owner'].includes(userProfile?.role || '')) {
+            unsubCodes = onSnapshot(query(collection(db, 'redeemCodes'), orderBy('createdAt', 'desc')), snap => {
+                setRedeemCodes(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            });
+        }
+
         return () => {
             unsubSettings();
             unsubApps();
@@ -223,6 +233,7 @@ export const StaffDashboard = () => {
             unsubPartners();
             unsubBanners();
             unsubLogs();
+            unsubCodes();
         };
     }, [user]);
 
@@ -560,6 +571,31 @@ export const StaffDashboard = () => {
         }
     };
 
+    const handleSaveCode = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const codeRef = doc(db, 'redeemCodes', codeForm.code.toUpperCase());
+            const codeSnap = await getDoc(codeRef);
+            if (codeSnap.exists() && !editingId) {
+                toast.error("This code already exists.");
+                return;
+            }
+            await setDoc(codeRef, {
+                credits: codeForm.credits,
+                usesLeft: codeForm.usesLeft,
+                createdAt: serverTimestamp(),
+                createdBy: userProfile?.uid
+            }, { merge: true });
+            
+            toast.success("Code saved!");
+            setShowCodeModal(false);
+            setCodeForm({ code: '', credits: 100, usesLeft: 1 });
+            setEditingId(null);
+        } catch (err) {
+            handleFirestoreError(err, OperationType.CREATE, 'redeemCodes');
+        }
+    };
+
     const role = userProfile?.role || 'member';
 
     const categories = [
@@ -596,6 +632,7 @@ export const StaffDashboard = () => {
                 { id: 'staff', name: 'Staff Directory', icon: Settings },
                 { id: 'users', name: 'User Database', icon: Users },
                 { id: 'branding', name: 'Banners & Partners', icon: Layers },
+                { id: 'shop-settings', name: 'Credit Codes', icon: Zap },
                 { id: 'audit-logs', name: 'Audit Logs', icon: FileText },
                 { id: 'system-settings', name: 'System Settings', icon: Activity },
             ]
@@ -1408,8 +1445,75 @@ export const StaffDashboard = () => {
                             </div>
                         </div>
                     )}
-
-
+                    
+                    {activeTab === 'shop-settings' && (
+                        <div>
+                            <div className="flex justify-between items-center mb-6">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-white">Credit Codes</h2>
+                                    <p className="text-gray-400 text-sm">Create and manage redeemable codes for Goodwood Credits.</p>
+                                </div>
+                                <button onClick={() => {
+                                    setEditingId(null);
+                                    setCodeForm({ code: '', credits: 100, usesLeft: 1 });
+                                    setShowCodeModal(true);
+                                }} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold">
+                                    <Plus size={18}/> New Code
+                                </button>
+                            </div>
+                            
+                            <div className="bg-goodwood-card border border-goodwood-border rounded-xl overflow-hidden shadow-2xl">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-[#12141a] border-b border-goodwood-border text-xs uppercase tracking-widest text-gray-400">
+                                            <th className="p-4 font-bold">Code</th>
+                                            <th className="p-4 font-bold">Credits</th>
+                                            <th className="p-4 font-bold">Uses Left</th>
+                                            <th className="p-4 font-bold hidden sm:table-cell">Created</th>
+                                            <th className="p-4 font-boldtext-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-goodwood-border text-gray-300 text-sm">
+                                        {redeemCodes.map(code => (
+                                            <tr key={code.id} className="hover:bg-white/5 transition-colors group">
+                                                <td className="p-4 font-mono text-emerald-400 font-bold">{code.id}</td>
+                                                <td className="p-4 font-bold text-yellow-400">{code.credits}</td>
+                                                <td className="p-4">
+                                                    <span className={`px-2 py-1 rounded text-xs font-bold ${code.usesLeft > 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-500'}`}>
+                                                        {code.usesLeft}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 hidden sm:table-cell text-xs text-gray-500">{formatDate(code.createdAt)}</td>
+                                                <td className="p-4 text-right">
+                                                    <div className="flex items-center gap-2">
+                                                        <button 
+                                                            onClick={() => {
+                                                                setEditingId(code.id);
+                                                                setCodeForm({ code: code.id, credits: code.credits, usesLeft: code.usesLeft });
+                                                                setShowCodeModal(true);
+                                                            }}
+                                                            className="p-1 text-gray-500 hover:text-white transition-colors"
+                                                        >
+                                                            <Edit3 size={16} />
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => handleDeleteDoc('redeemCodes', code.id)}
+                                                            className="p-1 text-red-500 hover:text-red-400 transition-colors"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                {redeemCodes.length === 0 && (
+                                    <div className="p-8 text-center text-gray-500 text-sm">No redeem codes created yet.</div>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     {activeTab === 'audit-logs' && (
                         <div>
@@ -1855,6 +1959,46 @@ export const StaffDashboard = () => {
                         <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2 rounded-lg font-bold transition-all active:scale-95 flex items-center gap-2">
                             <Plus size={18} /> {editingId ? 'Save Changes' : 'Add Partner'}
                         </button>
+                    </div>
+                </form>
+            </Modal>
+
+            <Modal
+                isOpen={showCodeModal}
+                onClose={() => { setShowCodeModal(false); setEditingId(null); setCodeForm({ code: '', credits: 100, usesLeft: 1 }); }}
+                title={editingId ? 'Edit Credit Code' : 'Create Credit Code'}
+                maxWidth="max-w-md"
+            >
+                <form onSubmit={handleSaveCode} className="space-y-4">
+                    <Input 
+                        label="Code String"
+                        placeholder="e.g. SUMMER2024"
+                        value={codeForm.code} 
+                        onChange={e => setCodeForm({...codeForm, code: e.target.value.toUpperCase()})}
+                        disabled={!!editingId}
+                        required
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input 
+                            label="Credits"
+                            type="number"
+                            min="1"
+                            value={codeForm.credits} 
+                            onChange={e => setCodeForm({...codeForm, credits: parseInt(e.target.value) || 0})}
+                            required
+                        />
+                        <Input 
+                            label="Uses Left"
+                            type="number"
+                            min="1"
+                            value={codeForm.usesLeft} 
+                            onChange={e => setCodeForm({...codeForm, usesLeft: parseInt(e.target.value) || 0})}
+                            required
+                        />
+                    </div>
+                    <div className="pt-4 flex justify-end gap-3">
+                        <button type="button" onClick={() => setShowCodeModal(false)} className="px-4 py-2 text-gray-400 hover:text-white font-bold">Cancel</button>
+                        <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded-lg font-bold">Save Code</button>
                     </div>
                 </form>
             </Modal>
