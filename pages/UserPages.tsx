@@ -3,8 +3,9 @@ import { useParams, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
     doc, onSnapshot, updateDoc, collection, query, orderBy, 
-    addDoc, serverTimestamp, deleteDoc 
+    addDoc, serverTimestamp, deleteDoc, writeBatch, where, getDocs 
 } from 'firebase/firestore';
+import { getAuth, sendPasswordResetEmail, deleteUser } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage, handleFirestoreError, OperationType } from '../firebase';
 import { toast } from 'react-hot-toast';
@@ -562,7 +563,6 @@ export const SettingsPage = () => {
         e.preventDefault();
         setSaving(true);
         try {
-            const { writeBatch, collection, query, where, getDocs } = await import('firebase/firestore');
             const batch = writeBatch(db);
 
             let avatarUrl = avatar;
@@ -878,7 +878,6 @@ export const SettingsPage = () => {
                                             <button 
                                                 type="button"
                                                 onClick={async () => {
-                                                    const { getAuth, sendPasswordResetEmail } = await import('firebase/auth');
                                                     const auth = getAuth();
                                                     if (profile.email) {
                                                         sendPasswordResetEmail(auth, profile.email).then(() => toast.success("Password reset email sent to " + profile.email));
@@ -944,10 +943,8 @@ export const SettingsPage = () => {
                                                 const confirmDelete = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
                                                 if (confirmDelete) {
                                                     try {
-                                                        const { deleteDoc, doc } = await import('firebase/firestore');
                                                         await deleteDoc(doc(db, 'users', profile.uid));
                                                         // Firebase Auth user deletion requires recent login, we will wipe firestore data and sign out.
-                                                        const { getAuth, deleteUser } = await import('firebase/auth');
                                                         const user = getAuth().currentUser;
                                                         if (user) {
                                                             await deleteUser(user).catch(e => console.log('Auth delete required re-login', e));
