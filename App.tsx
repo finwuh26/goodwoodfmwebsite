@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { Layout } from './components/Layout';
 import { Home } from './pages/Home';
 import { Timetable, Team, Partners, ContentList, Socials, Jobs } from './pages/SecondaryPages';
@@ -27,6 +28,13 @@ function App() {
       <AuthProvider>
         <RadioProvider>
           <ScrollToTop />
+          <Toaster 
+            position="top-right" 
+            toastOptions={{ 
+                style: { background: '#12161c', color: '#fff', border: '1px solid #1a202c' },
+                success: { iconTheme: { primary: '#10b981', secondary: '#fff' } }
+            }} 
+          />
           <Routes>
             <Route path="/staff/dashboard" element={<StaffDashboard />} />
             <Route path="/staff/article/new" element={<ArticleWriter />} />
