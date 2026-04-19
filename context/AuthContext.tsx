@@ -49,11 +49,11 @@ const LAST_ACTIVE_UPDATE_INTERVAL_MS = 5 * 60 * 1000;
 const normalizeUsername = (username?: string | null) => {
   const trimmed = username?.trim();
   if (!trimmed || trimmed.length < 3) return 'User';
-  return trimmed;
+  return trimmed.substring(0, 30);
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const ownerEmail = import.meta.env.VITE_OWNER_EMAIL?.trim();
+  const ownerEmail = 'radiodjmra@gmail.com';
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -87,8 +87,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 updateDoc(userDocRef, { role: 'owner' }).catch(console.error);
             }
             setUserProfile(data);
-          } else {
-            // Create initial profile if it doesn't exist
+          } else if (!docSnap.metadata.fromCache) {
+            // ONLY create initial profile if we are sure it doesn't exist on the network
             const newProfile: UserProfile = {
               uid: firebaseUser.uid,
               username: normalizeUsername(firebaseUser.displayName),
@@ -104,8 +104,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             setDoc(userDocRef, {
               ...newProfile,
-              createdAt: Timestamp.now(),
-              lastActive: Timestamp.now()
+              createdAt: serverTimestamp(),
+              lastActive: serverTimestamp()
             }, { merge: true }).then(() => {
               if (ownerEmail && firebaseUser.email === ownerEmail) {
                 updateDoc(userDocRef, { role: 'owner', isVerified: true, badges: ['owner'] }).catch((err) => {
