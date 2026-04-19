@@ -230,15 +230,15 @@ export const Home = () => {
                           </motion.p>
                       )}
                       {activeBanner.title && (
-                          <motion.h2 
-                            key={`title-${activeBanner.id}`}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4 }}
-                            className="text-xl sm:text-3xl md:text-5xl font-black text-white italic tracking-tighter drop-shadow-2xl"
-                          >
-                            {activeBanner.title}
-                          </motion.h2>
+                           <motion.h2 
+                             key={`title-${activeBanner.id}`}
+                             initial={{ opacity: 0, y: 10 }}
+                             animate={{ opacity: 1, y: 0 }}
+                             transition={{ delay: 0.4 }}
+                             className="max-w-[min(92vw,56rem)] text-lg sm:text-2xl md:text-4xl lg:text-5xl font-black text-white italic tracking-tight leading-tight break-words [text-wrap:balance] drop-shadow-2xl"
+                           >
+                             {activeBanner.title}
+                           </motion.h2>
                       )}
                   </div>
               )}
@@ -290,7 +290,7 @@ export const Home = () => {
                                   {formatDate(article.date)}
                                 </span>
                               </motion.div>
-                              <h2 title={article.title} className="text-xl sm:text-3xl md:text-4xl font-black text-white uppercase italic leading-tight mb-3 sm:mb-4 drop-shadow-md max-w-2xl group-hover:text-white/90 transition-colors">{article.title}</h2>
+                              <h2 title={article.title} className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-black text-white italic leading-tight mb-3 sm:mb-4 drop-shadow-md max-w-4xl group-hover:text-white/90 transition-colors break-words [text-wrap:balance]">{article.title}</h2>
                               <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                                   <div className="flex items-center gap-2 group-hover:text-white transition-colors">
                                       <User size={12} />

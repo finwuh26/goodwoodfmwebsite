@@ -22,6 +22,9 @@ export const ArticlePage = () => {
     const [comments, setComments] = useState<any[]>([]);
     const [reactions, setReactions] = useState<any[]>([]);
     const [newComment, setNewComment] = useState('');
+    const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null);
+    const [replyComment, setReplyComment] = useState('');
+    const [submittingReply, setSubmittingReply] = useState(false);
     const [loading, setLoading] = useState(true);
     const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState<{isOpen: boolean; commentId: string | null}>({isOpen: false, commentId: null});
 
@@ -128,18 +131,63 @@ export const ArticlePage = () => {
         }
     };
 
+    const handlePostReply = async (e: React.FormEvent, parentCommentId: string) => {
+        e.preventDefault();
+        if (!user || !replyComment.trim() || !parentCommentId) return;
+        setSubmittingReply(true);
+        try {
+            const replyContent = replyComment.trim();
+            const docRef = await addDoc(collection(db, 'articleComments'), {
+                articleId: id,
+                authorId: user.uid,
+                authorName: userProfile?.username || 'Anonymous',
+                authorAvatar: userProfile?.avatar || '',
+                content: replyContent,
+                parentCommentId,
+                timestamp: serverTimestamp()
+            });
+            setComments((prev) => [
+                {
+                    id: docRef.id,
+                    articleId: id,
+                    authorId: user.uid,
+                    authorName: userProfile?.username || 'Anonymous',
+                    authorAvatar: userProfile?.avatar || '',
+                    content: replyContent,
+                    parentCommentId,
+                    timestamp: Timestamp.now()
+                },
+                ...prev
+            ]);
+            setReplyComment('');
+            setReplyToCommentId(null);
+        } catch (err) {
+            handleFirestoreError(err, OperationType.CREATE, 'articleComments');
+        } finally {
+            setSubmittingReply(false);
+            refreshComments().catch(() => undefined);
+        }
+    };
+
     const handleDeleteComment = (commentId: string) => {
         setIsConfirmDeleteOpen({isOpen: true, commentId});
     };
 
     const confirmDeleteComment = async () => {
         if (!isConfirmDeleteOpen.commentId) return;
+        const targetId = isConfirmDeleteOpen.commentId;
+        const replyIds = comments
+            .filter((comment) => comment.parentCommentId === targetId)
+            .map((comment) => comment.id);
         try {
-            await deleteDoc(doc(db, 'articleComments', isConfirmDeleteOpen.commentId));
-            setComments((prev) => prev.filter((comment) => comment.id !== isConfirmDeleteOpen.commentId));
+            await Promise.all([
+                deleteDoc(doc(db, 'articleComments', targetId)),
+                ...replyIds.map((replyId) => deleteDoc(doc(db, 'articleComments', replyId)))
+            ]);
+            setComments((prev) => prev.filter((comment) => comment.id !== targetId && comment.parentCommentId !== targetId));
             setIsConfirmDeleteOpen({isOpen: false, commentId: null});
         } catch (err) {
-            handleFirestoreError(err, OperationType.DELETE, `articleComments/${isConfirmDeleteOpen.commentId}`);
+            handleFirestoreError(err, OperationType.DELETE, `articleComments/${targetId}`);
         } finally {
             refreshComments().catch(() => undefined);
         }
@@ -184,6 +232,12 @@ export const ArticlePage = () => {
 
     const getReactionCount = (type: string) => reactions.filter(r => r.reaction === type).length;
     const hasReacted = (type: string) => reactions.some(r => r.userId === user?.uid && r.reaction === type);
+    const topLevelComments = comments
+        .filter((comment) => !comment.parentCommentId)
+        .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+    const getReplies = (parentCommentId: string) => comments
+        .filter((comment) => comment.parentCommentId === parentCommentId)
+        .sort((a, b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-[400px]">
@@ -194,7 +248,7 @@ export const ArticlePage = () => {
     if (!article) return <Navigate to="/content" replace />;
 
     return (
-        <div className="container mx-auto max-w-4xl">
+        <div className="container mx-auto max-w-6xl">
             <motion.div
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
@@ -242,14 +296,14 @@ export const ArticlePage = () => {
                                 <Clock size={12} /> {formatDate(article.date)}
                              </span>
                         </motion.div>
-                         <motion.h1 
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.3 }}
-                           className="text-2xl sm:text-4xl md:text-6xl font-black text-white italic tracking-tighter leading-[0.95] mb-4 sm:mb-8 drop-shadow-2xl uppercase"
-                        >
-                          {article.title}
-                        </motion.h1>
+                          <motion.h1 
+                           initial={{ opacity: 0, y: 20 }}
+                           animate={{ opacity: 1, y: 0 }}
+                           transition={{ delay: 0.3 }}
+                            className="max-w-5xl text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white italic tracking-tight leading-tight md:leading-[0.95] mb-4 sm:mb-8 drop-shadow-2xl break-words [text-wrap:balance]"
+                         >
+                           {article.title}
+                         </motion.h1>
                         <motion.div 
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
@@ -309,7 +363,7 @@ export const ArticlePage = () => {
                 </div>
 
                 {/* Comments Section */}
-                <div className="bg-[#0f1014] p-4 sm:p-8 md:p-16 border-t border-goodwood-border">
+                <div className="bg-[#0f1014] p-4 sm:p-8 md:p-12 lg:p-16 border-t border-goodwood-border">
                     <h3 className="text-xl sm:text-2xl font-bold text-white mb-6 sm:mb-8 flex items-center gap-3">
                         <MessageSquare className="text-emerald-500" /> Comments ({comments.length})
                     </h3>
@@ -345,7 +399,7 @@ export const ArticlePage = () => {
                     )}
 
                     <div className="space-y-6">
-                        {comments.map(comment => (
+                        {topLevelComments.map(comment => (
                             <div key={comment.id} className="flex gap-3 sm:gap-4 group">
                                 <UserAvatar 
                                     userId={comment.authorId} 
@@ -366,10 +420,66 @@ export const ArticlePage = () => {
                                         )}
                                     </div>
                                     <p className="text-gray-300 leading-relaxed">{comment.content}</p>
+                                    <div className="mt-3 flex items-center gap-3">
+                                        {user && (
+                                            <button
+                                                onClick={() => {
+                                                    setReplyToCommentId((prev) => prev === comment.id ? null : comment.id);
+                                                    setReplyComment('');
+                                                }}
+                                                className="text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-emerald-400 transition-colors"
+                                            >
+                                                Reply
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {replyToCommentId === comment.id && user && (
+                                        <form onSubmit={(e) => handlePostReply(e, comment.id)} className="mt-4">
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={replyComment}
+                                                    onChange={(e) => setReplyComment(e.target.value)}
+                                                    placeholder={`Reply to ${comment.authorName}...`}
+                                                    className="flex-1 bg-[#090b0f] border border-goodwood-border rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-emerald-500"
+                                                    required
+                                                />
+                                                <button
+                                                    type="submit"
+                                                    disabled={submittingReply || !replyComment.trim()}
+                                                    className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest"
+                                                >
+                                                    Send
+                                                </button>
+                                            </div>
+                                        </form>
+                                    )}
+
+                                    {getReplies(comment.id).length > 0 && (
+                                        <div className="mt-4 space-y-3 border-l border-goodwood-border/70 pl-4 sm:pl-6">
+                                            {getReplies(comment.id).map((reply) => (
+                                                <div key={reply.id} className="rounded-lg border border-goodwood-border bg-[#090b0f] p-3">
+                                                    <div className="mb-1 flex items-center justify-between gap-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <Link to={`/profile/${reply.authorId}`} className="text-xs font-bold text-white hover:text-emerald-400">{reply.authorName}</Link>
+                                                            <span className="text-[10px] text-gray-500">{reply.timestamp?.toDate ? reply.timestamp.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Just now'}</span>
+                                                        </div>
+                                                        {(user?.uid === reply.authorId || userProfile?.role === 'admin') && (
+                                                            <button onClick={() => handleDeleteComment(reply.id)} className="text-gray-500 hover:text-red-500">
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-sm text-gray-300 leading-relaxed">{reply.content}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))}
-                        {comments.length === 0 && (
+                        {topLevelComments.length === 0 && (
                             <p className="text-gray-500 text-center italic">No comments yet. Be the first to share your thoughts!</p>
                         )}
                     </div>

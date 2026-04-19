@@ -66,6 +66,9 @@ export const ProfilePage = () => {
     const [activeTab, setActiveTab] = useState<'activity' | 'wall' | 'posts' | 'reputation'>('activity');
     const [newComment, setNewComment] = useState('');
     const [submittingComment, setSubmittingComment] = useState(false);
+    const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null);
+    const [replyComment, setReplyComment] = useState('');
+    const [submittingReply, setSubmittingReply] = useState(false);
 
     useEffect(() => {
         if (!uid) return;
@@ -192,10 +195,34 @@ export const ProfilePage = () => {
         }
     };
 
+    const handlePostReply = async (e: React.FormEvent, parentCommentId: string) => {
+        e.preventDefault();
+        if (!currentUser || !replyComment.trim() || !uid || !parentCommentId) return;
+        setSubmittingReply(true);
+        try {
+            await addDoc(collection(db, 'profileComments'), {
+                targetUserId: uid,
+                authorId: currentUser.uid,
+                authorName: currentUser.username,
+                authorAvatar: currentUser.avatar || '',
+                content: replyComment.trim(),
+                parentCommentId,
+                timestamp: serverTimestamp()
+            });
+            setReplyComment('');
+            setReplyToCommentId(null);
+        } catch (err) {
+            handleFirestoreError(err, OperationType.CREATE, 'profileComments');
+        } finally {
+            setSubmittingReply(false);
+        }
+    };
+
     const handleDeleteComment = async (commentId: string) => {
         if (!currentUser || !uid) return;
         const comment = wallComments.find((c) => c.id === commentId);
         if (!comment) return;
+        const replyIds = wallComments.filter((c) => c.parentCommentId === commentId).map((c) => c.id);
 
         const canDelete =
             comment.authorId === currentUser.uid ||
@@ -210,7 +237,10 @@ export const ProfilePage = () => {
         if (!window.confirm('Delete this comment? This action cannot be undone.')) return;
 
         try {
-            await deleteDoc(doc(db, 'profileComments', commentId));
+            await Promise.all([
+                deleteDoc(doc(db, 'profileComments', commentId)),
+                ...replyIds.map((replyId) => deleteDoc(doc(db, 'profileComments', replyId)))
+            ]);
             toast.success('Comment deleted.');
         } catch (err) {
             console.error('Failed to delete profile comment:', err);
@@ -227,6 +257,12 @@ export const ProfilePage = () => {
     if (!userProfile) return <Navigate to="/" replace />;
 
     const isOwnProfile = currentUser?.uid === uid;
+    const topLevelWallComments = wallComments
+        .filter((comment) => !comment.parentCommentId)
+        .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+    const getWallReplies = (parentCommentId: string) => wallComments
+        .filter((comment) => comment.parentCommentId === parentCommentId)
+        .sort((a, b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
     const azuraStreamerName = radioData?.live?.streamer_name || '';
     const normalizedAzuraStreamerName = normalizeAzuraIdentity(azuraStreamerName);
     // Support existing profile fields used as possible AzuraCast identity sources.
@@ -496,9 +532,9 @@ export const ProfilePage = () => {
                             )}
 
                             <div className="space-y-6">
-                                {wallComments.length > 0 ? wallComments.map(comment => (
+                                {topLevelWallComments.length > 0 ? topLevelWallComments.map(comment => (
                                     <div key={comment.id} className="flex gap-4 border-b border-goodwood-border pb-6 last:border-0 last:pb-0 relative group">
-                                        {(currentUser?.uid === uid || currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
+                                        {(currentUser?.uid === comment.authorId || currentUser?.uid === uid || currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
                                             <button 
                                                 onClick={() => handleDeleteComment(comment.id)} 
                                                 className="absolute top-0 right-0 text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -524,6 +560,62 @@ export const ProfilePage = () => {
                                                 </span>
                                             </div>
                                             <p className="text-sm text-gray-300">{comment.content}</p>
+                                            {currentUser && (
+                                                <button
+                                                    onClick={() => {
+                                                        setReplyToCommentId((prev) => prev === comment.id ? null : comment.id);
+                                                        setReplyComment('');
+                                                    }}
+                                                    className="mt-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-emerald-400 transition-colors"
+                                                >
+                                                    Reply
+                                                </button>
+                                            )}
+
+                                            {replyToCommentId === comment.id && currentUser && (
+                                                <form onSubmit={(e) => handlePostReply(e, comment.id)} className="mt-3 flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={replyComment}
+                                                        onChange={(e) => setReplyComment(e.target.value)}
+                                                        placeholder={`Reply to ${comment.authorName}...`}
+                                                        className="flex-1 bg-[#090b0f] border border-goodwood-border rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-emerald-500"
+                                                        required
+                                                    />
+                                                    <button
+                                                        disabled={submittingReply || !replyComment.trim()}
+                                                        className="bg-white text-black px-4 py-2 rounded-xl font-black uppercase tracking-widest text-[10px] disabled:opacity-50"
+                                                    >
+                                                        Send
+                                                    </button>
+                                                </form>
+                                            )}
+
+                                            {getWallReplies(comment.id).length > 0 && (
+                                                <div className="mt-4 space-y-3 border-l border-goodwood-border pl-4">
+                                                    {getWallReplies(comment.id).map((reply) => (
+                                                        <div key={reply.id} className="rounded-lg border border-goodwood-border bg-goodwood-dark p-3 relative group/reply">
+                                                            {(currentUser?.uid === reply.authorId || currentUser?.uid === uid || currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
+                                                                <button
+                                                                    onClick={() => handleDeleteComment(reply.id)}
+                                                                    className="absolute top-2 right-2 text-gray-500 hover:text-red-500 opacity-0 group-hover/reply:opacity-100 transition-opacity"
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                            )}
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <Link to={`/profile/${reply.authorId}`} className="text-xs font-bold text-white hover:underline">
+                                                                    {reply.authorName}
+                                                                </Link>
+                                                                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                                                                    {formatDate(reply.timestamp)}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-sm text-gray-300">{reply.content}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 )) : (
