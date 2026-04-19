@@ -3,28 +3,48 @@ import { STAFF } from '../constants';
 import { Heart, Trophy, Medal, Crown, Shield, Star, User, Search } from 'lucide-react';
 import clsx from 'clsx';
 import { Link } from 'react-router-dom';
-import { collection, onSnapshot, query, orderBy, limit, where } from 'firebase/firestore';
+import { collection, query, orderBy, limit, where, getDocs } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
+import { readFirestoreWithGuard } from '../utils/firestoreReadGuards';
+
+const COMMUNITY_READ_TTL_MS = 5 * 60 * 1000;
+const MEMBERS_LIST_LIMIT = 250;
 
 export const Leaderboard = () => {
   const [tracks, setTracks] = useState<any[]>([]);
   const [staff, setStaff] = useState<any[]>([]);
 
   useEffect(() => {
+    let isMounted = true;
     const tracksQuery = query(collection(db, 'tracks'), orderBy('likes', 'desc'), limit(5));
-    const unsubscribeTracks = onSnapshot(tracksQuery, (snapshot) => {
-      setTracks(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    }, (err) => handleFirestoreError(err, OperationType.GET, 'tracks'));
-
     const staffQuery = query(collection(db, 'staff'), where('department', '==', 'Radio'), limit(3));
-    const unsubscribeStaff = onSnapshot(staffQuery, (snapshot) => {
-      setStaff(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    }, (err) => handleFirestoreError(err, OperationType.GET, 'staff'));
 
-    return () => {
-      unsubscribeTracks();
-      unsubscribeStaff();
+    const fetchData = async () => {
+      try {
+        const [tracksSnapshot, staffSnapshot] = await Promise.all([
+          readFirestoreWithGuard(
+            'community:leaderboard:tracks',
+            () => getDocs(tracksQuery),
+            { ttlMs: COMMUNITY_READ_TTL_MS }
+          ),
+          readFirestoreWithGuard(
+            'community:leaderboard:staff',
+            () => getDocs(staffQuery),
+            { ttlMs: COMMUNITY_READ_TTL_MS }
+          )
+        ]);
+
+        if (!isMounted) return;
+        setTracks(tracksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setStaff(staffSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      } catch (err) {
+        if (!isMounted) return;
+        handleFirestoreError(err, OperationType.GET, 'tracks/staff');
+      }
     };
+
+    fetchData();
+    return () => { isMounted = false; };
   }, []);
 
   const topDJs = staff.length > 0 ? staff : STAFF.filter(s => s.department === 'Radio').slice(0, 3);
@@ -114,17 +134,33 @@ export const MembersList = ({ type }: { type: 'verified' | 'all' }) => {
   const [members, setMembers] = useState<any[]>([]);
 
   useEffect(() => {
+    let isMounted = true;
     let q = query(collection(db, 'users'), orderBy('username', 'asc'));
     
     if (type === 'verified') {
-      q = query(collection(db, 'users'), where('role', 'in', ['admin', 'owner', 'manager', 'dj', 'journalist', 'staff', 'vip']), orderBy('username', 'asc'));
+      q = query(
+        collection(db, 'users'),
+        where('role', 'in', ['admin', 'owner', 'manager', 'dj', 'journalist', 'staff', 'vip']),
+        orderBy('username', 'asc'),
+        limit(MEMBERS_LIST_LIMIT)
+      );
+    } else {
+      q = query(collection(db, 'users'), orderBy('username', 'asc'), limit(MEMBERS_LIST_LIMIT));
     }
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    readFirestoreWithGuard(
+      `community:members:${type}`,
+      () => getDocs(q),
+      { ttlMs: COMMUNITY_READ_TTL_MS }
+    ).then((snapshot) => {
+      if (!isMounted) return;
       setMembers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    }, (err) => handleFirestoreError(err, OperationType.GET, 'users'));
+    }).catch((err) => {
+      if (!isMounted) return;
+      handleFirestoreError(err, OperationType.GET, 'users');
+    });
 
-    return () => unsubscribe();
+    return () => { isMounted = false; };
   }, [type]);
 
   const filteredMembers = members.filter(m => 

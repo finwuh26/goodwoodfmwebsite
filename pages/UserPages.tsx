@@ -76,29 +76,59 @@ export const ProfilePage = () => {
             setLoading(false);
         }, (err) => handleFirestoreError(err, OperationType.GET, `users/${uid}`));
 
-        const qLikes = query(collection(db, 'likes'), orderBy('timestamp', 'desc'));
+        const qLikes = query(
+            collection(db, 'likes'),
+            where('userId', '==', uid),
+            limit(100)
+        );
         const unsubscribeLikes = onSnapshot(qLikes, (snapshot) => {
-            const allLikes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
-            setLikes(allLikes.filter(like => like.userId === uid));
+            const userLikes = snapshot.docs
+                .map(doc => ({ id: doc.id, ...doc.data() } as any))
+                .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+            setLikes(userLikes);
         }, (err) => handleFirestoreError(err, OperationType.GET, 'likes'));
 
-        const qComments = query(collection(db, 'profileComments'), orderBy('timestamp', 'desc'));
-        const unsubscribeComments = onSnapshot(qComments, (snapshot) => {
-            const allComments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
-            setPosts(allComments.filter(comment => comment.authorId === uid));
-            setWallComments(allComments.filter(comment => comment.targetUserId === uid));
+        const qPosts = query(
+            collection(db, 'profileComments'),
+            where('authorId', '==', uid),
+            limit(100)
+        );
+        const unsubscribePosts = onSnapshot(qPosts, (snapshot) => {
+            const authoredComments = snapshot.docs
+                .map(doc => ({ id: doc.id, ...doc.data() } as any))
+                .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+            setPosts(authoredComments);
         }, (err) => handleFirestoreError(err, OperationType.GET, 'profileComments'));
 
-        const qReputation = query(collection(db, 'reputationLogs'), orderBy('timestamp', 'desc'));
+        const qWallComments = query(
+            collection(db, 'profileComments'),
+            where('targetUserId', '==', uid),
+            limit(100)
+        );
+        const unsubscribeWallComments = onSnapshot(qWallComments, (snapshot) => {
+            const incomingComments = snapshot.docs
+                .map(doc => ({ id: doc.id, ...doc.data() } as any))
+                .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+            setWallComments(incomingComments);
+        }, (err) => handleFirestoreError(err, OperationType.GET, 'profileComments'));
+
+        const qReputation = query(
+            collection(db, 'reputationLogs'),
+            where('userId', '==', uid),
+            limit(100)
+        );
         const unsubscribeReputation = onSnapshot(qReputation, (snapshot) => {
-            const allLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
-            setReputationLogs(allLogs.filter(log => log.userId === uid));
+            const userLogs = snapshot.docs
+                .map(doc => ({ id: doc.id, ...doc.data() } as any))
+                .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+            setReputationLogs(userLogs);
         }, (err) => handleFirestoreError(err, OperationType.GET, 'reputationLogs'));
 
         return () => {
             unsubscribeUser();
             unsubscribeLikes();
-            unsubscribeComments();
+            unsubscribePosts();
+            unsubscribeWallComments();
             unsubscribeReputation();
         };
     }, [uid]);
