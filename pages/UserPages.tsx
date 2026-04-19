@@ -816,20 +816,23 @@ export const SettingsPage = () => {
             const canSyncAdminCollections = ['admin', 'owner', 'manager'].includes(profile?.role || '');
             if (canSyncAdminCollections) {
                 try {
-                    const staffQueries = [
-                        query(collection(db, 'staff'), where('uid', '==', profile.uid)),
-                        query(collection(db, 'staff'), where('userId', '==', profile.uid)),
-                    ];
-                    const staffSnapshots = await Promise.all(staffQueries.map((staffQ) => getDocs(staffQ)));
-                    await Promise.all(staffSnapshots.flatMap((staffSnap) =>
-                        staffSnap.docs.map((docSnap) => updateDoc(docSnap.ref, { avatar: avatarUrl, username }))
-                    ));
+                    const staffByUidQ = query(collection(db, 'staff'), where('uid', '==', profile.uid));
+                    let staffSnap = await getDocs(staffByUidQ);
+                    if (staffSnap.empty) {
+                        const staffByUserIdQ = query(collection(db, 'staff'), where('userId', '==', profile.uid));
+                        staffSnap = await getDocs(staffByUserIdQ);
+                    }
+                    await Promise.all(staffSnap.docs.map((docSnap) => updateDoc(docSnap.ref, { avatar: avatarUrl, username })));
+                } catch (staffSyncErr) {
+                    console.warn('Staff profile sync skipped after successful user profile update.', staffSyncErr);
+                }
 
+                try {
                     const scheduleQ = query(collection(db, 'schedule'), where('djId', '==', profile.uid));
                     const scheduleSnap = await getDocs(scheduleQ);
                     await Promise.all(scheduleSnap.docs.map((docSnap) => updateDoc(docSnap.ref, { djAvatar: avatarUrl })));
-                } catch (syncErr) {
-                    console.warn('Skipping staff/schedule profile sync after successful user profile update:', syncErr);
+                } catch (scheduleSyncErr) {
+                    console.warn('Schedule avatar sync skipped after successful user profile update.', scheduleSyncErr);
                 }
             }
 
