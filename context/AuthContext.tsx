@@ -103,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               lastActive: Timestamp.now()
             }, { merge: true }).then(() => {
               if (ownerEmail && firebaseUser.email === ownerEmail) {
-                updateDoc(userDocRef, { role: 'owner', isVerified: true, badges: ['owner'], reputationScore: 9999 }).catch((err) => {
+                updateDoc(userDocRef, { role: 'owner', isVerified: true, badges: ['owner'] }).catch((err) => {
                   console.error('Failed to upgrade user to owner role:', err);
                 });
               }
@@ -176,18 +176,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await res.user.getIdToken(true);
     
     const userDocRef = doc(db, 'users', res.user.uid);
-    const newProfile: UserProfile = {
-      uid: res.user.uid,
+    await updateDoc(userDocRef, {
       username: safeUsername,
-      email: email,
-      avatar: '',
-      role: 'user'
-    };
-    await setDoc(userDocRef, {
-      ...newProfile,
-      createdAt: Timestamp.now(),
-      lastActive: Timestamp.now()
-    }, { merge: true });
+    });
   };
 
   const logout = async () => {
