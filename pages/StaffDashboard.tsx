@@ -336,6 +336,17 @@ export const StaffDashboard = () => {
         if (!isConfirmDeleteOpen.collectionName || !isConfirmDeleteOpen.docId) return;
         try {
             await deleteDoc(doc(db, isConfirmDeleteOpen.collectionName, isConfirmDeleteOpen.docId));
+
+            // Instant UI updates without waiting for polling
+            const { collectionName, docId } = isConfirmDeleteOpen;
+            if (collectionName === 'enquiries') setMessages(p => p.filter(x => x.id !== docId));
+            if (collectionName === 'articles') setArticles(p => p.filter(x => x.id !== docId));
+            if (collectionName === 'schedule') setSchedule(p => p.filter(x => x.id !== docId));
+            if (collectionName === 'staff') setStaff(p => p.filter(x => x.id !== docId));
+            if (collectionName === 'partners') setPartners(p => p.filter(x => x.id !== docId));
+            if (collectionName === 'banners') setBanners(p => p.filter(x => x.id !== docId));
+            if (collectionName === 'redeemCodes') setRedeemCodes(p => p.filter(x => x.id !== docId));
+            
         } catch (err) {
             handleFirestoreError(err, OperationType.DELETE, `${isConfirmDeleteOpen.collectionName}/${isConfirmDeleteOpen.docId}`);
         } finally {
@@ -1272,9 +1283,12 @@ export const StaffDashboard = () => {
                                 {users.length === 0 ? <p className="text-gray-400">No users found.</p> : users.map(u => (
                                     <div key={u.id} className="bg-goodwood-dark border border-goodwood-border rounded-lg p-4 flex justify-between items-center">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-full bg-emerald-900 flex items-center justify-center text-white font-bold">
-                                                {u.username?.charAt(0) || '?'}
-                                            </div>
+                                            <UserAvatar 
+                                                userId={u.id}
+                                                fallbackAvatar={u.avatar}
+                                                fallbackName={u.username}
+                                                className="w-10 h-10 rounded-full object-cover shrink-0" 
+                                            />
                                             <div>
                                                 <h3 className="text-white font-bold flex items-center gap-2">
                                                     {u.username}
