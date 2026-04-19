@@ -42,8 +42,8 @@ export const LegalHub = () => (
         <div className="mt-6 bg-goodwood-card border border-goodwood-border rounded-xl p-6">
             <h2 className="text-lg font-bold text-white mb-3">Policy version history</h2>
             <ul className="text-sm text-gray-300 space-y-2 list-disc pl-5">
-                <li><strong>2026-04-uk-legal-v1</strong> — UK-focused Terms, Privacy, cookie information, and legal hub published.</li>
-                <li><strong>2026-04-legal-corrections-v1</strong> — Earlier legal correction release.</li>
+                <li><strong>2026-04-uk-legal-v1 (19 April 2026)</strong> — UK-focused Terms, Privacy, cookie information, and legal hub published.</li>
+                <li><strong>2026-04-legal-corrections-v1 (earlier April 2026)</strong> — Earlier legal correction release.</li>
             </ul>
         </div>
     </div>
