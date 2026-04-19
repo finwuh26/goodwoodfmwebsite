@@ -19,5 +19,6 @@ View your app in AI Studio: https://ai.studio/apps/8344bcaa-0bfd-4b39-8a01-5d144
 3. (Optional) Set `LASTFM_API_KEY` in `.env.local` and in Vercel environment variables for album-art fallback
 4. (Optional) Set `VITE_OWNER_EMAIL` to enable automatic owner-role assignment for that email
 5. Set `VITE_FIRESTORE_DATABASE_ID` to your persistent Firestore DB in production (use `(default)` for the default DB); if unset in production, the app now falls back to `(default)` instead of AI Studio temporary DBs
-6. Run the app:
+6. Set `DISCORD_ARTICLE_WEBHOOK_URL` in server environment variables to enable protected Discord notifications when articles are approved/published
+7. Run the app:
    `npm run dev`

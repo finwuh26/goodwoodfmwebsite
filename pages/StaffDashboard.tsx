@@ -366,10 +366,49 @@ export const StaffDashboard = () => {
         }
     };
 
+    const notifyArticlePublished = async (articleId: string) => {
+        if (!user) {
+            throw new Error('You must be signed in to publish an article.');
+        }
+
+        const token = await user.getIdToken();
+        for (let attempt = 1; attempt <= 3; attempt += 1) {
+            const response = await fetch('/api/notify-article-published', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ articleId }),
+            });
+
+            if (response.ok) {
+                return;
+            }
+
+            let errorMessage = `Notification failed (${response.status})`;
+            try {
+                const payload = await response.json();
+                if (typeof payload?.error === 'string' && payload.error.trim()) {
+                    errorMessage = payload.error;
+                }
+            } catch {
+                // ignore non-JSON responses
+            }
+
+            if (attempt === 3) {
+                throw new Error(errorMessage);
+            }
+
+            await new Promise((resolve) => setTimeout(resolve, 350 * attempt));
+        }
+    };
+
     const handleReviewArticle = async (articleId: string, authorId: string, approved: boolean) => {
         try {
             if (approved) {
                 await updateDoc(doc(db, 'articles', articleId), { status: 'published' });
+                await notifyArticlePublished(articleId);
                 // Award reputation
                 await addDoc(collection(db, 'reputationLogs'), {
                     userId: authorId,
