@@ -4,6 +4,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage, handleFirestoreError, OperationType } from '../firebase';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-hot-toast';
 
 const FormInput = ({ label, name, type = "text", placeholder, rows, required = false, value, onChange }: { label: string, name: string, type?: string, placeholder?: string, rows?: number, required?: boolean, value: string, onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void }) => (
     <div className="mb-4">
@@ -48,7 +49,7 @@ export const ApplicationForm = ({ role }: { role: string }) => {
             const audio = new Audio(URL.createObjectURL(file));
             audio.onloadedmetadata = () => {
                 if (audio.duration > 15) { // Giving them a tiny bit of grace period, 15s absolute max
-                    alert("Audio file is too long. Please ensure it is 10 seconds or less.");
+                    toast.error("Audio file is too long. Please ensure it is 10 seconds or less.");
                     e.target.value = ''; // clear input
                     setAudioFile(null);
                 } else {
@@ -61,7 +62,7 @@ export const ApplicationForm = ({ role }: { role: string }) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) {
-            alert("Please sign in to submit an application.");
+            toast.error("Please sign in to submit an application.");
             return;
         }
         setIsSubmitting(true);
@@ -207,7 +208,7 @@ export const ContactForm = ({ type }: { type: string }) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) {
-            alert("Please sign in to send a message.");
+            toast.error("Please sign in to send a message.");
             return;
         }
         setIsSubmitting(true);
