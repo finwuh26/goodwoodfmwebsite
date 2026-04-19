@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { doc, updateDoc, increment, getDoc, arrayUnion, writeBatch } from 'firebase/firestore';
@@ -153,7 +153,7 @@ export const Shop: React.FC = () => {
     };
 
     const equippedValue = getEquippedValue(activeTab);
-    const renderNameIconPreview = (iconId: string) => {
+    const renderNameIconPreview = useCallback((iconId: string) => {
         const iconOption = getNameIconOption(iconId);
         if (!iconOption) return null;
         const Icon = iconOption.icon;
@@ -161,10 +161,10 @@ export const Shop: React.FC = () => {
         return (
             <div className="flex items-center gap-2">
                 <Icon size={24} className={iconOption.colorClass} />
-                <span className="text-white font-black text-xl uppercase tracking-widest">{userProfile.username || 'Username'}</span>
+                <span className="text-white font-black text-xl uppercase tracking-tighter">{userProfile.username || 'Username'}</span>
             </div>
         );
-    };
+    }, [userProfile.username]);
 
     return (
         <div className="w-full max-w-6xl mx-auto px-4 py-8 sm:py-12">

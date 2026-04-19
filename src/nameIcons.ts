@@ -18,5 +18,5 @@ export const NAME_ICON_OPTIONS: NameIconOption[] = [
     { id: 'flame', label: 'Flame', icon: Flame, colorClass: glowClass('text-orange-300', '253,186,116') },
 ];
 
-export const getNameIconOption = (id?: string | null) =>
+export const getNameIconOption = (id?: string | null): NameIconOption | null =>
     NAME_ICON_OPTIONS.find((icon) => icon.id === id) ?? null;
