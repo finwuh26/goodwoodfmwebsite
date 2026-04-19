@@ -99,6 +99,10 @@ service cloud.firestore {
       return request.resource.data.keys().hasOnly(fields);
     }
 
+    function maxAllowedCredits() {
+      return 1000000;
+    }
+
     // ===============================================================
     // Domain Validators
     // ===============================================================
@@ -118,7 +122,7 @@ service cloud.firestore {
              (!('avatarHistory' in data) || data.avatarHistory is list) &&
              (!('lastActive' in data) || data.lastActive is timestamp) &&
              (!('twoFactorEnabled' in data) || data.twoFactorEnabled is bool) &&
-             (!('credits' in data) || (data.credits is number && data.credits >= 0 && data.credits <= 1000000)) &&
+             (!('credits' in data) || (data.credits is number && data.credits >= 0 && data.credits <= maxAllowedCredits())) &&
              (!('purchasedItems' in data) || data.purchasedItems is list) &&
              (!('activeRing' in data) || data.activeRing == null || data.activeRing is string) &&
              (!('activeNameIcon' in data) || data.activeNameIcon == null || data.activeNameIcon is string) &&
