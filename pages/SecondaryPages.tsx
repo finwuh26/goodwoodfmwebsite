@@ -363,7 +363,7 @@ export const Jobs = () => {
             requirements: [
                 "You must be able to present a minimum of 2 slots (hours) per week.",
                 "You must be the age of 13 or above.",
-                "You must be confident and willing to speak infront of a large audience.",
+                "You must be confident and willing to speak in front of a large audience.",
                 "You must be willing to play a large variety of music.",
                 "You must have a clear and working microphone.",
                 "You must have a good attitude and be able to work as part of a team.",

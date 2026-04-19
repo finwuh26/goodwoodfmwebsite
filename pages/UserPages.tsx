@@ -130,6 +130,7 @@ export const ProfilePage = () => {
                 if (!isMounted) return;
                 setLatestArticle(null);
                 handleFirestoreError(err, OperationType.GET, 'articles');
+                toast.error('Unable to load latest article right now.');
             }
         };
 
