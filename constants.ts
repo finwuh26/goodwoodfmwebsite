@@ -59,3 +59,6 @@ export const NAV_ITEMS: NavItem[] = [
 export const STAFF: StaffMember[] = [];
 export const ARTICLES: Article[] = [];
 export const SCHEDULE: ScheduleItem[] = [];
+
+export const LEGAL_NOTICE_VERSION = '2026-04-legal-corrections-v1';
+export const LEGAL_NOTICE_REASON = 'Recent conflicts and corrections to previous legal errors require renewed acceptance.';

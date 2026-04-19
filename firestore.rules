@@ -108,7 +108,7 @@ service cloud.firestore {
     // ===============================================================
 
     function isValidUser(data) {
-      return hasOnlyAllowedFields(['uid', 'username', 'email', 'avatar', 'bannerGradient', 'role', 'bio', 'createdAt', 'isVerified', 'badges', 'reputationScore', 'avatarHistory', 'lastActive', 'favoriteSong', 'twoFactorEnabled', 'credits', 'purchasedItems', 'activeRing', 'activeNameIcon', 'redeemedCodes', 'chanceCodeAttempts', 'chanceCodeLastAttemptAtMs']) &&
+      return hasOnlyAllowedFields(['uid', 'username', 'email', 'avatar', 'bannerGradient', 'role', 'bio', 'createdAt', 'isVerified', 'badges', 'reputationScore', 'avatarHistory', 'lastActive', 'favoriteSong', 'twoFactorEnabled', 'credits', 'purchasedItems', 'activeRing', 'activeNameIcon', 'redeemedCodes', 'chanceCodeAttempts', 'chanceCodeLastAttemptAtMs', 'legalAcceptedVersion', 'legalAcceptedAt', 'legalNoticeReason']) &&
              data.uid == request.auth.uid &&
              data.username is string && data.username.size() >= 3 && data.username.size() <= 30 &&
              isValidEmail(data.email) &&
@@ -127,9 +127,12 @@ service cloud.firestore {
              (!('activeRing' in data) || data.activeRing == null || data.activeRing is string) &&
              (!('activeNameIcon' in data) || data.activeNameIcon == null || data.activeNameIcon is string) &&
              (!('redeemedCodes' in data) || data.redeemedCodes is list) &&
-             (!('chanceCodeAttempts' in data) || data.chanceCodeAttempts is list) &&
-             (!('chanceCodeLastAttemptAtMs' in data) || (data.chanceCodeLastAttemptAtMs is number && data.chanceCodeLastAttemptAtMs >= 0)) &&
-             (!('favoriteSong' in data) || data.favoriteSong == null || (
+              (!('chanceCodeAttempts' in data) || data.chanceCodeAttempts is list) &&
+              (!('chanceCodeLastAttemptAtMs' in data) || (data.chanceCodeLastAttemptAtMs is number && data.chanceCodeLastAttemptAtMs >= 0)) &&
+              (!('legalAcceptedVersion' in data) || data.legalAcceptedVersion is string) &&
+              (!('legalAcceptedAt' in data) || data.legalAcceptedAt is timestamp) &&
+              (!('legalNoticeReason' in data) || data.legalNoticeReason is string) &&
+              (!('favoriteSong' in data) || data.favoriteSong == null || (
                data.favoriteSong is map &&
                data.favoriteSong.keys().hasOnly(['title', 'artist', 'art', 'url']) &&
                (!('title' in data.favoriteSong) || data.favoriteSong.title is string) &&
