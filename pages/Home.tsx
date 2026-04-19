@@ -293,7 +293,12 @@ export const Home = () => {
                               <h2 title={article.title} className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-black text-white italic leading-tight mb-3 sm:mb-4 drop-shadow-md max-w-4xl group-hover:text-white/90 transition-colors break-words [text-wrap:balance]">{article.title}</h2>
                               <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                                   <div className="flex items-center gap-2 group-hover:text-white transition-colors">
-                                      <User size={12} />
+                                      <UserAvatar 
+                                          userId={article.authorId} 
+                                          fallbackAvatar={article.authorAvatar} 
+                                          fallbackName={article.authorName} 
+                                          className="w-4 h-4 rounded-full object-cover" 
+                                      />
                                       <span>{article.authorName}</span>
                                   </div>
                                   <div className="flex items-center gap-2">
