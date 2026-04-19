@@ -11,6 +11,7 @@ import {
 } from 'firebase/auth';
 import { doc, onSnapshot, setDoc, serverTimestamp, updateDoc, Timestamp } from 'firebase/firestore';
 import { auth, db, handleFirestoreError, OperationType } from '../firebase';
+import { LEGAL_NOTICE_REASON, LEGAL_NOTICE_VERSION } from '../constants';
 
 interface UserProfile {
   uid: string;
@@ -31,6 +32,9 @@ interface UserProfile {
   activeRing?: string;
   activeNameIcon?: string;
   redeemedCodes?: string[];
+  legalAcceptedVersion?: string;
+  legalAcceptedAt?: Timestamp;
+  legalNoticeReason?: string;
 }
 
 interface AuthContextType {
@@ -99,13 +103,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               badges: [],
               reputationScore: 0,
               bio: '',
-              avatarHistory: [firebaseUser.photoURL || '']
+              avatarHistory: [firebaseUser.photoURL || ''],
+              legalAcceptedVersion: LEGAL_NOTICE_VERSION,
+              legalNoticeReason: LEGAL_NOTICE_REASON
             };
             
             setDoc(userDocRef, {
               ...newProfile,
               createdAt: serverTimestamp(),
-              lastActive: serverTimestamp()
+              lastActive: serverTimestamp(),
+              legalAcceptedAt: serverTimestamp()
             }, { merge: true }).then(() => {
               if (ownerEmail && firebaseUser.email === ownerEmail) {
                 updateDoc(userDocRef, { role: 'owner', isVerified: true, badges: ['owner'] }).catch((err) => {

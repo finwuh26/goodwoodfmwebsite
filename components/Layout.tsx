@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { Play, Pause, ShoppingBag, User as UserIcon, ChevronDown, Heart, Volume2, LogOut, Mail, Maximize2, MoreHorizontal, Radio, Settings, Shield, Menu, X, ShoppingCart, Check } from 'lucide-react';
 import { NAV_ITEMS } from '../constants';
+import { LEGAL_NOTICE_REASON, LEGAL_NOTICE_VERSION } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useRadio } from '../context/RadioContext';
 import { useAuth } from '../context/AuthContext';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, deleteDoc, onSnapshot, doc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, deleteDoc, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { makeLikeReadKey, readFirestoreWithGuard, seedFirestoreReadCache } from '../utils/firestoreReadGuards';
 import { toast } from 'react-hot-toast';
@@ -32,6 +33,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Auth Modal State
   const [showLogin, setShowLogin] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [legalConsentAccepted, setLegalConsentAccepted] = useState(false);
+  const [isSubmittingLegalConsent, setIsSubmittingLegalConsent] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [isSignupMode, setIsSignupMode] = useState(false);
   const [requestType, setRequestType] = useState('Song Request');
@@ -100,6 +103,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   }, [showLogin]);
 
+  useEffect(() => {
+    if (userProfile && userProfile.legalAcceptedVersion !== LEGAL_NOTICE_VERSION) {
+      setLegalConsentAccepted(false);
+    }
+  }, [userProfile]);
+
   // Reset dropdown on route change
   useEffect(() => {
     setActiveDropdown(null);
@@ -138,6 +147,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const nextSong = radioData?.playing_next?.song;
   const history = radioData?.song_history || [];
   const hasStaffAccess = Boolean(userProfile && ['admin', 'staff', 'manager', 'dj', 'journalist', 'owner'].includes(userProfile.role || ''));
+  const requiresLegalConsent = Boolean(userProfile && userProfile.legalAcceptedVersion !== LEGAL_NOTICE_VERSION);
 
   // Check if current song is liked by user
   useEffect(() => {
@@ -242,6 +252,27 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         handleFirestoreError(err, OperationType.WRITE, 'enquiries');
     } finally {
         setSubmittingRequest(false);
+    }
+  };
+
+  const handleLegalConsent = async () => {
+    if (!userProfile) return;
+    if (!legalConsentAccepted) {
+      toast.error('Please confirm agreement to continue.');
+      return;
+    }
+    setIsSubmittingLegalConsent(true);
+    try {
+      await updateDoc(doc(db, 'users', userProfile.uid), {
+        legalAcceptedVersion: LEGAL_NOTICE_VERSION,
+        legalAcceptedAt: serverTimestamp(),
+        legalNoticeReason: LEGAL_NOTICE_REASON
+      });
+      toast.success('Legal updates accepted. Thank you.');
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `users/${userProfile.uid}`);
+    } finally {
+      setIsSubmittingLegalConsent(false);
     }
   };
 
@@ -788,6 +819,65 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </div>
       )}
+
+      <AnimatePresence>
+        {requiresLegalConsent && (
+          <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-2 sm:p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/90 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-[#12141a] w-full max-w-lg rounded-lg shadow-2xl border border-goodwood-border relative z-10"
+            >
+              <div className="p-5 sm:p-8">
+                <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 uppercase tracking-tight">Important legal update</h2>
+                <p className="text-sm text-gray-300 leading-relaxed mb-4">
+                  Due to recent conflicts and corrections to previous legal errors, we require all existing registered users to accept the latest Terms & Conditions before continuing.
+                </p>
+                <p className="text-xs text-gray-400 mb-4">
+                  Version: {LEGAL_NOTICE_VERSION}
+                </p>
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={legalConsentAccepted}
+                  onClick={() => setLegalConsentAccepted(prev => !prev)}
+                  className="w-full flex items-center gap-2 text-xs text-gray-300 bg-goodwood-dark border border-goodwood-border rounded-lg px-3 py-2 hover:border-white/20 transition-colors text-left mb-3"
+                >
+                  <span className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${legalConsentAccepted ? 'bg-emerald-500 border-emerald-500 text-black' : 'border-goodwood-border'}`}>
+                    {legalConsentAccepted && <Check size={12} />}
+                  </span>
+                  <span>I agree to the updated Terms & Conditions</span>
+                </button>
+                <div className="flex items-center justify-between gap-3">
+                  <Link to="/terms" className="text-xs text-gray-400 hover:text-white transition-colors">Read Terms & Conditions</Link>
+                  <button
+                    type="button"
+                    onClick={handleLegalConsent}
+                    disabled={isSubmittingLegalConsent}
+                    className="bg-white text-black text-xs font-bold px-4 py-2 rounded hover:bg-gray-200 transition-colors disabled:opacity-60"
+                  >
+                    {isSubmittingLegalConsent ? 'Saving...' : 'Agree & Continue'}
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="mt-4 text-xs text-red-400 hover:text-red-300 transition-colors"
+                >
+                  Sign out instead
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Request Modal */}
       <AnimatePresence>

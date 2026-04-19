@@ -10,6 +10,10 @@ export const TermsOfService = () => (
             <p className="text-gray-400">Last updated: {new Date().toLocaleDateString()}</p>
         </div>
         <div className="bg-goodwood-card border border-goodwood-border rounded-xl p-8 text-gray-300 space-y-6 leading-relaxed">
+            <section className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                <h2 className="text-xl font-bold text-white mb-2">Important legal correction notice</h2>
+                <p>These Terms were updated due to recent conflicts and corrections to previous legal errors. Continued use now requires explicit re-acceptance by existing registered users.</p>
+            </section>
             <section>
                 <h2 className="text-2xl font-bold text-white mb-4">1. Acceptance of Terms</h2>
                 <p>By accessing and using Goodwood FM, you accept and agree to be bound by the terms and provision of this agreement.</p>
@@ -24,7 +28,7 @@ export const TermsOfService = () => (
             </section>
             <section>
                 <h2 className="text-2xl font-bold text-white mb-4">4. Modifications</h2>
-                <p>We reserve the right to modify these terms at any time. Continued use of the site constitutes acceptance of the new terms.</p>
+                <p>We reserve the right to modify these terms at any time. Continued use of the site constitutes acceptance of the new terms, including emergency corrections applied to resolve legal drafting conflicts.</p>
             </section>
         </div>
     </div>
@@ -39,6 +43,10 @@ export const PrivacyPolicy = () => (
             <p className="text-gray-400">Last updated: {new Date().toLocaleDateString()}</p>
         </div>
         <div className="bg-goodwood-card border border-goodwood-border rounded-xl p-8 text-gray-300 space-y-6 leading-relaxed">
+            <section className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                <h2 className="text-xl font-bold text-white mb-2">Important legal correction notice</h2>
+                <p>This Privacy Policy was updated due to recent conflicts and corrections to previous legal errors so that data and cookie practices are now described more clearly.</p>
+            </section>
             <section>
                 <h2 className="text-2xl font-bold text-white mb-4">1. Information Collection</h2>
                 <p>We collect information you provide directly to us when you create an account, apply for a role, or contact us. This may include your name, email address, and Discord ID.</p>
