@@ -153,6 +153,18 @@ export const Shop: React.FC = () => {
     };
 
     const equippedValue = getEquippedValue(activeTab);
+    const renderNameIconPreview = (iconId: string) => {
+        const iconOption = getNameIconOption(iconId);
+        if (!iconOption) return null;
+        const Icon = iconOption.icon;
+
+        return (
+            <div className="flex items-center gap-2">
+                <Icon size={24} className={iconOption.colorClass} />
+                <span className="text-white font-black text-xl uppercase tracking-widest">{userProfile.username || 'Username'}</span>
+            </div>
+        );
+    };
 
     return (
         <div className="w-full max-w-6xl mx-auto px-4 py-8 sm:py-12">
@@ -255,17 +267,7 @@ export const Shop: React.FC = () => {
                                         )}
                                         {item.type === 'nameIcon' && (
                                             <div className="w-full h-20 rounded-lg shadow-inner bg-[#0f1014] flex items-center justify-center">
-                                                {(() => {
-                                                    const iconOption = getNameIconOption(item.value);
-                                                    if (!iconOption) return null;
-                                                    const Icon = iconOption.icon;
-                                                    return (
-                                                        <div className="flex items-center gap-2">
-                                                            <Icon size={24} className={iconOption.colorClass} />
-                                                            <span className="text-white font-black text-xl uppercase tracking-widest">{userProfile.username || 'Username'}</span>
-                                                        </div>
-                                                    );
-                                                })()}
+                                                {renderNameIconPreview(item.value)}
                                             </div>
                                         )}
 
@@ -352,17 +354,7 @@ export const Shop: React.FC = () => {
                               )}
                               {confirmItem.type === 'nameIcon' && (
                                   <div className="w-full h-20 rounded-lg shadow-inner bg-[#0f1014] flex items-center justify-center">
-                                      {(() => {
-                                          const iconOption = getNameIconOption(confirmItem.value);
-                                          if (!iconOption) return null;
-                                          const Icon = iconOption.icon;
-                                          return (
-                                              <div className="flex items-center gap-2">
-                                                  <Icon size={24} className={iconOption.colorClass} />
-                                                  <span className="text-white font-black text-xl uppercase tracking-widest">{userProfile.username || 'Username'}</span>
-                                              </div>
-                                          );
-                                      })()}
+                                      {renderNameIconPreview(confirmItem.value)}
                                   </div>
                               )}
                          </div>
