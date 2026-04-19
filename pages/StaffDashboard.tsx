@@ -12,6 +12,7 @@ import { BadgeSelector } from '../components/BadgeSelector';
 import { checkPlagiarism } from '../services/geminiService';
 import { getDatesForThisWeek, formatDate } from '../utils';
 import { toast } from 'react-hot-toast';
+import { readFirestoreWithGuard } from '../utils/firestoreReadGuards';
 
 import { ConfirmModal } from '../components/ConfirmModal';
 import { UserAvatar } from '../components/UserAvatar';
@@ -56,7 +57,9 @@ const DEPARTMENT_OPTIONS = [
 ];
 
 const USERS_DASHBOARD_LIMIT = 200;
-const DASHBOARD_POLL_INTERVAL_MS = 2 * 60 * 1000;
+const DASHBOARD_POLL_INTERVAL_MS = 6 * 60 * 1000;
+const DASHBOARD_READ_TTL_MS = 6 * 60 * 1000;
+const createDefaultCodeForm = () => ({ code: '', credits: 100, usesLeft: 1, isChanceCode: false, winProbability: 25, attemptCooldownMinutes: 10 });
 const createEmptyBannerForm = () => ({ title: '', topic: '', image: '', link: '', active: true });
 
 export const StaffDashboard = () => {
@@ -75,7 +78,7 @@ export const StaffDashboard = () => {
     const [partners, setPartners] = useState<any[]>([]);
     const [banners, setBanners] = useState<any[]>([]);
     const [redeemCodes, setRedeemCodes] = useState<any[]>([]);
-    const [codeForm, setCodeForm] = useState({ code: '', credits: 100, usesLeft: 1 });
+    const [codeForm, setCodeForm] = useState(createDefaultCodeForm);
     const [showCodeModal, setShowCodeModal] = useState(false);
     const [reputationLogs, setReputationLogs] = useState<any[]>([]);
     const [weekOffset, setWeekOffset] = useState(0);
@@ -157,36 +160,69 @@ export const StaffDashboard = () => {
             }
         });
 
-        const qUsers = query(collection(db, 'users'), limit(USERS_DASHBOARD_LIMIT));
-        const unsubUsers = onSnapshot(qUsers, (snap) => {
-            const usersList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
-            usersList.sort((a: any, b: any) => {
-                const aTs = a?.lastActive?.seconds || a?.createdAt?.seconds || 0;
-                const bTs = b?.lastActive?.seconds || b?.createdAt?.seconds || 0;
-                return bTs - aTs;
-            });
-            setUsers(usersList);
-        }, (err) => handleFirestoreError(err, OperationType.GET, 'users'));
-
         let isMounted = true;
         const fetchLowPriorityData = async () => {
             try {
                 const requests = [
-                    getDocs(query(collection(db, 'applications'), limit(200))),
-                    getDocs(query(collection(db, 'enquiries'), limit(300))),
-                    getDocs(query(collection(db, 'articles'), limit(300))),
-                    getDocs(query(collection(db, 'schedule'), limit(300))),
-                    getDocs(query(collection(db, 'staff'), limit(300))),
-                    getDocs(query(collection(db, 'partners'), limit(100))),
-                    getDocs(query(collection(db, 'banners'), limit(100))),
-                    getDocs(query(collection(db, 'reputationLogs'), orderBy('timestamp', 'desc'), limit(50))),
+                    readFirestoreWithGuard(
+                        'staffDashboard:users',
+                        () => getDocs(query(collection(db, 'users'), limit(USERS_DASHBOARD_LIMIT))),
+                        { ttlMs: DASHBOARD_READ_TTL_MS }
+                    ),
+                    readFirestoreWithGuard(
+                        'staffDashboard:applications',
+                        () => getDocs(query(collection(db, 'applications'), limit(200))),
+                        { ttlMs: DASHBOARD_READ_TTL_MS }
+                    ),
+                    readFirestoreWithGuard(
+                        'staffDashboard:enquiries',
+                        () => getDocs(query(collection(db, 'enquiries'), limit(300))),
+                        { ttlMs: DASHBOARD_READ_TTL_MS }
+                    ),
+                    readFirestoreWithGuard(
+                        'staffDashboard:articles',
+                        () => getDocs(query(collection(db, 'articles'), limit(300))),
+                        { ttlMs: DASHBOARD_READ_TTL_MS }
+                    ),
+                    readFirestoreWithGuard(
+                        'staffDashboard:schedule',
+                        () => getDocs(query(collection(db, 'schedule'), limit(300))),
+                        { ttlMs: DASHBOARD_READ_TTL_MS }
+                    ),
+                    readFirestoreWithGuard(
+                        'staffDashboard:staff',
+                        () => getDocs(query(collection(db, 'staff'), limit(300))),
+                        { ttlMs: DASHBOARD_READ_TTL_MS }
+                    ),
+                    readFirestoreWithGuard(
+                        'staffDashboard:partners',
+                        () => getDocs(query(collection(db, 'partners'), limit(100))),
+                        { ttlMs: DASHBOARD_READ_TTL_MS }
+                    ),
+                    readFirestoreWithGuard(
+                        'staffDashboard:banners',
+                        () => getDocs(query(collection(db, 'banners'), limit(100))),
+                        { ttlMs: DASHBOARD_READ_TTL_MS }
+                    ),
+                    readFirestoreWithGuard(
+                        'staffDashboard:reputationLogs',
+                        () => getDocs(query(collection(db, 'reputationLogs'), orderBy('timestamp', 'desc'), limit(50))),
+                        { ttlMs: DASHBOARD_READ_TTL_MS }
+                    ),
                 ];
 
                 if (includeCodes) {
-                    requests.push(getDocs(query(collection(db, 'redeemCodes'), orderBy('createdAt', 'desc'), limit(200))));
+                    requests.push(
+                        readFirestoreWithGuard(
+                            'staffDashboard:redeemCodes',
+                            () => getDocs(query(collection(db, 'redeemCodes'), orderBy('createdAt', 'desc'), limit(200))),
+                            { ttlMs: DASHBOARD_READ_TTL_MS }
+                        )
+                    );
                 }
 
                 const [
+                    usersSnap,
                     appsSnap,
                     msgsSnap,
                     articlesSnap,
@@ -200,6 +236,13 @@ export const StaffDashboard = () => {
 
                 if (!isMounted) return;
 
+                const usersList = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+                usersList.sort((a: any, b: any) => {
+                    const aTs = a?.lastActive?.seconds || a?.createdAt?.seconds || 0;
+                    const bTs = b?.lastActive?.seconds || b?.createdAt?.seconds || 0;
+                    return bTs - aTs;
+                });
+                setUsers(usersList);
                 setApplications(appsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
                 setMessages(msgsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
                 setArticles(articlesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -218,14 +261,21 @@ export const StaffDashboard = () => {
             }
         };
 
+        const onVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                fetchLowPriorityData();
+            }
+        };
+
         fetchLowPriorityData();
         const pollingInterval = window.setInterval(fetchLowPriorityData, DASHBOARD_POLL_INTERVAL_MS);
+        document.addEventListener('visibilitychange', onVisibilityChange);
 
         return () => {
             isMounted = false;
             window.clearInterval(pollingInterval);
+            document.removeEventListener('visibilitychange', onVisibilityChange);
             unsubSettings();
-            unsubUsers();
         };
     }, [user, userProfile?.role]);
 
@@ -612,15 +662,18 @@ export const StaffDashboard = () => {
                 return;
             }
             await setDoc(codeRef, {
-                credits: codeForm.credits,
-                usesLeft: codeForm.usesLeft,
+                credits: Math.max(1, Number(codeForm.credits) || 1),
+                usesLeft: Math.max(1, Number(codeForm.usesLeft) || 1),
+                isChanceCode: Boolean(codeForm.isChanceCode),
+                winProbability: Math.min(100, Math.max(1, Number(codeForm.winProbability) || 1)),
+                attemptCooldownMinutes: Math.max(0, Number(codeForm.attemptCooldownMinutes) || 0),
                 createdAt: serverTimestamp(),
                 createdBy: userProfile?.uid
             }, { merge: true });
             
             toast.success("Code saved!");
             setShowCodeModal(false);
-            setCodeForm({ code: '', credits: 100, usesLeft: 1 });
+            setCodeForm(createDefaultCodeForm());
             setEditingId(null);
         } catch (err) {
             handleFirestoreError(err, OperationType.CREATE, 'redeemCodes');
@@ -1366,7 +1419,7 @@ export const StaffDashboard = () => {
                                 </div>
                                 <button onClick={() => {
                                     setEditingId(null);
-                                    setCodeForm({ code: '', credits: 100, usesLeft: 1 });
+                                    setCodeForm(createDefaultCodeForm());
                                     setShowCodeModal(true);
                                 }} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold">
                                     <Plus size={18}/> New Code
@@ -1378,6 +1431,7 @@ export const StaffDashboard = () => {
                                     <thead>
                                         <tr className="bg-[#12141a] border-b border-goodwood-border text-xs uppercase tracking-widest text-gray-400">
                                             <th className="p-4 font-bold">Code</th>
+                                            <th className="p-4 font-bold">Type</th>
                                             <th className="p-4 font-bold">Credits</th>
                                             <th className="p-4 font-bold">Uses Left</th>
                                             <th className="p-4 font-bold hidden sm:table-cell">Created</th>
@@ -1388,6 +1442,16 @@ export const StaffDashboard = () => {
                                         {redeemCodes.map(code => (
                                             <tr key={code.id} className="hover:bg-white/5 transition-colors group">
                                                 <td className="p-4 font-mono text-emerald-400 font-bold">{code.id}</td>
+                                                <td className="p-4 text-xs">
+                                                    {code.isChanceCode ? (
+                                                        <div className="space-y-1">
+                                                            <span className="inline-flex px-2 py-1 rounded bg-yellow-500/10 text-yellow-400 font-bold">Chance</span>
+                                                            <p className="text-gray-400">{Math.min(100, Math.max(1, Number(code.winProbability) || 1))}% win • {Math.max(0, Number(code.attemptCooldownMinutes) || 0)}m cooldown</p>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="inline-flex px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 font-bold">Guaranteed</span>
+                                                    )}
+                                                </td>
                                                 <td className="p-4 font-bold text-yellow-400">{code.credits}</td>
                                                 <td className="p-4">
                                                     <span className={`px-2 py-1 rounded text-xs font-bold ${code.usesLeft > 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-500'}`}>
@@ -1400,7 +1464,14 @@ export const StaffDashboard = () => {
                                                         <button 
                                                             onClick={() => {
                                                                 setEditingId(code.id);
-                                                                setCodeForm({ code: code.id, credits: code.credits, usesLeft: code.usesLeft });
+                                                                setCodeForm({
+                                                                    code: code.id,
+                                                                    credits: code.credits,
+                                                                    usesLeft: code.usesLeft,
+                                                                    isChanceCode: Boolean(code.isChanceCode),
+                                                                    winProbability: Math.min(100, Math.max(1, Number(code.winProbability) || 25)),
+                                                                    attemptCooldownMinutes: Math.max(0, Number(code.attemptCooldownMinutes) || 10),
+                                                                });
                                                                 setShowCodeModal(true);
                                                             }}
                                                             className="p-1 text-gray-500 hover:text-white transition-colors"
@@ -1876,7 +1947,7 @@ export const StaffDashboard = () => {
 
             <Modal
                 isOpen={showCodeModal}
-                onClose={() => { setShowCodeModal(false); setEditingId(null); setCodeForm({ code: '', credits: 100, usesLeft: 1 }); }}
+                onClose={() => { setShowCodeModal(false); setEditingId(null); setCodeForm(createDefaultCodeForm()); }}
                 title={editingId ? 'Edit Credit Code' : 'Create Credit Code'}
                 maxWidth="max-w-md"
             >
@@ -1907,6 +1978,39 @@ export const StaffDashboard = () => {
                             required
                         />
                     </div>
+                    <label className="flex items-center gap-3 p-3 rounded-lg border border-goodwood-border bg-goodwood-dark">
+                        <input
+                            type="checkbox"
+                            checked={codeForm.isChanceCode}
+                            onChange={e => setCodeForm({ ...codeForm, isChanceCode: e.target.checked })}
+                            className="h-4 w-4"
+                        />
+                        <div>
+                            <p className="text-white font-bold text-sm">Chance-Based Giveaway</p>
+                            <p className="text-xs text-gray-400">Users get one attempt for this code. Winners receive credits, losers do not.</p>
+                        </div>
+                    </label>
+                    {codeForm.isChanceCode && (
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input
+                                label="Win Probability (%)"
+                                type="number"
+                                min="1"
+                                max="100"
+                                value={codeForm.winProbability}
+                                onChange={e => setCodeForm({ ...codeForm, winProbability: parseInt(e.target.value) || 1 })}
+                                required
+                            />
+                            <Input
+                                label="Cooldown (minutes)"
+                                type="number"
+                                min="0"
+                                value={codeForm.attemptCooldownMinutes}
+                                onChange={e => setCodeForm({ ...codeForm, attemptCooldownMinutes: parseInt(e.target.value) || 0 })}
+                                required
+                            />
+                        </div>
+                    )}
                     <div className="pt-4 flex justify-end gap-3">
                         <button type="button" onClick={() => setShowCodeModal(false)} className="px-4 py-2 text-gray-400 hover:text-white font-bold">Cancel</button>
                         <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded-lg font-bold">Save Code</button>
