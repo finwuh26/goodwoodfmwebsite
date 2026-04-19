@@ -1,0 +1,66 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": false,
+    "users": {
+      "$uid": {
+        ".read": true,
+        ".write": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() in ['admin', 'owner', 'manager'])"
+      }
+    },
+    "applications": {
+      "$appId": {
+        ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() in ['admin', 'owner', 'manager', 'staff']",
+        ".write": "auth != null"
+      }
+    },
+    "enquiries": {
+      "$enquiryId": {
+        ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() in ['admin', 'owner', 'manager', 'staff']",
+        ".write": "auth != null"
+      }
+    },
+    "schedule": {
+      "$scheduleId": {
+        ".read": true,
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() in ['admin', 'owner', 'manager', 'staff', 'dj'] || newData.child('claimedBy').val() === auth.uid)"
+      }
+    },
+    "reputationLogs": {
+      "$logId": {
+        ".read": "auth != null",
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() in ['admin', 'owner', 'manager', 'staff', 'dj', 'journalist'])"
+      }
+    },
+    "redeemCodes": {
+      "$codeId": {
+        ".read": "auth != null",
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() in ['admin', 'owner', 'manager'] || (data.exists() && newData.hasChildren(['credits', 'usesLeft', 'isChanceCode', 'winProbability', 'attemptCooldownMinutes', 'createdAt', 'createdBy']) && newData.child('usesLeft').isNumber() && data.child('usesLeft').isNumber() && newData.child('usesLeft').val() === data.child('usesLeft').val() - 1))"
+      }
+    },
+    "likes": {
+      "$likeId": {
+        ".read": true,
+        ".write": "auth != null"
+      }
+    },
+    "profileComments": {
+      "$commentId": {
+        ".read": true,
+        ".write": "auth != null"
+      }
+    },
+    "articleComments": {
+      "$commentId": {
+        ".read": true,
+        ".write": "auth != null"
+      }
+    },
+    "articleReactions": {
+      "$reactionId": {
+        ".read": true,
+        ".write": "auth != null"
+      }
+    }
+  }
+}

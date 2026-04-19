@@ -226,6 +226,17 @@ service cloud.firestore {
              data.createdAt is timestamp;
     }
 
+    function isValidSchedule(data) {
+      return hasOnlyAllowedFields(['showName', 'day', 'time', 'status', 'claimedBy', 'duration', 'authorName']) &&
+             data.showName is string &&
+             data.day is string &&
+             data.time is string &&
+             data.status in ['open', 'claimed', 'completed'] &&
+             (!('claimedBy' in data) || data.claimedBy == '' || data.claimedBy is string) &&
+             (!('duration' in data) || data.duration is number) &&
+             (!('authorName' in data) || data.authorName is string);
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -274,12 +285,14 @@ service cloud.firestore {
     match /schedule/{scheduleId} {
       allow read: if true;
       allow write: if isAdmin();
-      allow update: if isStaff() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'claimedBy', 'showName']) && request.resource.data.claimedBy == request.auth.uid;
+      allow create: if isStaff() && isValidSchedule(request.resource.data) && request.resource.data.status == 'claimed' && request.resource.data.claimedBy == request.auth.uid;
+      allow update: if isStaff() && isValidSchedule(request.resource.data) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'claimedBy', 'showName']) && request.resource.data.claimedBy == request.auth.uid;
     }
 
     match /reputationLogs/{logId} {
       allow read: if true;
-      allow create: if isAdmin();
+      allow create: if isStaff() && isValidReputationLog(request.resource.data) &&
+        request.resource.data.userId == request.auth.uid;
       allow update, delete: if false;
     }
 
@@ -327,13 +340,16 @@ service cloud.firestore {
     }
 
     match /redeemCodes/{codeId} {
-      allow read, write: if isAdmin();
-    }
-
-    match /reputationLogs/{logId} {
-      allow read: if true;
-      allow create: if isAdmin();
-      allow update, delete: if false;
+      allow read: if isAuthenticated();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        isAuthenticated() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usesLeft']) &&
+        request.resource.data.usesLeft is number &&
+        resource.data.usesLeft is number &&
+        request.resource.data.usesLeft >= 0 &&
+        request.resource.data.usesLeft == resource.data.usesLeft - 1
+      );
     }
   }
 }
