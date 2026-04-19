@@ -222,7 +222,7 @@ service cloud.firestore {
           request.resource.data.createdAt is timestamp &&
           request.resource.data.get('isVerified', false) == false &&
           request.resource.data.get('badges', []) == [] &&
-          (!('lastActive' in request.resource.data) || (request.resource.data.lastActive is timestamp && request.resource.data.lastActive <= request.time))
+          (!('lastActive' in request.resource.data) || (request.resource.data.lastActive is timestamp && request.resource.data.lastActive <= request.time && request.resource.data.lastActive >= request.time - duration.value(1, 'd')))
         )
       );
       allow update: if isAuthenticated() && (
