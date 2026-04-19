@@ -93,12 +93,22 @@ service cloud.firestore {
       return request.resource.data.keys().hasOnly(fields);
     }
 
+    function userAllowedFields() {
+      return ['uid', 'username', 'email', 'avatar', 'bannerGradient', 'role', 'bio', 'createdAt', 'isVerified', 'badges', 'reputationScore', 'avatarHistory', 'lastActive', 'favoriteSong', 'twoFactorEnabled'];
+    }
+
+    function isValidLastActiveTimestamp(value) {
+      return value is timestamp &&
+             value <= request.time &&
+             value >= request.time - duration.value(5, 'm');
+    }
+
     // ===============================================================
     // Domain Validators
     // ===============================================================
 
     function isValidUser(data) {
-      return hasOnlyAllowedFields(['uid', 'username', 'email', 'avatar', 'bannerGradient', 'role', 'bio', 'createdAt', 'isVerified', 'badges', 'reputationScore', 'avatarHistory', 'lastActive', 'favoriteSong', 'twoFactorEnabled']) &&
+      return hasOnlyAllowedFields(userAllowedFields()) &&
              data.uid == request.auth.uid &&
              data.username is string && data.username.size() >= 3 && data.username.size() <= 30 &&
              isValidEmail(data.email) &&
@@ -213,8 +223,23 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if true;
-      allow create: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == 'user';
-      allow update: if isAuthenticated() && ((isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role && request.resource.data.get('isVerified', false) == resource.data.get('isVerified', false) && request.resource.data.get('badges', []) == resource.data.get('badges', [])) || isAdmin());
+      allow create: if isAuthenticated() && isOwner(userId) && (
+        (isValidUser(request.resource.data) && request.resource.data.role == 'user') ||
+        (
+          request.resource.data.keys().hasOnly(userAllowedFields()) &&
+          request.resource.data.uid == request.auth.uid &&
+          request.resource.data.role == 'user' &&
+          request.resource.data.createdAt is timestamp &&
+          request.resource.data.get('isVerified', false) == false &&
+          request.resource.data.get('badges', []) == [] &&
+          (!('lastActive' in request.resource.data) || isValidLastActiveTimestamp(request.resource.data.lastActive))
+        )
+      );
+      allow update: if isAuthenticated() && (
+        (isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role && request.resource.data.get('isVerified', false) == resource.data.get('isVerified', false) && request.resource.data.get('badges', []) == resource.data.get('badges', [])) ||
+        (isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastActive']) && isValidLastActiveTimestamp(request.resource.data.lastActive)) ||
+        isAdmin()
+      );
       allow delete: if isAdmin();
     }
 
