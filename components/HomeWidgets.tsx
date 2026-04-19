@@ -218,7 +218,7 @@ export const RecentlyActiveWidget = () => {
             <h3 className="flex items-center gap-2 text-gray-500 font-bold text-[10px] tracking-[0.3em] uppercase mb-4">
                 <span className="text-lg">🕒</span> Recently Active
             </h3>
-            <div className="grid grid-cols-5 gap-3">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
                 {activeStaff.map((staff, i) => {
                         const lastActiveDate = toDate(staff.lastActive);
                         const isOnline = Boolean(lastActiveDate && Date.now() - lastActiveDate.getTime() <= ONLINE_WINDOW_MS);

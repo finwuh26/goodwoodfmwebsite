@@ -150,7 +150,7 @@ export const ProfilePage = () => {
         <div className="container mx-auto max-w-5xl">
             {/* Header / Banner */}
             <div className="relative mb-24">
-                <div className="absolute top-0 left-0 right-0 h-64 rounded-3xl overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-56 sm:h-64 rounded-3xl overflow-hidden">
                     <div className={`absolute inset-0 ${userProfile.bannerGradient || 'bg-gradient-to-br from-emerald-900 via-goodwood-dark to-blue-900'} opacity-50`} />
                     <div className="absolute inset-0 backdrop-blur-3xl" />
                     
@@ -159,7 +159,7 @@ export const ProfilePage = () => {
                             href={userProfile.favoriteSong.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="absolute top-6 right-6 z-20 flex items-center gap-3 bg-black/40 hover:bg-black/60 transition-colors backdrop-blur-md border border-white/10 rounded-xl p-3 shadow-2xl group max-w-xs"
+                            className="absolute top-3 left-3 right-3 sm:top-6 sm:right-6 sm:left-auto z-20 flex items-center gap-3 bg-black/40 hover:bg-black/60 transition-colors backdrop-blur-md border border-white/10 rounded-xl p-3 shadow-2xl group max-w-xs"
                         >
                             {userProfile.favoriteSong.art && (
                                 <img src={userProfile.favoriteSong.art} alt="Art" className="w-12 h-12 rounded object-cover shadow-lg border border-white/20" />
@@ -174,7 +174,7 @@ export const ProfilePage = () => {
                         </a>
                     )}
                 </div>
-                <div className="relative pt-32 px-8 pb-0 flex flex-col md:flex-row items-end gap-6 translate-y-16">
+                <div className="relative pt-28 sm:pt-32 px-4 sm:px-8 pb-0 flex flex-col md:flex-row items-start md:items-end gap-6 translate-y-16">
                     <div className="relative shrink-0">
                         {isOnAirProfile && (
                             <>
@@ -190,7 +190,7 @@ export const ProfilePage = () => {
                             />
                         ) : (
                             <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-8 border-goodwood-dark shadow-2xl bg-emerald-900 flex items-center justify-center">
-                                <span className="text-white font-black text-6xl">{userProfile.username?.charAt(0) || '?'}</span>
+                                <span className="text-white font-black text-4xl sm:text-6xl">{userProfile.username?.charAt(0) || '?'}</span>
                             </div>
                         )}
                         {userProfile.role === 'admin' && (
@@ -200,7 +200,7 @@ export const ProfilePage = () => {
                         )}
                     </div>
                     <div className="mb-4">
-                        <h1 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter drop-shadow-2xl flex items-center gap-3">
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter drop-shadow-2xl flex items-center gap-3 max-w-full [overflow-wrap:anywhere]">
                             {userProfile.username}
                             {userProfile.isVerified && (
                                 <svg className="w-8 h-8 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
@@ -237,7 +237,7 @@ export const ProfilePage = () => {
             </div>
 
             {/* Content Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mt-12">
                 {/* Sidebar Stats */}
                 <div className="space-y-6">
                     <div className="bg-goodwood-card border border-goodwood-border rounded-2xl p-6 shadow-xl">
@@ -276,7 +276,7 @@ export const ProfilePage = () => {
 
                 {/* Main Feed / About */}
                 <div className="md:col-span-2 space-y-8">
-                    <div className="bg-goodwood-card border border-goodwood-border rounded-2xl p-8 shadow-xl">
+                    <div className="bg-goodwood-card border border-goodwood-border rounded-2xl p-5 sm:p-8 shadow-xl">
                         <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6">About {userProfile.username}</h3>
                         <p className="text-gray-300 leading-relaxed italic">
                             {userProfile.bio || "This user hasn't written a bio yet. They're probably too busy listening to Goodwood FM! 🎧"}
@@ -312,7 +312,7 @@ export const ProfilePage = () => {
                     </div>
 
                     {activeTab === 'activity' && (
-                        <div className="bg-goodwood-card border border-goodwood-border rounded-2xl p-8 shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="bg-goodwood-card border border-goodwood-border rounded-2xl p-5 sm:p-8 shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6">Recent Activity</h3>
                             <div className="space-y-6">
                                 {likes.length > 0 ? likes.map(like => (
@@ -335,7 +335,7 @@ export const ProfilePage = () => {
                     )}
 
                     {activeTab === 'wall' && (
-                        <div className="bg-goodwood-card border border-goodwood-border rounded-2xl p-8 shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="bg-goodwood-card border border-goodwood-border rounded-2xl p-5 sm:p-8 shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6">Profile Wall</h3>
                             
                             {currentUser && (
@@ -396,7 +396,7 @@ export const ProfilePage = () => {
                     )}
 
                     {activeTab === 'posts' && (
-                        <div className="bg-goodwood-card border border-goodwood-border rounded-2xl p-8 shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="bg-goodwood-card border border-goodwood-border rounded-2xl p-5 sm:p-8 shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6">Comments Made</h3>
                             
                             <div className="space-y-6">
@@ -423,7 +423,7 @@ export const ProfilePage = () => {
                     )}
 
                     {activeTab === 'reputation' && (
-                        <div className="bg-goodwood-card border border-goodwood-border rounded-2xl p-8 shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="bg-goodwood-card border border-goodwood-border rounded-2xl p-5 sm:p-8 shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <div className="flex items-center justify-between mb-8">
                                 <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Reputation History</h3>
                                 <div className="bg-white/10 px-4 py-2 rounded-xl flex items-center gap-2">
@@ -612,7 +612,7 @@ export const SettingsPage = () => {
     return (
         <div className="container mx-auto max-w-4xl">
             <div className="mb-12">
-                <h1 className="text-6xl font-black text-white italic tracking-tighter uppercase mb-2 drop-shadow-2xl">Settings</h1>
+                <h1 className="text-4xl sm:text-6xl font-black text-white italic tracking-tighter uppercase mb-2 drop-shadow-2xl">Settings</h1>
                 <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Manage your account and preferences</p>
             </div>
 
@@ -643,7 +643,7 @@ export const SettingsPage = () => {
                 <div className="flex-1 space-y-8">
                     {showCropper && imageSrc && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
-                            <div className="bg-goodwood-card border border-goodwood-border rounded-3xl p-6 w-full max-w-2xl shadow-2xl flex flex-col h-[80vh]">
+                            <div className="bg-goodwood-card border border-goodwood-border rounded-3xl p-4 sm:p-6 w-full max-w-2xl shadow-2xl flex flex-col h-[85vh] sm:h-[80vh] max-h-[90vh]">
                                 <div className="flex justify-between items-center mb-6">
                                     <h3 className="text-xl font-black text-white uppercase italic">Crop Avatar</h3>
                                     <button onClick={() => setShowCropper(false)} className="text-gray-400 hover:text-white transition-colors">
@@ -686,10 +686,10 @@ export const SettingsPage = () => {
                         </div>
                     )}
 
-                    <form onSubmit={handleSave} className="bg-goodwood-card border border-goodwood-border rounded-3xl p-8 shadow-xl space-y-8">
+                    <form onSubmit={handleSave} className="bg-goodwood-card border border-goodwood-border rounded-3xl p-4 sm:p-8 shadow-xl space-y-6 sm:space-y-8">
                         {activeTab === 'profile' && (
                             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
                                     <div>
                                         <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">Username</label>
                                         <input 
@@ -755,7 +755,7 @@ export const SettingsPage = () => {
                                             {profile.avatarHistory && profile.avatarHistory.length > 0 && (
                                                 <div>
                                                     <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Previous Avatars</p>
-                                                    <div className="flex gap-3">
+                                                    <div className="flex gap-3 overflow-x-auto pb-2" tabIndex={0} aria-label="Previous avatars list">
                                                         {profile.avatarHistory.map((histUrl: string, idx: number) => (
                                                             <button 
                                                                 key={idx}
@@ -849,7 +849,7 @@ export const SettingsPage = () => {
                                             <button 
                                                 type="button" 
                                                 onClick={() => setFavoriteSong(null)} 
-                                                className="opacity-0 group-hover:opacity-100 transition-opacity bg-red-500/20 text-red-400 hover:text-white hover:bg-red-500 p-2 rounded-full absolute right-4"
+                                                className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-red-500/20 text-red-400 hover:text-white hover:bg-red-500 p-2 rounded-full absolute right-4"
                                             >
                                                 <X size={16} />
                                             </button>
@@ -866,7 +866,7 @@ export const SettingsPage = () => {
                                     <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6 border-b border-goodwood-border pb-4">Security Settings</h3>
                                     
                                     <div className="space-y-6">
-                                        <div className="flex items-center justify-between">
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                             <div>
                                                 <h4 className="text-white font-bold mb-1">Update Password</h4>
                                                 <p className="text-gray-500 text-xs">Send a password reset link to your email.</p>

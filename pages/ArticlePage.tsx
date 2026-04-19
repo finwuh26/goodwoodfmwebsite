@@ -124,7 +124,7 @@ export const ArticlePage = () => {
               animate={{ opacity: 1, y: 0 }}
               className="bg-goodwood-card border border-goodwood-border rounded-2xl overflow-hidden shadow-2xl"
             >
-                <div className="h-[450px] relative overflow-hidden">
+                <div className="h-[280px] sm:h-[380px] md:h-[450px] relative overflow-hidden">
                     {article.image ? (
                         <motion.img 
                           initial={{ scale: 1.1 }}
@@ -145,23 +145,23 @@ export const ArticlePage = () => {
                         </motion.div>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-goodwood-card via-goodwood-card/20 to-transparent" />
-                    <div className="absolute bottom-0 left-0 p-8 md:p-12 w-full">
+                    <div className="absolute bottom-0 left-0 p-4 sm:p-8 md:p-12 w-full">
                         <motion.div 
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.2 }}
-                          className="mb-6 flex items-center gap-3"
+                          className="mb-4 sm:mb-6 flex flex-wrap items-center gap-2 sm:gap-3"
                         >
                              <span className="bg-white text-black text-[10px] font-black px-3 py-1 rounded uppercase tracking-widest">{article.category || 'News'}</span>
                              <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
                                 <Clock size={12} /> {formatDate(article.date)}
                              </span>
                         </motion.div>
-                        <motion.h1 
+                         <motion.h1 
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.3 }}
-                          className="text-4xl md:text-7xl font-black text-white italic tracking-tighter leading-[0.9] mb-8 drop-shadow-2xl uppercase"
+                           className="text-2xl sm:text-4xl md:text-6xl font-black text-white italic tracking-tighter leading-[0.95] mb-4 sm:mb-8 drop-shadow-2xl uppercase"
                         >
                           {article.title}
                         </motion.h1>
@@ -169,14 +169,14 @@ export const ArticlePage = () => {
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: 0.4 }}
-                          className="flex items-center justify-between border-t border-white/10 pt-8"
+                           className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-t border-white/10 pt-4 sm:pt-8"
                         >
                             <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 rounded-full border-2 border-goodwood-border shadow-xl bg-emerald-900 flex items-center justify-center">
+                                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-goodwood-border shadow-xl bg-emerald-900 flex items-center justify-center">
                                     <span className="text-white font-black text-xl">{article.authorName?.charAt(0) || '?'}</span>
                                 </div>
                                 <div>
-                                    <div className="text-white font-black text-sm uppercase italic tracking-tight">{article.authorName}</div>
+                                    <div className="text-white font-black text-xs sm:text-sm uppercase italic tracking-tight">{article.authorName}</div>
                                     <div className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Author</div>
                                 </div>
                             </div>
@@ -188,13 +188,13 @@ export const ArticlePage = () => {
                     </div>
                 </div>
 
-                <div className="p-8 md:p-16">
+                <div className="p-4 sm:p-8 md:p-16">
                     <div className="prose prose-invert max-w-none">
                         <motion.div 
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: 0.6 }}
-                          className="text-gray-400 leading-loose text-lg space-y-6 markdown-body"
+                          className="text-gray-400 leading-relaxed sm:leading-loose text-base sm:text-lg space-y-5 sm:space-y-6 markdown-body"
                         >
                           <Markdown>{article.content}</Markdown>
                         </motion.div>
@@ -204,9 +204,9 @@ export const ArticlePage = () => {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.7 }}
-                      className="mt-16 pt-10 border-t border-goodwood-border flex flex-col sm:flex-row items-center justify-between gap-6"
+                      className="mt-10 sm:mt-16 pt-6 sm:pt-10 border-t border-goodwood-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6"
                     >
-                        <div className="flex items-center gap-4">
+                        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                             <button onClick={() => handleReact('like')} className={clsx("flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-colors", hasReacted('like') ? "bg-blue-500/20 text-blue-400" : "bg-goodwood-dark text-gray-400 hover:bg-goodwood-card-hover")}>
                                 <ThumbsUp size={18} className={hasReacted('like') ? "fill-current" : ""} /> {getReactionCount('like')}
                             </button>
@@ -221,8 +221,8 @@ export const ArticlePage = () => {
                 </div>
 
                 {/* Comments Section */}
-                <div className="bg-[#0f1014] p-8 md:p-16 border-t border-goodwood-border">
-                    <h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-3">
+                <div className="bg-[#0f1014] p-4 sm:p-8 md:p-16 border-t border-goodwood-border">
+                    <h3 className="text-xl sm:text-2xl font-bold text-white mb-6 sm:mb-8 flex items-center gap-3">
                         <MessageSquare className="text-emerald-500" /> Comments ({comments.length})
                     </h3>
 
@@ -258,7 +258,7 @@ export const ArticlePage = () => {
 
                     <div className="space-y-6">
                         {comments.map(comment => (
-                            <div key={comment.id} className="flex gap-4 group">
+                            <div key={comment.id} className="flex gap-3 sm:gap-4 group">
                                 <UserAvatar 
                                     userId={comment.authorId} 
                                     fallbackAvatar={comment.authorAvatar} 
@@ -272,7 +272,7 @@ export const ArticlePage = () => {
                                             <span className="text-gray-500 text-xs ml-3">{comment.timestamp?.toDate ? comment.timestamp.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Just now'}</span>
                                         </div>
                                         {(user?.uid === comment.authorId || userProfile?.role === 'admin') && (
-                                            <button onClick={() => handleDeleteComment(comment.id)} className="text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => handleDeleteComment(comment.id)} className="text-gray-500 hover:text-red-500 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                                 <Trash2 size={16} />
                                             </button>
                                         )}

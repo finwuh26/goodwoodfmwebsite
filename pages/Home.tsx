@@ -101,7 +101,7 @@ export const Home = () => {
   ];
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8">
+    <div className="flex flex-col lg:flex-row gap-6 md:gap-8">
       {/* Left Column (Content) */}
       <div className="flex-1 min-w-0">
         {!user && (
@@ -123,10 +123,10 @@ export const Home = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className="bg-goodwood-card border border-goodwood-border rounded p-4 flex items-center gap-4 relative overflow-hidden group cursor-pointer hover:border-white/20 transition-all"
+                className="bg-goodwood-card border border-goodwood-border rounded p-3 sm:p-4 flex items-center gap-3 sm:gap-4 relative overflow-hidden group cursor-pointer hover:border-white/20 transition-all"
               >
                 <div className={`absolute left-0 top-0 bottom-0 w-1 ${item.opacity} group-hover:bg-white transition-colors`} />
-                <div className="w-12 h-12 rounded bg-emerald-900 flex items-center justify-center border border-goodwood-border shadow-inner overflow-hidden">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded bg-emerald-900 flex items-center justify-center border border-goodwood-border shadow-inner overflow-hidden">
                     {item.slot?.claimedBy ? (
                         <UserAvatar userId={item.slot.claimedBy} fallbackName={item.show} className="w-full h-full object-cover" />
                     ) : (
@@ -146,7 +146,7 @@ export const Home = () => {
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-full h-56 rounded-lg overflow-hidden relative mb-12 group cursor-pointer border border-goodwood-border shadow-2xl"
+            className="w-full h-44 sm:h-56 rounded-lg overflow-hidden relative mb-10 sm:mb-12 group cursor-pointer border border-goodwood-border shadow-2xl"
             onClick={() => window.open(activeBanner.link, activeBanner.link?.startsWith('#') ? '_self' : '_blank')}
           >
               <div className="absolute inset-0 bg-goodwood-dark mix-blend-overlay z-0" />
@@ -159,7 +159,7 @@ export const Home = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-goodwood-dark via-goodwood-dark/40 to-transparent z-10" />
               
               {banners.length > 1 && (
-                  <div className="absolute top-6 right-6 z-20 flex gap-2">
+                  <div className="absolute top-3 right-3 sm:top-6 sm:right-6 z-20 flex gap-2">
                        {banners.map((_, i) => (
                            <button 
                                key={i} 
@@ -171,14 +171,14 @@ export const Home = () => {
               )}
               
               {(activeBanner.title || activeBanner.topic) && (
-                  <div className="absolute bottom-6 left-6 z-20">
+                  <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 z-20 pr-3">
                       {activeBanner.topic && (
                           <motion.p 
                             key={`topic-${activeBanner.id}`}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.3 }}
-                            className="text-[10px] tracking-[0.4em] font-bold text-white/80 mb-2 uppercase drop-shadow-md"
+                            className="text-[9px] sm:text-[10px] tracking-[0.3em] sm:tracking-[0.4em] font-bold text-white/80 mb-2 uppercase drop-shadow-md"
                           >
                             {activeBanner.topic}
                           </motion.p>
@@ -189,7 +189,7 @@ export const Home = () => {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.4 }}
-                            className="text-3xl md:text-5xl font-black text-white italic tracking-tighter drop-shadow-2xl"
+                            className="text-xl sm:text-3xl md:text-5xl font-black text-white italic tracking-tighter drop-shadow-2xl"
                           >
                             {activeBanner.title}
                           </motion.h2>
@@ -197,8 +197,8 @@ export const Home = () => {
                   </div>
               )}
               
-              <div className="absolute bottom-6 right-6 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="flex items-center gap-2 text-white font-bold uppercase tracking-widest text-xs bg-white/10 px-4 py-2 rounded-full backdrop-blur-md shadow-2xl">
+              <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="flex items-center gap-2 text-white font-bold uppercase tracking-widest text-[10px] sm:text-xs bg-white/10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full backdrop-blur-md shadow-2xl">
                       Go Here <ExternalLink size={14} />
                   </span>
               </div>
@@ -222,7 +222,7 @@ export const Home = () => {
                       viewport={{ once: true }}
                       transition={{ delay: idx * 0.1 }}
                     >
-                      <Link to={`/article/${article.id}`} className="block relative h-[240px] rounded-xl overflow-hidden border border-goodwood-border group cursor-pointer shadow-xl">
+                      <Link to={`/article/${article.id}`} className="block relative h-[200px] sm:h-[240px] rounded-xl overflow-hidden border border-goodwood-border group cursor-pointer shadow-xl">
                            {article.image ? (
                                <img src={article.image} alt={article.title} className="w-full h-full object-cover opacity-30 group-hover:opacity-50 transition-all duration-700 group-hover:scale-105" />
                            ) : (
@@ -232,7 +232,7 @@ export const Home = () => {
                            )}
                            <div className="absolute inset-0 bg-gradient-to-t from-goodwood-dark via-goodwood-dark/40 to-transparent" />
                            
-                           <div className="absolute bottom-0 left-0 w-full p-8">
+                            <div className="absolute bottom-0 left-0 w-full p-4 sm:p-8">
                               <motion.div 
                                 initial={{ opacity: 0, y: 10 }}
                                 whileInView={{ opacity: 1, y: 0 }}
@@ -244,8 +244,8 @@ export const Home = () => {
                                   {formatDate(article.date)}
                                 </span>
                               </motion.div>
-                              <h2 className="text-3xl md:text-4xl font-black text-white uppercase italic leading-tight mb-4 drop-shadow-md max-w-2xl group-hover:text-white/90 transition-colors">{article.title}</h2>
-                              <div className="flex items-center gap-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                              <h2 title={article.title} className="text-xl sm:text-3xl md:text-4xl font-black text-white uppercase italic leading-tight mb-3 sm:mb-4 drop-shadow-md max-w-2xl group-hover:text-white/90 transition-colors">{article.title}</h2>
+                              <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                                   <div className="flex items-center gap-2 group-hover:text-white transition-colors">
                                       <User size={12} />
                                       <span>{article.authorName}</span>

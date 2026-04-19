@@ -57,11 +57,11 @@ export const Timetable = () => {
         <div className="container mx-auto max-w-6xl">
             <div className="mb-12">
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-                    <h1 className="text-6xl font-black text-white italic tracking-tighter uppercase drop-shadow-2xl">Timetable</h1>
-                    <div className="flex gap-2">
-                        <button onClick={() => setWeekOffset(w => w - 1)} className="px-4 py-2 bg-goodwood-dark border border-goodwood-border rounded-lg text-xs font-bold text-gray-400 hover:text-white uppercase tracking-widest">&larr; Previous</button>
-                        <button onClick={() => setWeekOffset(0)} className="px-4 py-2 bg-goodwood-dark border border-goodwood-border rounded-lg text-xs font-bold text-white hover:text-white uppercase tracking-widest">This Week</button>
-                        <button onClick={() => setWeekOffset(w => w + 1)} className="px-4 py-2 bg-goodwood-dark border border-goodwood-border rounded-lg text-xs font-bold text-gray-400 hover:text-white uppercase tracking-widest">Next &rarr;</button>
+                    <h1 className="text-4xl sm:text-6xl font-black text-white italic tracking-tighter uppercase drop-shadow-2xl">Timetable</h1>
+                    <div className="flex flex-wrap gap-2">
+                        <button onClick={() => setWeekOffset(w => w - 1)} className="px-3 sm:px-4 py-2 bg-goodwood-dark border border-goodwood-border rounded-lg text-[10px] sm:text-xs font-bold text-gray-400 hover:text-white uppercase tracking-widest">&larr; Previous</button>
+                        <button onClick={() => setWeekOffset(0)} className="px-3 sm:px-4 py-2 bg-goodwood-dark border border-goodwood-border rounded-lg text-[10px] sm:text-xs font-bold text-white hover:text-white uppercase tracking-widest">This Week</button>
+                        <button onClick={() => setWeekOffset(w => w + 1)} className="px-3 sm:px-4 py-2 bg-goodwood-dark border border-goodwood-border rounded-lg text-[10px] sm:text-xs font-bold text-gray-400 hover:text-white uppercase tracking-widest">Next &rarr;</button>
                     </div>
                 </div>
                 
@@ -72,7 +72,7 @@ export const Timetable = () => {
                         <span className="text-xs text-emerald-400 font-mono mb-4 block">
                             {`${currentHour.toString().padStart(2, '0')}:00 - ${((currentHour + 1) % 24).toString().padStart(2, '0')}:00`}
                         </span>
-                        <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">{liveShow?.showName || 'AutoDJ'}</h3>
+                        <h3 className="text-xl sm:text-2xl font-black text-white uppercase italic tracking-tight">{liveShow?.showName || 'AutoDJ'}</h3>
                     </div>
 
                     <div className="bg-goodwood-card/40 border border-goodwood-border rounded-xl p-6 relative group">
@@ -80,7 +80,7 @@ export const Timetable = () => {
                         <span className="text-xs text-emerald-400 font-mono mb-4 block">
                             {`${((currentHour + 1) % 24).toString().padStart(2, '0')}:00 - ${((currentHour + 2) % 24).toString().padStart(2, '0')}:00`}
                         </span>
-                        <h3 className="text-2xl font-black text-white uppercase italic tracking-tight flex items-center gap-2">
+                        <h3 className="text-xl sm:text-2xl font-black text-white uppercase italic tracking-tight flex items-center gap-2">
                             {nextShow?.showName || 'AutoDJ'}
                         </h3>
                     </div>
@@ -90,7 +90,7 @@ export const Timetable = () => {
                         <span className="text-xs text-emerald-400 font-mono mb-4 block">
                             {`${((currentHour + 2) % 24).toString().padStart(2, '0')}:00 - ${((currentHour + 3) % 24).toString().padStart(2, '0')}:00`}
                         </span>
-                        <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">{laterShow?.showName || 'AutoDJ'}</h3>
+                        <h3 className="text-xl sm:text-2xl font-black text-white uppercase italic tracking-tight">{laterShow?.showName || 'AutoDJ'}</h3>
                     </div>
                 </div>
 
@@ -118,7 +118,7 @@ export const Timetable = () => {
                                 key={day}
                                 onClick={() => setActiveDay(day)}
                                 className={clsx(
-                                    "px-6 py-3 rounded-lg font-black uppercase text-[10px] tracking-widest transition-all min-w-[140px]",
+                                    "px-4 sm:px-6 py-3 rounded-lg font-black uppercase text-[10px] tracking-widest transition-all min-w-[120px] sm:min-w-[140px]",
                                     activeDay === day 
                                     ? "bg-white/10 text-white border border-white/20" 
                                     : "bg-goodwood-card text-gray-500 hover:text-gray-300 border border-goodwood-border"
@@ -133,8 +133,8 @@ export const Timetable = () => {
                 {/* Schedule List */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {currentDaySchedule.length > 0 ? currentDaySchedule.map((slot) => (
-                        <div key={slot.id} className="bg-goodwood-card/60 border border-goodwood-border rounded-xl p-4 flex items-center justify-between group hover:bg-goodwood-card transition-all">
-                            <div className="flex items-center gap-4">
+                        <div key={slot.id} className="bg-goodwood-card/60 border border-goodwood-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 group hover:bg-goodwood-card transition-all">
+                            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                                 <div className="w-10 h-10 bg-emerald-900 rounded-lg flex items-center justify-center border border-goodwood-border overflow-hidden shrink-0">
                                     {slot.claimedBy ? (
                                         <UserAvatar userId={slot.claimedBy} fallbackName={slot.djName} className="w-full h-full" />
@@ -142,9 +142,9 @@ export const Timetable = () => {
                                         <Radio className="text-white/50" size={20} />
                                     )}
                                 </div>
-                                <span className="text-lg font-black text-white uppercase italic tracking-tight">{slot.showName}</span>
+                                <span title={slot.showName} className="text-base sm:text-lg font-black text-white uppercase italic tracking-tight line-clamp-2 leading-tight">{slot.showName}</span>
                             </div>
-                            <span className="text-sm font-black text-white/40 tracking-widest">{slot.time}</span>
+                            <span className="text-xs sm:text-sm font-black text-white/40 tracking-widest self-start sm:self-auto">{slot.time}</span>
                         </div>
                     )) : (
                         <div className="col-span-full py-12 text-center text-gray-600 font-bold uppercase tracking-widest italic border border-goodwood-border rounded-xl">
@@ -393,11 +393,11 @@ export const Jobs = () => {
 
     return (
         <div className="container mx-auto max-w-6xl">
-            <div className="text-center mb-16 relative py-20 overflow-hidden rounded-3xl">
+            <div className="text-center mb-12 sm:mb-16 relative py-12 sm:py-20 overflow-hidden rounded-3xl">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-900/40 via-goodwood-card to-blue-900/40 backdrop-blur-md border border-goodwood-border z-0" />
                 <div className="relative z-10">
-                    <h1 className="text-7xl font-black text-white italic tracking-tighter uppercase mb-2 drop-shadow-2xl">Job Openings</h1>
-                    <p className="text-emerald-400 font-black uppercase tracking-widest text-sm mb-4 drop-shadow-md">WANT TO BE A PART OF A TEAM OF PASSIONATE INDIVIDUALS?</p>
+                    <h1 className="text-4xl sm:text-7xl font-black text-white italic tracking-tighter uppercase mb-2 drop-shadow-2xl">Job Openings</h1>
+                    <p className="text-emerald-400 font-black uppercase tracking-widest text-[10px] sm:text-sm mb-4 drop-shadow-md">WANT TO BE A PART OF A TEAM OF PASSIONATE INDIVIDUALS?</p>
                     <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px] block">Take a look at our voluntary job openings below:</p>
                 </div>
             </div>
@@ -405,11 +405,11 @@ export const Jobs = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {jobs.map((job) => (
                     <div key={job.title} className="bg-goodwood-card border border-goodwood-border rounded-3xl overflow-hidden flex flex-col shadow-2xl">
-                        <div className={clsx("p-8 bg-gradient-to-r flex items-center justify-center gap-4", job.color)}>
+                        <div className={clsx("p-5 sm:p-8 bg-gradient-to-r flex items-center justify-center gap-3 sm:gap-4", job.color)}>
                             <job.icon size={32} className="text-white" />
-                            <h2 className="text-3xl font-black text-white uppercase italic tracking-tight">{job.title}</h2>
+                            <h2 className="text-xl sm:text-3xl font-black text-white uppercase italic tracking-tight">{job.title}</h2>
                         </div>
-                        <div className="p-8 flex-1 flex flex-col">
+                        <div className="p-5 sm:p-8 flex-1 flex flex-col">
                             <p className="text-gray-300 text-sm leading-relaxed mb-8 text-center font-medium">
                                 {job.description}
                             </p>
@@ -467,8 +467,8 @@ export const ContentList = () => {
 
             <div className="space-y-4">
                 {articles.map((article) => (
-                    <Link to={`/article/${article.id}`} key={article.id} className="bg-[#16191f] border border-[#2a2f3a] rounded-lg h-24 flex overflow-hidden group hover:border-gray-500 transition-colors cursor-pointer relative">
-                        <div className="w-48 relative overflow-hidden">
+                    <Link to={`/article/${article.id}`} key={article.id} className="bg-[#16191f] border border-[#2a2f3a] rounded-lg flex flex-col sm:flex-row sm:h-24 overflow-hidden group hover:border-gray-500 transition-colors cursor-pointer relative">
+                        <div className="w-full sm:w-48 h-32 sm:h-auto relative overflow-hidden">
                             {article.image ? (
                                 <img src={article.image} alt={article.title} className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
                             ) : (
@@ -482,9 +482,9 @@ export const ContentList = () => {
                             </div>
                         </div>
                         <div className="flex-1 p-4 flex flex-col justify-center">
-                            <h3 className="text-white font-bold text-lg leading-tight group-hover:text-blue-400 transition-colors">{article.title}</h3>
+                            <h3 className="text-white font-bold text-base sm:text-lg leading-tight group-hover:text-blue-400 transition-colors">{article.title}</h3>
                         </div>
-                        <div className="px-6 flex items-center text-xs text-gray-400 font-mono border-l border-[#2a2f3a]">
+                        <div className="px-4 sm:px-6 py-3 sm:py-0 flex items-center text-xs text-gray-400 font-mono border-t sm:border-t-0 sm:border-l border-[#2a2f3a]">
                              <Clock size={12} className="mr-2" /> {formatDate(article.date)}
                         </div>
                     </Link>

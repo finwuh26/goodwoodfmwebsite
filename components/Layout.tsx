@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Play, Pause, ShoppingBag, User as UserIcon, ChevronDown, Heart, Volume2, LogOut, Mail, Maximize2, MoreHorizontal, Radio, Settings, Shield } from 'lucide-react';
+import { Play, Pause, ShoppingBag, User as UserIcon, ChevronDown, Heart, Volume2, LogOut, Mail, Maximize2, MoreHorizontal, Radio, Settings, Shield, Menu, X } from 'lucide-react';
 import { NAV_ITEMS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 import clsx from 'clsx';
@@ -43,6 +43,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // UI State
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [showMiniplayer, setShowMiniplayer] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -85,6 +86,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Reset dropdown on route change
   useEffect(() => {
     setActiveDropdown(null);
+    setMobileNavOpen(false);
   }, [location]);
 
   // Audio Logic
@@ -118,6 +120,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const streamerName = radioData?.live?.streamer_name || "";
   const nextSong = radioData?.playing_next?.song;
   const history = radioData?.song_history || [];
+  const hasStaffAccess = Boolean(userProfile && ['admin', 'staff', 'manager', 'dj', 'journalist', 'owner'].includes(userProfile.role || ''));
 
   // Check if current song is liked by user
   useEffect(() => {
@@ -281,7 +284,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       />
 
       {/* Header Section */}
-      <header className="relative w-full h-[450px] flex flex-col">
+      <header className="relative w-full h-[380px] sm:h-[450px] flex flex-col">
         {/* Background Wrapper */}
         <div className="absolute inset-0 overflow-hidden z-0">
             {/* Blurred Background */}
@@ -304,8 +307,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
 
         {/* Main Player Area */}
-        <div className="relative z-10 flex-1 flex flex-col justify-end pb-8">
-          <div className="container mx-auto px-6 md:px-12 flex flex-col md:flex-row items-end gap-8">
+        <div className="relative z-10 flex-1 flex flex-col justify-end pb-6 sm:pb-8">
+          <div className="container mx-auto px-4 sm:px-6 md:px-12 flex flex-col md:flex-row items-start md:items-end gap-6 md:gap-8">
             
             {/* Album Art */}
             <motion.div 
@@ -313,7 +316,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               animate={{ opacity: 1, y: 0 }}
               className="relative shrink-0 group"
             >
-                <div className="w-48 h-48 md:w-60 md:h-60 rounded-lg shadow-2xl shadow-black/50 overflow-hidden border border-white/10 bg-goodwood-card relative">
+                <div className="w-36 h-36 sm:w-48 sm:h-48 md:w-60 md:h-60 rounded-lg shadow-2xl shadow-black/50 overflow-hidden border border-white/10 bg-goodwood-card relative">
                    <AnimatePresence mode="wait">
                      {albumArt ? (
                           <motion.img 
@@ -353,16 +356,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <div className="flex items-center gap-3 mb-2">
                     <span className="text-gray-500 text-xs font-bold tracking-widest uppercase">Now Playing</span>
                   </div>
-                  <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-none mb-2 drop-shadow-lg w-full overflow-hidden">
+                  <h1 className="text-2xl sm:text-4xl md:text-6xl font-black text-white tracking-tight leading-none mb-2 drop-shadow-lg w-full overflow-hidden">
                       <Marquee text={songTitle} className="w-full" />
                   </h1>
-                  <div className="text-xl md:text-2xl text-gray-400 font-medium mb-4 w-full overflow-hidden">
+                  <div className="text-base sm:text-xl md:text-2xl text-gray-400 font-medium mb-4 w-full overflow-hidden">
                       <Marquee text={songArtist} className="w-full" />
                   </div>
                   <motion.div 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="flex items-center gap-2 mb-8"
+                    className="flex items-center gap-2 mb-5 sm:mb-8"
                   >
                      <span className="bg-white/10 px-1.5 py-0.5 rounded text-[8px] font-black text-white/60 tracking-widest uppercase">ON AIR</span>
                       <span className="text-white/30 text-[10px] font-bold uppercase tracking-widest truncate">
@@ -375,12 +378,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="flex items-center gap-6"
+                   className="flex flex-wrap items-center gap-4 sm:gap-6"
                 >
                     {/* Play Button */}
                     <button 
                         onClick={() => setIsPlaying(!isPlaying)}
-                        className="w-14 h-14 bg-white rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-white/10 group"
+                        className="w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-white/10 group"
                     >
                         {isPlaying ? (
                             <Pause className="w-6 h-6 text-black fill-current" />
@@ -393,7 +396,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <div className="h-8 w-[1px] bg-white/10 mx-2 hidden md:block" />
 
                     {/* Volume Slider */}
-                    <div className="flex items-center gap-3 group">
+                    <div className="hidden sm:flex items-center gap-3 group">
                         <Volume2 size={20} className="text-gray-400 group-hover:text-white transition-colors" />
                         <div className="w-24 h-1 bg-white/10 rounded-full relative cursor-pointer overflow-hidden">
                             <motion.div 
@@ -413,7 +416,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </div>
 
                     {/* Right Actions */}
-                    <div className="ml-auto flex items-center gap-4 text-gray-400">
+                    <div className="ml-auto flex items-center gap-2 sm:gap-4 text-gray-400">
                         <button 
                           onClick={handleLike}
                           className={clsx(
@@ -436,8 +439,33 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
 
         {/* Navigation Bar */}
-        <div className="relative z-20 container mx-auto px-4 pb-0">
-          <nav className="flex items-center justify-between bg-goodwood-card/80 backdrop-blur-md border border-goodwood-border rounded-t-lg px-2">
+        <div className="relative z-20 container mx-auto px-3 sm:px-4 pb-0">
+          <nav className="bg-goodwood-card/80 backdrop-blur-md border border-goodwood-border rounded-t-lg px-2">
+            <div className="lg:hidden flex items-center justify-between px-2 py-2">
+              <button
+                onClick={() => setMobileNavOpen(prev => !prev)}
+                className="inline-flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-widest text-gray-300 hover:text-white hover:bg-white/5 rounded-md transition-colors"
+              >
+                {mobileNavOpen ? <X size={16} /> : <Menu size={16} />}
+                Menu
+              </button>
+              {userProfile ? (
+                <Link to={`/profile/${userProfile.uid}`} className="inline-flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-widest text-gray-300 hover:text-white hover:bg-white/5 rounded-md transition-colors">
+                  <UserIcon size={14} />
+                  Account
+                </Link>
+              ) : (
+                <button
+                  onClick={() => setShowLogin(true)}
+                  className="inline-flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-widest text-gray-300 hover:text-white hover:bg-white/5 rounded-md transition-colors"
+                >
+                  <UserIcon size={14} />
+                  Login
+                </button>
+              )}
+            </div>
+
+            <div className="hidden lg:flex items-center justify-between">
             {/* Left Nav */}
             <ul className="flex items-center">
               {NAV_ITEMS.map((item) => (
@@ -517,7 +545,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                           <Link to="/settings" className="w-full text-left px-4 py-2 text-xs text-gray-400 hover:bg-white/5 flex items-center gap-2">
                               <Settings size={12} /> Settings
                           </Link>
-                          {(userProfile.role === 'admin' || userProfile.role === 'staff' || userProfile.role === 'manager' || userProfile.role === 'dj' || userProfile.role === 'journalist' || userProfile.role === 'owner') && (
+                          {hasStaffAccess && (
                               <Link to="/staff/dashboard" className="w-full text-left px-4 py-2 text-xs text-emerald-400 hover:bg-white/5 flex items-center gap-2">
                                   <Shield size={12} /> Staff Dashboard
                               </Link>
@@ -538,6 +566,70 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                    </button>
                )}
             </div>
+            </div>
+
+            <AnimatePresence>
+              {mobileNavOpen && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="lg:hidden border-t border-goodwood-border overflow-hidden"
+                >
+                  <ul className="px-2 py-2 space-y-1">
+                    {NAV_ITEMS.map((item) => (
+                      <li key={item.label}>
+                        <Link
+                          to={item.href}
+                          className="flex items-center gap-2 px-3 py-3 text-xs font-bold uppercase tracking-wide text-gray-300 hover:text-white hover:bg-white/5 rounded-md transition-colors"
+                        >
+                          <item.icon size={14} />
+                          {item.label}
+                        </Link>
+                        {item.subItems && (
+                          <div className="ml-7 mb-1 space-y-1">
+                            {item.subItems.map((sub) => (
+                              sub.href.startsWith('http') ? (
+                                <a
+                                  key={sub.label}
+                                  href={sub.href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block px-2 py-1.5 text-xs text-gray-500 hover:text-white transition-colors"
+                                >
+                                  {sub.label}
+                                </a>
+                              ) : (
+                                <Link
+                                  key={sub.label}
+                                  to={sub.href}
+                                  className="block px-2 py-1.5 text-xs text-gray-500 hover:text-white transition-colors"
+                                >
+                                  {sub.label}
+                                </Link>
+                              )
+                            ))}
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                    <li className="pt-2 mt-2 border-t border-goodwood-border">
+                      {userProfile ? (
+                        <div className="space-y-1">
+                          <Link to="/settings" className="block px-3 py-2 text-xs text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Settings</Link>
+                          {hasStaffAccess && (
+                            <Link to="/staff/dashboard" className="block px-3 py-2 text-xs text-emerald-400 hover:bg-white/5 rounded-md">Staff Dashboard</Link>
+                          )}
+                          <button onClick={logout} className="w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-white/5 rounded-md">Sign Out</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => setShowLogin(true)} className="w-full text-left px-3 py-2 text-xs text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Login / Sign Up</button>
+                      )}
+                    </li>
+                  </ul>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </nav>
         </div>
       </header>
@@ -569,7 +661,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
            </div>
 
            <div className="text-center">
-              <h2 className="text-4xl font-thin tracking-[0.4em] text-gray-700 hover:text-gray-500 transition-colors cursor-default select-none">GOODWOOD</h2>
+              <h2 className="text-2xl sm:text-4xl font-thin tracking-[0.25em] sm:tracking-[0.4em] text-gray-700 hover:text-gray-500 transition-colors cursor-default select-none">GOODWOOD</h2>
            </div>
 
            <div className="text-xs text-gray-500 text-center md:text-right space-y-2">
@@ -647,7 +739,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Request Modal */}
       <AnimatePresence>
         {showRequestModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-2 sm:p-4">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -659,10 +751,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-[#12141a] w-full max-w-md rounded-lg shadow-2xl border border-goodwood-border overflow-hidden relative z-10"
-            >                <div className="p-8">
-                  <h2 className="text-2xl font-bold text-white mb-6 uppercase tracking-tighter italic">Send a Request</h2>
-                  <form className="space-y-4" onSubmit={handleRequestSubmit}>
+              className="bg-[#12141a] w-full max-w-md rounded-lg shadow-2xl border border-goodwood-border max-h-[80dvh] sm:max-h-[85dvh] relative z-10 flex flex-col"
+            >
+               <div className="p-4 sm:p-8 overflow-y-auto">
+                  <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 uppercase tracking-tighter italic">Send a Request</h2>
+                  <form className="space-y-3 sm:space-y-4" onSubmit={handleRequestSubmit}>
                     <div>
                       <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Message Type</label>
                       <select 
@@ -687,7 +780,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         />
                         {isSearchingSongs && <p className="text-xs text-gray-500 italic px-2">Searching...</p>}
                         {songSearchResults.length > 0 && (
-                          <div className="bg-goodwood-dark border border-goodwood-border rounded-lg overflow-hidden absolute z-20 w-full shadow-2xl">
+                          <div className="bg-goodwood-dark border border-goodwood-border rounded-lg overflow-y-auto max-h-48 sm:max-h-56 absolute z-20 w-full shadow-2xl">
                             {songSearchResults.map((song, idx) => (
                               <button
                                 key={idx}
@@ -717,23 +810,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                       <textarea 
                         value={requestMessage}
                         onChange={(e) => setRequestMessage(e.target.value)}
-                        className="w-full bg-goodwood-dark border border-goodwood-border rounded-lg px-4 py-3 text-white text-sm focus:border-white/20 transition-colors outline-none h-32 resize-none"
+                        className="w-full bg-goodwood-dark border border-goodwood-border rounded-lg px-4 py-3 text-white text-sm focus:border-white/20 transition-colors outline-none h-28 sm:h-32 resize-none"
                         placeholder="Type your message here..."
                         required
                       ></textarea>
                     </div>
                     <button 
                       disabled={submittingRequest || !userProfile}
-                      className="w-full bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-white/5 disabled:opacity-50"
+                      className="w-full bg-white text-black py-3 sm:py-4 rounded-xl font-black uppercase tracking-widest text-xs sm:text-sm hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-white/5 disabled:opacity-50"
                     >
                       {submittingRequest ? 'Sending...' : userProfile ? 'Send Request' : 'Login to Send'}
                     </button>
                   </form>
                </div>
 
-               <div className="bg-goodwood-dark py-4 px-8 border-t border-goodwood-border flex justify-center items-center">
-                   <button onClick={() => setShowRequestModal(false)} className="text-gray-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors">Close</button>
-               </div>
+               <div className="bg-goodwood-dark py-3 sm:py-4 px-4 sm:px-8 border-t border-goodwood-border flex justify-center items-center">
+                    <button onClick={() => setShowRequestModal(false)} className="text-gray-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors">Close</button>
+                </div>
             </motion.div>
           </div>
         )}
@@ -742,7 +835,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Auth Modal (Login/Signup) */}
       <AnimatePresence>
         {showLogin && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-2 sm:p-4">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -754,15 +847,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-[#12141a] w-full max-w-md rounded-lg shadow-2xl border border-goodwood-border overflow-hidden relative z-10"
+              className="bg-[#12141a] w-full max-w-md rounded-lg shadow-2xl border border-goodwood-border max-h-[80dvh] sm:max-h-[85dvh] relative z-10 flex flex-col"
             >
                
-               <div className="p-8">
-                  <div className="text-center mb-8">
+               <div className="p-4 sm:p-8 overflow-y-auto">
+                  <div className="text-center mb-6 sm:mb-8">
                      <div className="w-16 h-16 bg-[#1a1d26] rounded-full mx-auto flex items-center justify-center mb-4 border border-goodwood-border">
                         <UserIcon size={32} className="text-white" />
                      </div>
-                     <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">
+                     <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 tracking-tight">
                        Welcome to Goodwood FM
                      </h2>
                      <p className="text-gray-400 text-sm">
@@ -837,9 +930,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                      </p>
                   </div>
                </div>
-               <div className="bg-goodwood-dark py-4 px-8 border-t border-goodwood-border flex justify-center items-center">
-                   <button onClick={() => setShowLogin(false)} className="text-gray-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors">Cancel</button>
-               </div>
+                <div className="bg-goodwood-dark py-3 sm:py-4 px-4 sm:px-8 border-t border-goodwood-border flex justify-center items-center">
+                    <button onClick={() => setShowLogin(false)} className="text-gray-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors">Cancel</button>
+                </div>
             </motion.div>
           </div>
         )}
