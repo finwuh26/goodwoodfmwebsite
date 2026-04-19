@@ -3,7 +3,7 @@ import { Shield, FileText, Lock, Cookie, Scale } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const LEGAL_EFFECTIVE_DATE = '19 April 2026';
-const LEGAL_CONTACT_EMAIL = 'radiodjmra@gmail.com';
+const LEGAL_CONTACT_EMAIL = 'contact@finwuh.uk';
 
 const SectionCard: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <section className="bg-goodwood-card border border-goodwood-border rounded-xl p-8 text-gray-300 space-y-6 leading-relaxed">
