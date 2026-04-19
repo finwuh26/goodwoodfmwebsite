@@ -530,7 +530,16 @@ export const ContentList = () => {
                             </div>
                         </div>
                         <div className="flex-1 p-4 flex flex-col justify-center">
-                            <h3 className="text-white font-bold text-base sm:text-lg leading-tight group-hover:text-blue-400 transition-colors">{article.title}</h3>
+                            <h3 className="text-white font-bold text-base sm:text-lg leading-tight group-hover:text-blue-400 transition-colors mb-2">{article.title}</h3>
+                            <div className="flex items-center gap-2">
+                                <UserAvatar 
+                                    userId={article.authorId} 
+                                    fallbackAvatar={article.authorAvatar} 
+                                    fallbackName={article.authorName} 
+                                    className="w-4 h-4 rounded-full object-cover shrink-0" 
+                                />
+                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{article.authorName}</span>
+                            </div>
                         </div>
                         <div className="px-4 sm:px-6 py-3 sm:py-0 flex items-center text-xs text-gray-400 font-mono border-t sm:border-t-0 sm:border-l border-[#2a2f3a]">
                              <Clock size={12} className="mr-2" /> {formatDate(article.date)}
