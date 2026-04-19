@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
-import { User, Clock, ArrowLeft, Heart, Flame, ThumbsUp, MessageSquare, Send, Trash2, FileText } from 'lucide-react';
+import { User, Clock, ArrowLeft, Heart, Flame, ThumbsUp, MessageSquare, Send, Trash2, FileText, Share2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { doc, onSnapshot, collection, query, where, orderBy, addDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
@@ -10,6 +10,7 @@ import clsx from 'clsx';
 import Markdown from 'react-markdown';
 import { UserAvatar } from '../components/UserAvatar';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { toast } from 'react-hot-toast';
 
 export const ArticlePage = () => {
     const { id } = useParams();
@@ -94,6 +95,21 @@ export const ArticlePage = () => {
             }
         } catch (err) {
             handleFirestoreError(err, OperationType.CREATE, 'articleReactions');
+        }
+    };
+
+    const handleCopyShareLink = async () => {
+        if (!id) return;
+        const shareUrl = `${window.location.origin}/share/article/${id}`;
+        try {
+            if (!navigator.clipboard?.writeText) {
+                toast.error('Clipboard not supported in this browser');
+                return;
+            }
+            await navigator.clipboard.writeText(shareUrl);
+            toast.success('Share link copied');
+        } catch {
+            toast.error('Unable to copy share link');
         }
     };
 
@@ -215,6 +231,9 @@ export const ArticlePage = () => {
                             </button>
                             <button onClick={() => handleReact('fire')} className={clsx("flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-colors", hasReacted('fire') ? "bg-orange-500/20 text-orange-400" : "bg-goodwood-dark text-gray-400 hover:bg-goodwood-card-hover")}>
                                 <Flame size={18} className={hasReacted('fire') ? "fill-current" : ""} /> {getReactionCount('fire')}
+                            </button>
+                            <button onClick={handleCopyShareLink} className="flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-colors bg-goodwood-dark text-gray-400 hover:bg-goodwood-card-hover">
+                                <Share2 size={18} /> Share
                             </button>
                         </div>
                     </motion.div>
