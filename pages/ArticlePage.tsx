@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { User, Clock, ArrowLeft, Heart, Flame, ThumbsUp, MessageSquare, Send, Trash2, FileText, Share2 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { doc, getDoc, collection, query, where, orderBy, addDoc, serverTimestamp, deleteDoc, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, orderBy, addDoc, serverTimestamp, deleteDoc, getDocs, Timestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { formatDate } from '../utils';
 import { useAuth } from '../context/AuthContext';
@@ -116,8 +116,7 @@ export const ArticlePage = () => {
                     authorName: userProfile?.username || 'Anonymous',
                     authorAvatar: userProfile?.avatar || '',
                     content: commentContent,
-                    // Temporary placeholder; refreshed server timestamps replace this shortly.
-                    timestamp: null
+                    timestamp: Timestamp.now()
                 },
                 ...prev
             ]);

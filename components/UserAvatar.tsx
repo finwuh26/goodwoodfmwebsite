@@ -22,7 +22,7 @@ interface SharedUserAvatarListener {
   subscribers: Set<(data: UserAvatarData | null) => void>;
 }
 
-const USER_AVATAR_CACHE_TTL_MS = 30 * 60 * 1000;
+const USER_AVATAR_CACHE_TTL_MS = 10 * 60 * 1000;
 const sharedUserAvatarListeners = new Map<string, SharedUserAvatarListener>();
 
 const subscribeToSharedUserAvatar = (
