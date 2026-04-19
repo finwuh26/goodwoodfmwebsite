@@ -34,7 +34,7 @@ const stripMarkdown = (value = '') =>
 const getString = (fields, key) => fields?.[key]?.stringValue || '';
 const normalizeDatabaseId = (value) => {
   const trimmed = value?.trim();
-  return trimmed ? trimmed : '';
+  return trimmed || '';
 };
 
 const buildOrigin = (req) => {
