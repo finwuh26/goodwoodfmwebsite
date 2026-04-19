@@ -12,7 +12,7 @@ import { Shop } from './pages/Shop';
 import { StaffDashboard } from './pages/StaffDashboard';
 import { ArticleWriter } from './pages/ArticleWriter';
 import { IdeasPoolPage, MyWorkflowPage, EditorialQueuePage } from './pages/StaffEditorialPages';
-import { TermsOfService, PrivacyPolicy, Safety } from './pages/LegalPages';
+import { TermsOfService, PrivacyPolicy, Safety, LegalHub, CookiePolicy } from './pages/LegalPages';
 import { RadioProvider } from './context/RadioContext';
 import { AuthProvider } from './context/AuthContext';
 
@@ -80,8 +80,10 @@ function App() {
                   <Route path="/contact/feedback" element={<ContactForm type="Site Feedback" />} />
                   
                   {/* Legal */}
+                  <Route path="/legal" element={<LegalHub />} />
                   <Route path="/terms" element={<TermsOfService />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />
+                  <Route path="/cookies" element={<CookiePolicy />} />
                   <Route path="/safety" element={<Safety />} />
                   
                   <Route path="*" element={<Navigate to="/" replace />} />

@@ -710,9 +710,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-8">
            <div className="text-xs text-gray-500 space-y-2 text-center md:text-left">
               <div className="flex items-center gap-3 justify-center md:justify-start text-gray-400 font-bold">
+                <Link to="/legal" className="hover:text-white transition-colors">Legal</Link>
+                <span>/</span>
                 <Link to="/terms" className="hover:text-white transition-colors">Terms & Conditions</Link>
                 <span>/</span>
                 <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+                <span>/</span>
+                <Link to="/cookies" className="hover:text-white transition-colors">Cookies</Link>
                 <span>/</span>
                 <Link to="/safety" className="hover:text-white transition-colors">Safety</Link>
               </div>
@@ -838,7 +842,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               <div className="p-5 sm:p-8">
                 <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 uppercase tracking-tight">Important legal update</h2>
                 <p className="text-sm text-gray-300 leading-relaxed mb-4">
-                  Due to recent conflicts and corrections to previous legal errors, we require all existing registered users to accept the latest Terms & Conditions before continuing.
+                  We have updated our legal documents for UK-focused Terms, Privacy, and cookie information. Existing registered users must accept the latest Terms & Conditions before continuing.
                 </p>
                 <p className="text-xs text-gray-400 mb-4">
                   Version: {LEGAL_NOTICE_VERSION}
