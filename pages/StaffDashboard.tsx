@@ -257,7 +257,24 @@ export const StaffDashboard = () => {
                     setRedeemCodes([]);
                 }
             } catch (err) {
-                handleFirestoreError(err, OperationType.GET, 'staffDashboard:lowPriorityPolling');
+                console.error('Firestore Error:', JSON.stringify({
+                    error: err instanceof Error ? err.message : String(err),
+                    operationType: OperationType.GET,
+                    path: 'staffDashboard:lowPriorityPolling',
+                    authInfo: {
+                        userId: user?.uid,
+                        email: user?.email ?? null,
+                        emailVerified: user?.emailVerified,
+                        isAnonymous: user?.isAnonymous,
+                        tenantId: user?.tenantId ?? null,
+                        providerInfo: user?.providerData.map(provider => ({
+                            providerId: provider.providerId,
+                            displayName: provider.displayName,
+                            email: provider.email,
+                            photoUrl: provider.photoURL
+                        })) || []
+                    }
+                }));
             }
         };
 

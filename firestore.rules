@@ -326,6 +326,10 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    match /redeemCodes/{codeId} {
+      allow read, write: if isAdmin();
+    }
+
     match /reputationLogs/{logId} {
       allow read: if true;
       allow create: if isAdmin();
