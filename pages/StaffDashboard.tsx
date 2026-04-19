@@ -266,20 +266,14 @@ export const StaffDashboard = () => {
             }
         };
 
-        const onWindowFocus = () => {
-            fetchLowPriorityData();
-        };
-
         fetchLowPriorityData();
         const pollingInterval = window.setInterval(fetchLowPriorityData, DASHBOARD_POLL_INTERVAL_MS);
         document.addEventListener('visibilitychange', onVisibilityChange);
-        window.addEventListener('focus', onWindowFocus);
 
         return () => {
             isMounted = false;
             window.clearInterval(pollingInterval);
             document.removeEventListener('visibilitychange', onVisibilityChange);
-            window.removeEventListener('focus', onWindowFocus);
             unsubSettings();
         };
     }, [user, userProfile?.role]);
