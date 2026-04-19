@@ -311,11 +311,15 @@ export const ArticlePage = () => {
                            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-t border-white/10 pt-4 sm:pt-8"
                         >
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-goodwood-border shadow-xl bg-emerald-900 flex items-center justify-center">
-                                    <span className="text-white font-black text-xl">{article.authorName?.charAt(0) || '?'}</span>
+                                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-goodwood-border shadow-xl bg-emerald-900 flex items-center justify-center overflow-hidden">
+                                     {article.authorAvatar ? (
+                                         <img src={article.authorAvatar} alt={article.authorName} className="w-full h-full object-cover" />
+                                     ) : (
+                                         <span className="text-white font-black text-xl">{article.authorName?.charAt(0) || '?'}</span>
+                                     )}
                                 </div>
                                 <div>
-                                    <div className="text-white font-black text-xs sm:text-sm uppercase italic tracking-tight">{article.authorName}</div>
+                                    <Link to={`/profile/${article.authorId}`} className="text-white font-black text-xs sm:text-sm uppercase italic tracking-tight hover:text-emerald-400 transition-colors">{article.authorName}</Link>
                                     <div className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Author</div>
                                 </div>
                             </div>
