@@ -38,8 +38,8 @@ function App() {
           />
           <Routes>
             <Route path="/staff/dashboard" element={<StaffDashboard />} />
-            <Route path="/staff/article/new" element={<ArticleWriter />} />
-            <Route path="/staff/article/:id" element={<ArticleWriter />} />
+            <Route path="/staff/article/new" element={<Layout><ArticleWriter /></Layout>} />
+            <Route path="/staff/article/:id" element={<Layout><ArticleWriter /></Layout>} />
             <Route path="*" element={
               <Layout>
                 <Routes>

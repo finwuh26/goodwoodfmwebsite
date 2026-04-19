@@ -362,8 +362,8 @@ export const Jobs = () => {
             description: "A Station Presenter is the core role of Goodwood FM. Station Presenters are responsible for keeping listeners entertained throughout the day by hosting a range of competitions, taking requests and shoutouts and playing the freshest hits. If you love music, this is the role for you!",
             requirements: [
                 "You must be able to present a minimum of 2 slots (hours) per week.",
-                "You must be the age of 16 or above.",
-                "You must be confident and willing to speak infront of a large audience.",
+                "You must be the age of 13 or above.",
+                "You must be confident and willing to speak in front of a large audience.",
                 "You must be willing to play a large variety of music.",
                 "You must have a clear and working microphone.",
                 "You must have a good attitude and be able to work as part of a team.",
@@ -380,7 +380,7 @@ export const Jobs = () => {
             description: "A Content Reporter is responsible for actively posting articles to the Goodwood FM site. Articles are to contain a variety of topics such as Goodwood FM news, affiliate news, music related gossip etc. You are to keep the community and visitors of the site updated with the latest news. If you have a passion for writing, Content Reporter is the role for you!",
             requirements: [
                 "You must be able to write a minimum of 2 articles per week.",
-                "You must be the age of 16 or above.",
+                "You must be the age of 13 or above.",
                 "You must have thorough understanding of basic punctuation and grammar.",
                 "You must be fluent in the English language.",
                 "You must have a good attitude and be able to work as part of a team.",

@@ -41,8 +41,12 @@ const buildOrigin = (req) => {
 };
 
 const resolveImageUrl = (origin, imageUrl) => {
-  if (!imageUrl || imageUrl.startsWith('data:')) {
+  if (!imageUrl) {
     return '';
+  }
+
+  if (/^data:image\//i.test(imageUrl)) {
+    return imageUrl;
   }
 
   if (/^https?:\/\//i.test(imageUrl)) {
