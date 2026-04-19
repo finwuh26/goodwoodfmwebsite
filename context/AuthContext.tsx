@@ -9,7 +9,7 @@ import {
   signInWithEmailAndPassword,
   updateProfile
 } from 'firebase/auth';
-import { doc, onSnapshot, setDoc, serverTimestamp, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, serverTimestamp, updateDoc, Timestamp } from 'firebase/firestore';
 import { auth, db, handleFirestoreError, OperationType } from '../firebase';
 
 interface UserProfile {
@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (firebaseUser) {
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         
-        // Listen to profile changes
+        // Listen to profile changes in realtime to avoid stale role/profile regressions.
         unsubProfile = onSnapshot(userDocRef, (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data() as UserProfile;
@@ -115,6 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }).catch(err => handleFirestoreError(err, OperationType.CREATE, `users/${firebaseUser.uid}`));
           }
         }, (err) => handleFirestoreError(err, OperationType.GET, `users/${firebaseUser.uid}`));
+
         updateDoc(userDocRef, { lastActive: serverTimestamp() }).catch((err) => {
           console.warn('Unable to update lastActive on auth state change:', err);
         });

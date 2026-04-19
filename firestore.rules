@@ -158,21 +158,23 @@ service cloud.firestore {
     }
 
     function isValidProfileComment(data) {
-      return hasOnlyAllowedFields(['targetUserId', 'authorId', 'authorName', 'authorAvatar', 'content', 'timestamp']) &&
+      return hasOnlyAllowedFields(['targetUserId', 'authorId', 'authorName', 'authorAvatar', 'content', 'parentCommentId', 'timestamp']) &&
              data.targetUserId is string &&
              data.authorId == request.auth.uid &&
              data.authorName is string &&
              (!('authorAvatar' in data) || data.authorAvatar is string) &&
+             (!('parentCommentId' in data) || data.parentCommentId is string) &&
              data.content is string && data.content.size() > 0 && data.content.size() <= 1000 &&
              data.timestamp is timestamp;
     }
 
     function isValidArticleComment(data) {
-      return hasOnlyAllowedFields(['articleId', 'authorId', 'authorName', 'authorAvatar', 'content', 'timestamp']) &&
+      return hasOnlyAllowedFields(['articleId', 'authorId', 'authorName', 'authorAvatar', 'content', 'parentCommentId', 'timestamp']) &&
              data.articleId is string &&
              data.authorId == request.auth.uid &&
              data.authorName is string &&
              (!('authorAvatar' in data) || data.authorAvatar is string) &&
+             (!('parentCommentId' in data) || data.parentCommentId is string) &&
              data.content is string && data.content.size() > 0 && data.content.size() <= 1000 &&
              data.timestamp is timestamp;
     }
