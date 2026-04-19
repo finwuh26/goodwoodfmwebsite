@@ -103,7 +103,7 @@ export const ArticlePage = () => {
         const shareUrl = `${window.location.origin}/share/article/${id}`;
         try {
             if (!navigator.clipboard?.writeText) {
-                toast.error('Unable to copy share link');
+                toast.error('Clipboard not supported in this browser');
                 return;
             }
             await navigator.clipboard.writeText(shareUrl);

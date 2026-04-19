@@ -13,6 +13,15 @@ const escapeHtml = (value = '') =>
     .replace(/'/g, '&#39;');
 
 const normalizeWhitespace = (value = '') => value.replace(/\s+/g, ' ').trim();
+const truncateAtWordBoundary = (value = '', maxLength = MAX_OG_DESCRIPTION_LENGTH) => {
+  if (value.length <= maxLength) {
+    return value;
+  }
+  const truncated = value.slice(0, maxLength + 1);
+  const boundaryIndex = truncated.lastIndexOf(' ');
+  const safeTruncation = boundaryIndex > 0 ? truncated.slice(0, boundaryIndex) : value.slice(0, maxLength);
+  return `${safeTruncation}…`;
+};
 
 const stripMarkdown = (value = '') =>
   normalizeWhitespace(
@@ -51,7 +60,9 @@ const getFirestoreDocument = async (articleId) => {
 
   const envDatabaseId = (process.env.FIRESTORE_DATABASE_ID || '').trim();
   const configDatabaseId = config.firestoreDatabaseId?.trim() || '';
-  const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
+  const isProduction = process.env.VERCEL_ENV
+    ? process.env.VERCEL_ENV === 'production'
+    : process.env.NODE_ENV === 'production';
   const bypassAiStudio = isProduction && !envDatabaseId && /^ai-studio-/i.test(configDatabaseId);
   const databaseId = bypassAiStudio ? '(default)' : (envDatabaseId || configDatabaseId || '(default)');
 
@@ -95,7 +106,7 @@ export default async function handler(req, res) {
     const title = normalizeWhitespace(getString(fields, 'title')) || 'Goodwood FM Article';
     const summary = normalizeWhitespace(getString(fields, 'summary'));
     const content = stripMarkdown(getString(fields, 'content'));
-    const description = (summary || content || 'Read this article on Goodwood FM.').slice(0, MAX_OG_DESCRIPTION_LENGTH);
+    const description = truncateAtWordBoundary(summary || content || 'Read this article on Goodwood FM.');
     const image = resolveImageUrl(origin, getString(fields, 'image'));
     const canonicalUrl = `${origin}/share/article/${encodeURIComponent(articleId)}`;
     const redirectTarget = `${origin}/#/article/${encodeURIComponent(articleId)}`;
