@@ -260,22 +260,28 @@ export const StaffDashboard = () => {
             }
         };
 
-        const onVisibilityOrFocus = () => {
+        const onVisibilityChange = () => {
             if (document.visibilityState === 'visible') {
+                fetchLowPriorityData();
+            }
+        };
+
+        const onWindowFocus = () => {
+            if (document.visibilityState !== 'hidden') {
                 fetchLowPriorityData();
             }
         };
 
         fetchLowPriorityData();
         const pollingInterval = window.setInterval(fetchLowPriorityData, DASHBOARD_POLL_INTERVAL_MS);
-        document.addEventListener('visibilitychange', onVisibilityOrFocus);
-        window.addEventListener('focus', onVisibilityOrFocus);
+        document.addEventListener('visibilitychange', onVisibilityChange);
+        window.addEventListener('focus', onWindowFocus);
 
         return () => {
             isMounted = false;
             window.clearInterval(pollingInterval);
-            document.removeEventListener('visibilitychange', onVisibilityOrFocus);
-            window.removeEventListener('focus', onVisibilityOrFocus);
+            document.removeEventListener('visibilitychange', onVisibilityChange);
+            window.removeEventListener('focus', onWindowFocus);
             unsubSettings();
         };
     }, [user, userProfile?.role]);
