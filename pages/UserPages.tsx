@@ -3,7 +3,7 @@ import { useParams, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
     doc, onSnapshot, updateDoc, collection, query, orderBy, 
-    addDoc, serverTimestamp, deleteDoc, writeBatch, where, getDocs, limit
+    addDoc, serverTimestamp, deleteDoc, where, getDocs, limit
 } from 'firebase/firestore';
 import { getAuth, sendPasswordResetEmail, deleteUser } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -789,8 +789,6 @@ export const SettingsPage = () => {
         e.preventDefault();
         setSaving(true);
         try {
-            const batch = writeBatch(db);
-
             let avatarUrl = avatar;
             if (avatarFile) {
                 const storageRef = ref(storage, `avatars/${profile.uid}/${Date.now()}.jpg`);
@@ -806,7 +804,7 @@ export const SettingsPage = () => {
 
             // Update main profile
             const userRef = doc(db, 'users', profile.uid);
-            batch.update(userRef, {
+            await updateDoc(userRef, {
                 username,
                 bio,
                 avatar: avatarUrl,
@@ -815,21 +813,25 @@ export const SettingsPage = () => {
                 avatarHistory: newHistory
             });
 
-            // Update staff collection if exists
-            const staffQ = query(collection(db, 'staff'), where('userId', '==', profile.uid));
-            const staffSnap = await getDocs(staffQ);
-            staffSnap.forEach((docSnap) => {
-                batch.update(docSnap.ref, { avatar: avatarUrl, username });
-            });
+            const canSyncAdminCollections = ['admin', 'owner', 'manager'].includes(profile?.role || '');
+            if (canSyncAdminCollections) {
+                try {
+                    const staffQueries = [
+                        query(collection(db, 'staff'), where('uid', '==', profile.uid)),
+                        query(collection(db, 'staff'), where('userId', '==', profile.uid)),
+                    ];
+                    const staffSnapshots = await Promise.all(staffQueries.map((staffQ) => getDocs(staffQ)));
+                    await Promise.all(staffSnapshots.flatMap((staffSnap) =>
+                        staffSnap.docs.map((docSnap) => updateDoc(docSnap.ref, { avatar: avatarUrl, username }))
+                    ));
 
-            // Update schedule collection if exists
-            const scheduleQ = query(collection(db, 'schedule'), where('djId', '==', profile.uid));
-            const scheduleSnap = await getDocs(scheduleQ);
-            scheduleSnap.forEach((docSnap) => {
-                batch.update(docSnap.ref, { djAvatar: avatarUrl });
-            });
-
-            await batch.commit();
+                    const scheduleQ = query(collection(db, 'schedule'), where('djId', '==', profile.uid));
+                    const scheduleSnap = await getDocs(scheduleQ);
+                    await Promise.all(scheduleSnap.docs.map((docSnap) => updateDoc(docSnap.ref, { djAvatar: avatarUrl })));
+                } catch (syncErr) {
+                    console.warn('Skipping staff/schedule profile sync after successful user profile update:', syncErr);
+                }
+            }
 
             toast.success("Settings saved successfully!");
         } catch (err) {
