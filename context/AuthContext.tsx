@@ -29,6 +29,7 @@ interface UserProfile {
   credits?: number;
   purchasedItems?: string[];
   activeRing?: string;
+  activeNameIcon?: string;
   redeemedCodes?: string[];
 }
 
