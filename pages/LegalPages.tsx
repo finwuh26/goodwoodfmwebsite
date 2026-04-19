@@ -52,7 +52,11 @@ export const PrivacyPolicy = () => (
                 <p>We do not sell your personal data. We may share information with third-party vendors who need access to such information to carry out work on our behalf.</p>
             </section>
             <section>
-                <h2 className="text-2xl font-bold text-white mb-4">4. Security</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">4. Cookies</h2>
+                <p>We use essential cookies and similar local storage technologies to support core site features such as sign-in and account access. You can review and update your cookie preferences when prompted on the site.</p>
+            </section>
+            <section>
+                <h2 className="text-2xl font-bold text-white mb-4">5. Security</h2>
                 <p>We take reasonable measures to help protect information about you from loss, theft, misuse and unauthorized access.</p>
             </section>
         </div>

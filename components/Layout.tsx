@@ -45,6 +45,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [showMiniplayer, setShowMiniplayer] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [showCookieBanner, setShowCookieBanner] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -82,6 +83,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const hasCookieConsent = localStorage.getItem('goodwood_cookie_consent') === 'accepted';
+    setShowCookieBanner(!hasCookieConsent);
   }, []);
 
   // Reset dropdown on route change
@@ -748,6 +754,31 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           )}
       </AnimatePresence>
 
+      {showCookieBanner && (
+        <div className="fixed left-4 right-4 bottom-4 z-[70] sm:left-auto sm:max-w-md">
+          <div className="bg-[#12141a] border border-goodwood-border rounded-xl p-4 shadow-2xl">
+            <p className="text-xs text-gray-300 leading-relaxed">
+              We use essential cookies to keep Goodwood FM working properly. You can allow cookies to continue using sign-in and core features.
+            </p>
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <Link to="/privacy" className="text-xs text-gray-400 hover:text-white transition-colors">
+                Learn more
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.setItem('goodwood_cookie_consent', 'accepted');
+                  setShowCookieBanner(false);
+                }}
+                className="bg-white text-black text-xs font-bold px-4 py-2 rounded hover:bg-gray-200 transition-colors"
+              >
+                Allow Cookies
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Request Modal */}
       <AnimatePresence>
         {showRequestModal && (
@@ -898,18 +929,22 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                              toast.error(err.message);
                          }
                      }}>
-                         <div className="space-y-3 mb-4">
-                             <input type="email" name="email" placeholder="Email Address" required className="w-full bg-goodwood-dark border border-goodwood-border rounded-lg px-4 py-3 text-white text-sm focus:border-white/20 transition-colors outline-none" />
-                             <input type="password" name="password" placeholder="Password" required className="w-full bg-goodwood-dark border border-goodwood-border rounded-lg px-4 py-3 text-white text-sm focus:border-white/20 transition-colors outline-none" />
+                          <div className="space-y-3 mb-4">
+                              <input type="email" name="email" placeholder="Email Address" required className="w-full bg-goodwood-dark border border-goodwood-border rounded-lg px-4 py-3 text-white text-sm focus:border-white/20 transition-colors outline-none" />
+                              <input type="password" name="password" placeholder="Password" required className="w-full bg-goodwood-dark border border-goodwood-border rounded-lg px-4 py-3 text-white text-sm focus:border-white/20 transition-colors outline-none" />
                              <div className="flex items-center gap-2">
                                  <input type="checkbox" name="isSignup" id="isSignup" value="true" className="rounded bg-goodwood-dark border-goodwood-border" onChange={(e) => {
                                      const usernameInput = document.getElementById('usernameInput');
                                      if (usernameInput) usernameInput.style.display = e.target.checked ? 'block' : 'none';
                                  }} />
                                  <label htmlFor="isSignup" className="text-xs text-gray-400">I need to create an account</label>
-                             </div>
-                              <input type="text" name="username" id="usernameInput" placeholder="Username" style={{display: 'none'}} className="w-full bg-goodwood-dark border border-goodwood-border rounded-lg px-4 py-3 text-white text-sm focus:border-white/20 transition-colors outline-none" />
-                         </div>
+                              </div>
+                               <input type="text" name="username" id="usernameInput" placeholder="Username" style={{display: 'none'}} className="w-full bg-goodwood-dark border border-goodwood-border rounded-lg px-4 py-3 text-white text-sm focus:border-white/20 transition-colors outline-none" />
+                              <label className="flex items-center gap-2 text-xs text-gray-400">
+                                  <input type="checkbox" name="agreeTerms" value="true" required className="rounded bg-goodwood-dark border-goodwood-border" />
+                                  I agree to the <Link to="/terms" onClick={() => setShowLogin(false)} className="text-gray-300 hover:text-white transition-colors">Terms of Service</Link>
+                              </label>
+                          </div>
                          <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg font-bold uppercase tracking-widest transition-all mb-4">
                              Continue with Email
                          </button>
