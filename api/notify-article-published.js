@@ -105,12 +105,12 @@ const getFirestoreDocument = async (config, databaseId, documentPath) => {
   return data?.fields ? data : null;
 };
 
-const postDiscordWebhook = async (webhookUrl, content) => {
+const postDiscordWebhook = async (webhookUrl, payload) => {
   const response = await fetch(webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      content,
+      ...payload,
       allowed_mentions: { parse: [] },
     }),
   });
@@ -167,9 +167,29 @@ export default async function handler(req, res) {
     const title = sanitizeLine(getStringField(articleDoc.fields, 'title'), 'Untitled');
     const author = sanitizeLine(getStringField(articleDoc.fields, 'authorName'), 'Unknown');
     const articleLink = `${buildOrigin(req)}/share/article/${encodeURIComponent(articleId)}`;
-    const content = `**NEW ARTICLE**\nTile: ${title}\nAuthor: ${author}\nLink: ${articleLink}`;
+    const payload = {
+      content: '📰 **NEW ARTICLE**',
+      embeds: [
+        {
+          title,
+          url: articleLink,
+          description: `By **${author}**`,
+          color: 0xfacc15,
+          fields: [
+            {
+              name: 'Read now',
+              value: `[Open article](${articleLink})`,
+            },
+          ],
+          timestamp: new Date().toISOString(),
+          footer: {
+            text: 'Goodwood FM',
+          },
+        },
+      ],
+    };
 
-    await postDiscordWebhook(webhookUrl, content);
+    await postDiscordWebhook(webhookUrl, payload);
     return res.status(200).json({ ok: true });
   } catch (error) {
     const status = Number.isInteger(error?.status) ? error.status : 500;
