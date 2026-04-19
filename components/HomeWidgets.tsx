@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Shield, Award, Users, ExternalLink, MessageSquare } from 'lucide-react';
 import { motion } from 'motion/react';
 import { collection, getDocs, query, limit, orderBy } from 'firebase/firestore';
@@ -6,6 +7,7 @@ import { db, handleFirestoreError, OperationType } from '../firebase';
 import { useRadio } from '../context/RadioContext';
 import { normalizeAzuraIdentity } from '../utils/azuraIdentity';
 import { readFirestoreWithGuard } from '../utils/firestoreReadGuards';
+import { UserAvatar } from './UserAvatar';
 
 const RECENT_ACTIVITY_QUERY_LIMIT = 25;
 const ONLINE_WINDOW_MS = 7 * 60 * 1000;
@@ -274,19 +276,26 @@ export const RecentlyActiveWidget = () => {
                       whileHover={{ scale: 1.1, zIndex: 10 }}
                       className="aspect-square relative group cursor-pointer"
                     >
-                        {isOnAirProfile && (
-                            <div aria-hidden="true" className="absolute -inset-1 rounded-lg border-2 border-red-500 animate-pulse pointer-events-none" />
-                        )}
-                        <img src={staff.avatar || undefined} alt={staff.username} className="w-full h-full rounded-lg object-cover border border-goodwood-border group-hover:border-white/50 transition-colors shadow-lg" />
-                        {isOnline && (
-                            <span role="status" aria-label="Online" className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-goodwood-dark rounded-full shadow-lg"></span>
-                        )}
-                        
-                        {/* Tooltip */}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-white text-black text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                            <span>{staff.username}</span>
-                            {isOnline && <span className="ml-1">Online</span>}
-                        </div>
+                        <Link to={`/profile/${staff.id}`} className="block w-full h-full relative">
+                            {isOnAirProfile && (
+                                <div aria-hidden="true" className="absolute -inset-1 rounded-lg border-2 border-red-500 animate-pulse pointer-events-none z-10" />
+                            )}
+                            <UserAvatar 
+                                userId={staff.id}
+                                fallbackAvatar={staff.avatar}
+                                fallbackName={staff.username}
+                                className="w-full h-full rounded-lg object-cover border border-goodwood-border group-hover:border-white/50 transition-colors shadow-lg relative z-0" 
+                            />
+                            {isOnline && (
+                                <span role="status" aria-label="Online" className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-goodwood-dark rounded-full shadow-lg z-10"></span>
+                            )}
+                            
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-white text-black text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                                <span>{staff.username}</span>
+                                {isOnline && <span className="ml-1">Online</span>}
+                            </div>
+                        </Link>
                     </motion.div>
                         );
                 })}
