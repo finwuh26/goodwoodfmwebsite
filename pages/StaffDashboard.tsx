@@ -56,6 +56,7 @@ const DEPARTMENT_OPTIONS = [
 ];
 
 const USERS_DASHBOARD_LIMIT = 200;
+const DASHBOARD_POLL_INTERVAL_MS = 2 * 60 * 1000;
 const createEmptyBannerForm = () => ({ title: '', topic: '', image: '', link: '', active: true });
 
 export const StaffDashboard = () => {
@@ -147,7 +148,6 @@ export const StaffDashboard = () => {
     useEffect(() => {
         if (!user) return;
 
-        // Fetch Settings
         const unsubSettings = onSnapshot(doc(db, 'settings', 'global'), (docSnap) => {
             if (docSnap.exists()) {
                 setSystemSettings(docSnap.data());
@@ -156,37 +156,6 @@ export const StaffDashboard = () => {
             }
         });
 
-        // Fetch Applications
-        const qApps = query(collection(db, 'applications'));
-        const unsubApps = onSnapshot(qApps, (snap) => {
-            setApplications(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        }, (err) => handleFirestoreError(err, OperationType.GET, 'applications'));
-
-        // Fetch Messages
-        const qMsgs = query(collection(db, 'enquiries'));
-        const unsubMsgs = onSnapshot(qMsgs, (snap) => {
-            setMessages(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        }, (err) => handleFirestoreError(err, OperationType.GET, 'enquiries'));
-
-        // Fetch Articles
-        const qArticles = query(collection(db, 'articles'));
-        const unsubArticles = onSnapshot(qArticles, (snap) => {
-            setArticles(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        }, (err) => handleFirestoreError(err, OperationType.GET, 'articles'));
-
-        // Fetch Schedule
-        const qSchedule = query(collection(db, 'schedule'));
-        const unsubSchedule = onSnapshot(qSchedule, (snap) => {
-            setSchedule(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        }, (err) => handleFirestoreError(err, OperationType.GET, 'schedule'));
-
-        // Fetch Staff
-        const qStaff = query(collection(db, 'staff'));
-        const unsubStaff = onSnapshot(qStaff, (snap) => {
-            setStaff(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        }, (err) => handleFirestoreError(err, OperationType.GET, 'staff'));
-
-        // Fetch Users (Recently Active)
         const qUsers = query(collection(db, 'users'), limit(USERS_DASHBOARD_LIMIT));
         const unsubUsers = onSnapshot(qUsers, (snap) => {
             const usersList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
@@ -198,45 +167,67 @@ export const StaffDashboard = () => {
             setUsers(usersList);
         }, (err) => handleFirestoreError(err, OperationType.GET, 'users'));
 
-        // Fetch Partners
-        const qPartners = query(collection(db, 'partners'));
-        const unsubPartners = onSnapshot(qPartners, snap => {
-            setPartners(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        });
+        let isMounted = true;
+        const fetchLowPriorityData = async () => {
+            try {
+                const requests = [
+                    getDocs(query(collection(db, 'applications'), limit(200))),
+                    getDocs(query(collection(db, 'enquiries'), limit(300))),
+                    getDocs(query(collection(db, 'articles'), limit(300))),
+                    getDocs(query(collection(db, 'schedule'), limit(300))),
+                    getDocs(query(collection(db, 'staff'), limit(300))),
+                    getDocs(query(collection(db, 'partners'), limit(100))),
+                    getDocs(query(collection(db, 'banners'), limit(100))),
+                    getDocs(query(collection(db, 'reputationLogs'), orderBy('timestamp', 'desc'), limit(50))),
+                ];
 
-        // Fetch Banners
-        const qBanners = query(collection(db, 'banners'));
-        const unsubBanners = onSnapshot(qBanners, snap => {
-            setBanners(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        });
+                const includeCodes = ['admin', 'owner'].includes(userProfile?.role || '');
+                if (includeCodes) {
+                    requests.push(getDocs(query(collection(db, 'redeemCodes'), orderBy('createdAt', 'desc'), limit(200))));
+                }
 
-        // Fetch Audit / Reputation Logs
-        const qLogs = query(collection(db, 'reputationLogs'), orderBy('timestamp', 'desc'), limit(50));
-        const unsubLogs = onSnapshot(qLogs, snap => {
-            setReputationLogs(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        });
+                const [
+                    appsSnap,
+                    msgsSnap,
+                    articlesSnap,
+                    scheduleSnap,
+                    staffSnap,
+                    partnersSnap,
+                    bannersSnap,
+                    logsSnap,
+                    codesSnap
+                ] = await Promise.all(requests);
 
-        let unsubCodes = () => {};
-        if (['admin', 'owner'].includes(userProfile?.role || '')) {
-            unsubCodes = onSnapshot(query(collection(db, 'redeemCodes'), orderBy('createdAt', 'desc')), snap => {
-                setRedeemCodes(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-            });
-        }
+                if (!isMounted) return;
+
+                setApplications(appsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                setMessages(msgsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                setArticles(articlesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                setSchedule(scheduleSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                setStaff(staffSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                setPartners(partnersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                setBanners(bannersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                setReputationLogs(logsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                if (codesSnap) {
+                    setRedeemCodes(codesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                } else {
+                    setRedeemCodes([]);
+                }
+            } catch (err) {
+                handleFirestoreError(err, OperationType.GET, 'staffDashboard:lowPriorityPolling');
+            }
+        };
+
+        fetchLowPriorityData();
+        const pollingInterval = window.setInterval(fetchLowPriorityData, DASHBOARD_POLL_INTERVAL_MS);
 
         return () => {
+            isMounted = false;
+            window.clearInterval(pollingInterval);
             unsubSettings();
-            unsubApps();
-            unsubMsgs();
-            unsubArticles();
-            unsubSchedule();
-            unsubStaff();
             unsubUsers();
-            unsubPartners();
-            unsubBanners();
-            unsubLogs();
-            unsubCodes();
         };
-    }, [user]);
+    }, [user, userProfile?.role]);
 
     if (!user) return <Navigate to="/" replace />;
     if (userProfile && ['user', 'member', 'vip'].includes(userProfile.role)) {
@@ -655,7 +646,7 @@ export const StaffDashboard = () => {
         {
             name: 'Journalists & Editors',
             allowedRoles: ['admin', 'owner', 'manager', 'journalist'],
-            items: [ { id: 'articles', name: 'Content & Articles', icon: FileText } ]
+            items: [ { id: 'editorial', name: 'Editorial Suite', icon: FileText } ]
         },
         {
             name: 'Management',
@@ -989,36 +980,22 @@ export const StaffDashboard = () => {
                         </div>
                     )}
 
-                    {activeTab === 'articles' && (
+                    {activeTab === 'editorial' && (
                         <div>
                             <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold text-white">Article Publishing System</h2>
-                                    <div className="flex gap-3">
-                                        <button 
-                                            onClick={() => { 
-                                                setEditingId(null); 
-                                                setArticleForm({ title: '', summary: '', content: '', image: '', category: 'News', status: 'idea', url: '', originalTitle: '', originalSummary: '' }); 
-                                                setShowArticleModal(true); 
-                                            }} 
-                                            className="flex items-center gap-2 bg-goodwood-dark hover:bg-goodwood-card-hover border border-goodwood-border text-white px-5 py-2.5 rounded-xl font-bold transition-all active:scale-95 shadow-lg group"
-                                        >
-                                            <Plus size={18} className="text-emerald-400 group-hover:rotate-90 transition-transform" /> 
-                                            New Idea
-                                        </button>
-                                        <Link 
-                                            to="/staff/article/new" 
-                                            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-emerald-900/20"
-                                        >
-                                            <Edit3 size={18} /> 
-                                            Write Article
-                                        </Link>
-                                    </div>
+                                <h2 className="text-2xl font-bold text-white">Editorial Suite</h2>
+                                <Link 
+                                    to="/staff/article/new" 
+                                    className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-emerald-900/20"
+                                >
+                                    <Edit3 size={18} /> 
+                                    Write Article
+                                </Link>
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {/* Ideas */}
-                                <div className="bg-goodwood-dark border border-goodwood-border rounded-xl p-5 shadow-inner">
-                                    <div className="flex items-center justify-between mb-5 border-b border-goodwood-border/30 pb-3">
+                                <Link to="/staff/ideas-pool" className="bg-goodwood-dark border border-goodwood-border rounded-xl p-5 shadow-inner hover:border-emerald-500/40 transition-colors">
+                                    <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-2">
                                             <Layers size={16} className="text-emerald-400" />
                                             <h3 className="text-sm font-black text-white uppercase tracking-widest">Ideas Pool</h3>
@@ -1027,46 +1004,12 @@ export const StaffDashboard = () => {
                                             {articles.filter(a => a.status === 'idea').length}
                                         </span>
                                     </div>
-                                    <div className="space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-1">
-                                        {articles.filter(a => a.status === 'idea').sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)).map(art => (
-                                            <div key={art.id} className="bg-goodwood-card/30 p-4 rounded-xl border border-white/[0.03] hover:border-white/10 transition-all group">
-                                                <div className="flex items-start justify-between gap-3 mb-2">
-                                                    <h4 className="text-white font-bold text-sm leading-tight group-hover:text-emerald-300 transition-colors">{art.title}</h4>
-                                                    <span className="shrink-0 bg-emerald-950/40 text-emerald-400 border border-emerald-500/20 text-[9px] px-1.5 py-0.5 rounded font-black uppercase">
-                                                        {art.category}
-                                                    </span>
-                                                </div>
-                                                <p className="text-gray-500 text-[11px] mb-4 line-clamp-2 italic">{art.summary}</p>
-                                                <div className="flex gap-2">
-                                                    <button 
-                                                        onClick={() => handleClaimArticle(art)} 
-                                                        className="flex-1 bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 py-2 rounded-lg text-xs font-black transition-all active:scale-95 border border-emerald-500/10"
-                                                    >
-                                                        Claim Idea
-                                                    </button>
-                                                    {(userProfile?.role === 'admin' || userProfile?.role === 'manager') && (
-                                                        <button 
-                                                            onClick={() => handleDeleteDoc('articles', art.id)} 
-                                                            className="text-gray-600 hover:text-red-500 transition-colors px-2"
-                                                        >
-                                                            <Trash2 size={16}/>
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {articles.filter(a => a.status === 'idea').length === 0 && (
-                                            <div className="text-center py-10 opacity-30">
-                                                <Plus size={32} className="mx-auto mb-2" />
-                                                <p className="text-xs font-bold uppercase tracking-widest">No ideas yet</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
+                                    <p className="text-xs text-gray-400 mb-4">Triage and claim fresh story ideas with filters, search, and faster assignment actions.</p>
+                                    <div className="text-emerald-400 text-xs font-black uppercase tracking-widest">Open Page</div>
+                                </Link>
 
-                                {/* Drafts / In Progress */}
-                                <div className="bg-goodwood-dark border border-goodwood-border rounded-xl p-5 shadow-inner">
-                                    <div className="flex items-center justify-between mb-5 border-b border-goodwood-border/30 pb-3">
+                                <Link to="/staff/my-workflow" className="bg-goodwood-dark border border-goodwood-border rounded-xl p-5 shadow-inner hover:border-blue-500/40 transition-colors">
+                                    <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-2">
                                             <Edit3 size={16} className="text-blue-400" />
                                             <h3 className="text-sm font-black text-white uppercase tracking-widest">My Workflow</h3>
@@ -1075,50 +1018,12 @@ export const StaffDashboard = () => {
                                             {articles.filter(a => (a.status === 'draft' || a.status === 'review' || a.status === 'rejected') && a.authorId === user?.uid).length}
                                         </span>
                                     </div>
-                                    <div className="space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-1">
-                                        {articles.filter(a => (a.status === 'draft' || a.status === 'review' || a.status === 'rejected') && a.authorId === user?.uid).sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)).map(art => (
-                                            <div key={art.id} className="bg-goodwood-card/30 p-4 rounded-xl border border-white/[0.03] hover:border-white/10 transition-all">
-                                                <div className="flex items-start justify-between gap-3 mb-2">
-                                                    <h4 className="text-white font-bold text-sm leading-tight">{art.title}</h4>
-                                                    <span className={`shrink-0 px-2 py-0.5 rounded text-[9px] font-black uppercase border ${
-                                                        art.status === 'review' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 
-                                                        art.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                                        'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                                                    }`}>
-                                                        {art.status}
-                                                    </span>
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <Link 
-                                                        to={`/staff/article/${art.id}`}
-                                                        className="flex-1 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 py-2 rounded-lg text-xs font-black transition-all active:scale-95 border border-blue-500/10 flex items-center justify-center gap-1"
-                                                    >
-                                                        <Edit3 size={12} /> {(!art.content || art.content.length < 10) ? 'Start Writing' : 'Edit Work'}
-                                                    </Link>
-                                                    {art.status === 'draft' && (
-                                                        <button 
-                                                            onClick={() => updateDoc(doc(db, 'articles', art.id), { status: 'review' })}
-                                                            className="flex-1 bg-green-600/10 hover:bg-green-600/20 text-green-400 py-2 rounded-lg text-xs font-black transition-all active:scale-95 border border-green-500/10 flex items-center justify-center gap-1"
-                                                        >
-                                                            <CheckCircle size={12} /> Submit
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {articles.filter(a => (a.status === 'draft' || a.status === 'review' || a.status === 'rejected') && a.authorId === user?.uid).length === 0 && (
-                                            <div className="text-center py-10 opacity-30">
-                                                <Zap size={32} className="mx-auto mb-2" />
-                                                <p className="text-xs font-bold uppercase tracking-widest">Nothing in progress</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
+                                    <p className="text-xs text-gray-400 mb-4">Track your drafts, resubmit revisions, and jump directly into writing flow.</p>
+                                    <div className="text-blue-400 text-xs font-black uppercase tracking-widest">Open Page</div>
+                                </Link>
 
-                                {/* Review Queue (Managers/Admins) */}
-                                {(userProfile?.role === 'admin' || userProfile?.role === 'manager' || userProfile?.role === 'owner') && (
-                                <div className="bg-goodwood-dark border border-goodwood-border rounded-xl p-5 shadow-inner">
-                                    <div className="flex items-center justify-between mb-5 border-b border-goodwood-border/30 pb-3">
+                                <Link to="/staff/editorial-queue" className="bg-goodwood-dark border border-goodwood-border rounded-xl p-5 shadow-inner hover:border-yellow-500/40 transition-colors">
+                                    <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-2">
                                             <Shield size={16} className="text-yellow-400" />
                                             <h3 className="text-sm font-black text-white uppercase tracking-widest">Editorial Queue</h3>
@@ -1127,43 +1032,9 @@ export const StaffDashboard = () => {
                                             {articles.filter(a => a.status === 'review').length}
                                         </span>
                                     </div>
-                                    <div className="space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-1">
-                                        {articles.filter(a => a.status === 'review').sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)).map(art => (
-                                            <div key={art.id} className="bg-goodwood-card/30 p-4 rounded-xl border border-white/[0.03] hover:border-white/10 transition-all">
-                                                <div className="flex items-start justify-between gap-3 mb-2">
-                                                    <h4 className="text-white font-bold text-sm leading-tight">{art.title}</h4>
-                                                </div>
-                                                <div className="flex items-center gap-2 mb-4">
-                                                    <div className="w-5 h-5 rounded-full bg-emerald-900 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
-                                                        {art.authorName?.charAt(0) || '?'}
-                                                    </div>
-                                                    <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider truncate">Writer: {art.authorName}</p>
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <button 
-                                                        onClick={() => handleReviewArticle(art.id, art.authorId, true)} 
-                                                        className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-[10px] font-black transition-all active:scale-95 flex items-center justify-center gap-1 shadow-lg shadow-green-900/20"
-                                                    >
-                                                        <Check size={14}/> Approve
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => handleReviewArticle(art.id, art.authorId, false)} 
-                                                        className="flex-1 bg-red-600/20 hover:bg-red-600/40 text-red-400 py-2 rounded-lg text-[10px] font-black transition-all active:scale-95 border border-red-500/20 flex items-center justify-center gap-1"
-                                                    >
-                                                        <Trash2 size={14}/> Reject
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {articles.filter(a => a.status === 'review').length === 0 && (
-                                            <div className="text-center py-10 opacity-30">
-                                                <CheckCircle size={32} className="mx-auto mb-2" />
-                                                <p className="text-xs font-bold uppercase tracking-widest">Queue is clear</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                )}
+                                    <p className="text-xs text-gray-400 mb-4">Approve or reject submissions with publication and reputation flow in one place.</p>
+                                    <div className="text-yellow-400 text-xs font-black uppercase tracking-widest">Open Page</div>
+                                </Link>
                             </div>
                         </div>
                     )}

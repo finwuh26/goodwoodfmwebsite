@@ -11,6 +11,7 @@ import { ProfilePage, SettingsPage } from './pages/UserPages';
 import { Shop } from './pages/Shop';
 import { StaffDashboard } from './pages/StaffDashboard';
 import { ArticleWriter } from './pages/ArticleWriter';
+import { IdeasPoolPage, MyWorkflowPage, EditorialQueuePage } from './pages/StaffEditorialPages';
 import { TermsOfService, PrivacyPolicy, Safety } from './pages/LegalPages';
 import { RadioProvider } from './context/RadioContext';
 import { AuthProvider } from './context/AuthContext';
@@ -38,6 +39,9 @@ function App() {
           />
           <Routes>
             <Route path="/staff/dashboard" element={<StaffDashboard />} />
+            <Route path="/staff/ideas-pool" element={<IdeasPoolPage />} />
+            <Route path="/staff/my-workflow" element={<MyWorkflowPage />} />
+            <Route path="/staff/editorial-queue" element={<EditorialQueuePage />} />
             <Route path="/staff/article/new" element={<Layout><ArticleWriter /></Layout>} />
             <Route path="/staff/article/:id" element={<Layout><ArticleWriter /></Layout>} />
             <Route path="*" element={
