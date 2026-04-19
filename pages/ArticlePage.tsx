@@ -116,6 +116,7 @@ export const ArticlePage = () => {
                     authorName: userProfile?.username || 'Anonymous',
                     authorAvatar: userProfile?.avatar || '',
                     content: commentContent,
+                    // Temporary placeholder; refreshed server timestamps replace this shortly.
                     timestamp: null
                 },
                 ...prev

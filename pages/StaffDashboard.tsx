@@ -11,6 +11,7 @@ import { ImageUpload } from '../components/ImageUpload';
 import { BadgeSelector } from '../components/BadgeSelector';
 import { checkPlagiarism } from '../services/geminiService';
 import { getDatesForThisWeek, formatDate } from '../utils';
+import { toast } from 'react-hot-toast';
 
 import { ConfirmModal } from '../components/ConfirmModal';
 import { UserAvatar } from '../components/UserAvatar';

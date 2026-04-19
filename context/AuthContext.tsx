@@ -9,9 +9,8 @@ import {
   signInWithEmailAndPassword,
   updateProfile
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, serverTimestamp, updateDoc, Timestamp } from 'firebase/firestore';
 import { auth, db, handleFirestoreError, OperationType } from '../firebase';
-import { readFirestoreWithGuard } from '../utils/firestoreReadGuards';
 
 interface UserProfile {
   uid: string;
@@ -47,8 +46,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const LAST_ACTIVE_UPDATE_INTERVAL_MS = 5 * 60 * 1000;
-const GLOBAL_SETTINGS_READ_TTL_MS = 15 * 60 * 1000;
-const USER_PROFILE_READ_TTL_MS = 2 * 60 * 1000;
 const normalizeUsername = (username?: string | null) => {
   const trimmed = username?.trim();
   if (!trimmed || trimmed.length < 3) return 'User';
@@ -63,57 +60,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [systemSettings, setSystemSettings] = useState<any>({ firewallStrictMode: false, maintenanceMode: false });
 
   useEffect(() => {
-    let isMounted = true;
-    let profileRefreshInterval: number | null = null;
-    let activeProfileLoader: (() => Promise<void>) | null = null;
-
-    const refreshSystemSettings = async () => {
-      try {
-        const settingsSnapshot = await readFirestoreWithGuard(
-          'auth:settings:global',
-          () => getDoc(doc(db, 'settings', 'global')),
-          { ttlMs: GLOBAL_SETTINGS_READ_TTL_MS }
-        );
-        if (!isMounted || !settingsSnapshot.exists()) return;
-        setSystemSettings(settingsSnapshot.data());
-      } catch (err) {
-        if (!isMounted) return;
-        handleFirestoreError(err, OperationType.GET, 'settings/global');
+    const unsubSettings = onSnapshot(doc(db, 'settings', 'global'), (docSnap) => {
+      if (docSnap.exists()) {
+        setSystemSettings(docSnap.data());
       }
-    };
+    });
 
-    refreshSystemSettings();
-    const settingsRefreshInterval = window.setInterval(refreshSystemSettings, GLOBAL_SETTINGS_READ_TTL_MS);
+    let unsubProfile: (() => void) | null = null;
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (profileRefreshInterval) {
-        window.clearInterval(profileRefreshInterval);
-        profileRefreshInterval = null;
+      if (unsubProfile) {
+        unsubProfile();
+        unsubProfile = null;
       }
-      activeProfileLoader = null;
+
       setUser(firebaseUser);
       
       if (firebaseUser) {
         const userDocRef = doc(db, 'users', firebaseUser.uid);
-
-        const loadUserProfile = async () => {
-          try {
-            const docSnap = await readFirestoreWithGuard(
-              `auth:userProfile:${firebaseUser.uid}`,
-              () => getDoc(userDocRef),
-              { ttlMs: USER_PROFILE_READ_TTL_MS }
-            );
-
-            if (docSnap.exists()) {
-              const data = docSnap.data() as UserProfile;
-              if (ownerEmail && data.email === ownerEmail && data.role !== 'owner') {
+        
+        // Listen to profile changes in realtime to avoid stale role/profile regressions.
+        unsubProfile = onSnapshot(userDocRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data() as UserProfile;
+            // Upgrade role if needed
+            if (ownerEmail && data.email === ownerEmail && data.role !== 'owner') {
                 updateDoc(userDocRef, { role: 'owner' }).catch(console.error);
-                if (isMounted) setUserProfile({ ...data, role: 'owner' });
-              } else if (isMounted) {
-                setUserProfile(data);
-              }
-              return;
             }
-
+            setUserProfile(data);
+          } else {
+            // Create initial profile if it doesn't exist
             const newProfile: UserProfile = {
               uid: firebaseUser.uid,
               username: normalizeUsername(firebaseUser.displayName),
@@ -127,34 +102,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               avatarHistory: [firebaseUser.photoURL || '']
             };
             
-            await setDoc(userDocRef, {
+            setDoc(userDocRef, {
               ...newProfile,
               createdAt: Timestamp.now(),
               lastActive: Timestamp.now()
-            }, { merge: true });
-
-            if (ownerEmail && firebaseUser.email === ownerEmail) {
-              await updateDoc(userDocRef, { role: 'owner', isVerified: true, badges: ['owner'] }).catch((err) => {
-                console.error('Failed to upgrade user to owner role:', err);
-              });
-              if (isMounted) setUserProfile({ ...newProfile, role: 'owner', isVerified: true, badges: ['owner'] });
-              return;
-            }
-
-            if (isMounted) setUserProfile(newProfile);
-          } catch (err) {
-            if (!isMounted) return;
-            handleFirestoreError(err, OperationType.GET, `users/${firebaseUser.uid}`);
+            }, { merge: true }).then(() => {
+              if (ownerEmail && firebaseUser.email === ownerEmail) {
+                updateDoc(userDocRef, { role: 'owner', isVerified: true, badges: ['owner'] }).catch((err) => {
+                  console.error('Failed to upgrade user to owner role:', err);
+                });
+              }
+            }).catch(err => handleFirestoreError(err, OperationType.CREATE, `users/${firebaseUser.uid}`));
           }
-        };
-
-        activeProfileLoader = loadUserProfile;
-        await loadUserProfile();
-        profileRefreshInterval = window.setInterval(() => {
-          activeProfileLoader?.().catch((err) => {
-            console.warn('User profile refresh failed:', err);
-          });
-        }, USER_PROFILE_READ_TTL_MS);
+        }, (err) => handleFirestoreError(err, OperationType.GET, `users/${firebaseUser.uid}`));
 
         updateDoc(userDocRef, { lastActive: serverTimestamp() }).catch((err) => {
           console.warn('Unable to update lastActive on auth state change:', err);
@@ -167,12 +127,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => {
-      isMounted = false;
-      if (profileRefreshInterval) {
-        window.clearInterval(profileRefreshInterval);
+      if (unsubProfile) {
+        unsubProfile();
       }
-      window.clearInterval(settingsRefreshInterval);
       unsubscribe();
+      unsubSettings();
     };
   }, []);
 
