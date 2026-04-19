@@ -147,6 +147,7 @@ export const StaffDashboard = () => {
 
     useEffect(() => {
         if (!user) return;
+        const includeCodes = ['admin', 'owner'].includes(userProfile?.role || '');
 
         const unsubSettings = onSnapshot(doc(db, 'settings', 'global'), (docSnap) => {
             if (docSnap.exists()) {
@@ -181,7 +182,6 @@ export const StaffDashboard = () => {
                     getDocs(query(collection(db, 'reputationLogs'), orderBy('timestamp', 'desc'), limit(50))),
                 ];
 
-                const includeCodes = ['admin', 'owner'].includes(userProfile?.role || '');
                 if (includeCodes) {
                     requests.push(getDocs(query(collection(db, 'redeemCodes'), orderBy('createdAt', 'desc'), limit(200))));
                 }

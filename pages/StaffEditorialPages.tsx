@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 const STAFF_BLOCKED_ROLES = ['user', 'member', 'vip'];
 const EDITORIAL_ROLES = ['admin', 'owner', 'manager', 'journalist'];
 const EDITORIAL_REVIEW_ROLES = ['admin', 'owner', 'manager'];
+const ARTICLE_PUBLISHED_REPUTATION_POINTS = 50;
 
 const StaffEditorialShell: React.FC<{
   title: string;
@@ -237,7 +238,7 @@ export const EditorialQueuePage = () => {
     });
     if (!response.ok) {
       const body = await response.text();
-      throw new Error(`Failed to notify article publication (${response.status}): ${body || 'no response body'}`);
+      throw new Error(`Failed to notify article publication (${response.status}): ${body.trim() || 'no response body'}`);
     }
   };
 
@@ -249,12 +250,12 @@ export const EditorialQueuePage = () => {
         await notifyArticlePublished(art.id);
         await addDoc(collection(db, 'reputationLogs'), {
           userId: art.authorId,
-          points: 50,
+          points: ARTICLE_PUBLISHED_REPUTATION_POINTS,
           reason: 'Article Published',
           source: 'Editorial Queue',
           timestamp: serverTimestamp()
         });
-        await updateDoc(doc(db, 'users', art.authorId), { reputationScore: increment(50) });
+        await updateDoc(doc(db, 'users', art.authorId), { reputationScore: increment(ARTICLE_PUBLISHED_REPUTATION_POINTS) });
         toast.success('Article approved and published');
         return;
       }
