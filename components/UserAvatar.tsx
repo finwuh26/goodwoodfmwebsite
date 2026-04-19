@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { readFirestoreWithGuard } from '../utils/firestoreReadGuards';
 
 interface UserAvatarProps {
   userId: string;
@@ -17,11 +18,11 @@ interface UserAvatarData {
 interface SharedUserAvatarListener {
   data: UserAvatarData | null;
   lastUpdatedAt: number;
-  unsubscribe: (() => void) | null;
+  loadingPromise: Promise<void> | null;
   subscribers: Set<(data: UserAvatarData | null) => void>;
 }
 
-const USER_AVATAR_CACHE_TTL_MS = 10_000;
+const USER_AVATAR_CACHE_TTL_MS = 30 * 60 * 1000;
 const sharedUserAvatarListeners = new Map<string, SharedUserAvatarListener>();
 
 const subscribeToSharedUserAvatar = (
@@ -34,7 +35,7 @@ const subscribeToSharedUserAvatar = (
     entry = {
       data: null,
       lastUpdatedAt: 0,
-      unsubscribe: null,
+      loadingPromise: null,
       subscribers: new Set()
     };
     sharedUserAvatarListeners.set(userId, entry);
@@ -47,9 +48,13 @@ const subscribeToSharedUserAvatar = (
     callback(entry.data);
   }
 
-  if (!entry.unsubscribe) {
-    // Exactly one Firestore listener per userId in this tab, regardless of component count.
-    entry.unsubscribe = onSnapshot(doc(db, 'users', userId), (docSnap) => {
+  const shouldRefresh = !entry.data || Date.now() - entry.lastUpdatedAt >= USER_AVATAR_CACHE_TTL_MS;
+  if (shouldRefresh && !entry.loadingPromise) {
+    entry.loadingPromise = readFirestoreWithGuard(
+      `userAvatar:${userId}`,
+      () => getDoc(doc(db, 'users', userId)),
+      { ttlMs: USER_AVATAR_CACHE_TTL_MS }
+    ).then((docSnap) => {
       const data = docSnap.exists() ? docSnap.data() : null;
       entry!.data = docSnap.exists()
         ? {
@@ -59,6 +64,15 @@ const subscribeToSharedUserAvatar = (
         : null;
       entry!.lastUpdatedAt = Date.now();
       entry!.subscribers.forEach((subscriber) => subscriber(entry!.data));
+    }).catch((err) => {
+      console.warn(`Failed to read avatar for user ${userId}`, err);
+    }).finally(() => {
+      const current = sharedUserAvatarListeners.get(userId);
+      if (!current) return;
+      current.loadingPromise = null;
+      if (current.subscribers.size === 0) {
+        sharedUserAvatarListeners.delete(userId);
+      }
     });
   }
 
@@ -66,12 +80,7 @@ const subscribeToSharedUserAvatar = (
     const current = sharedUserAvatarListeners.get(userId);
     if (!current) return;
     current.subscribers.delete(callback);
-
-    // Tear down listener only when the last consumer unmounts.
-    if (current.subscribers.size === 0) {
-      current.unsubscribe?.();
-      sharedUserAvatarListeners.delete(userId);
-    }
+    if (current.subscribers.size === 0 && !current.loadingPromise) sharedUserAvatarListeners.delete(userId);
   };
 };
 

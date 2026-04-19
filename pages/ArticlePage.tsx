@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { User, Clock, ArrowLeft, Heart, Flame, ThumbsUp, MessageSquare, Send, Trash2, FileText, Share2 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { doc, onSnapshot, collection, query, where, orderBy, addDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, orderBy, addDoc, serverTimestamp, deleteDoc, getDocs } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { formatDate } from '../utils';
 import { useAuth } from '../context/AuthContext';
@@ -11,6 +11,9 @@ import Markdown from 'react-markdown';
 import { UserAvatar } from '../components/UserAvatar';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { toast } from 'react-hot-toast';
+import { readFirestoreWithGuard } from '../utils/firestoreReadGuards';
+
+const ARTICLE_PAGE_READ_TTL_MS = 2 * 60 * 1000;
 
 export const ArticlePage = () => {
     const { id } = useParams();
@@ -24,45 +27,104 @@ export const ArticlePage = () => {
 
     useEffect(() => {
         if (!id) return;
-        const unsubscribeArticle = onSnapshot(doc(db, 'articles', id), (doc) => {
-            if (doc.exists()) {
-                setArticle({ id: doc.id, ...doc.data() });
+        let isMounted = true;
+        const loadArticle = async () => {
+            try {
+                const articleDocRef = doc(db, 'articles', id);
+                const qComments = query(collection(db, 'articleComments'), where('articleId', '==', id), orderBy('timestamp', 'desc'));
+                const qReactions = query(collection(db, 'articleReactions'), where('articleId', '==', id));
+
+                const [articleDoc, commentsSnap, reactionsSnap] = await Promise.all([
+                    readFirestoreWithGuard(`articlePage:${id}:article`, () => getDoc(articleDocRef), { ttlMs: ARTICLE_PAGE_READ_TTL_MS }),
+                    readFirestoreWithGuard(`articlePage:${id}:comments`, () => getDocs(qComments), { ttlMs: ARTICLE_PAGE_READ_TTL_MS }),
+                    readFirestoreWithGuard(`articlePage:${id}:reactions`, () => getDocs(qReactions), { ttlMs: ARTICLE_PAGE_READ_TTL_MS }),
+                ]);
+
+                if (!isMounted) return;
+                setArticle(articleDoc.exists() ? { id: articleDoc.id, ...articleDoc.data() } : null);
+                setComments(commentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                setReactions(reactionsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            } catch (err) {
+                if (!isMounted) return;
+                handleFirestoreError(err, OperationType.GET, `articles/${id}`);
+            } finally {
+                if (isMounted) setLoading(false);
             }
-            setLoading(false);
-        }, (err) => handleFirestoreError(err, OperationType.GET, `articles/${id}`));
+        };
 
-        const qComments = query(collection(db, 'articleComments'), where('articleId', '==', id), orderBy('timestamp', 'desc'));
-        const unsubscribeComments = onSnapshot(qComments, (snap) => {
-            setComments(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        }, (err) => handleFirestoreError(err, OperationType.GET, 'articleComments'));
-
-        const qReactions = query(collection(db, 'articleReactions'), where('articleId', '==', id));
-        const unsubscribeReactions = onSnapshot(qReactions, (snap) => {
-            setReactions(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        }, (err) => handleFirestoreError(err, OperationType.GET, 'articleReactions'));
-
+        loadArticle();
+        const refreshInterval = window.setInterval(loadArticle, ARTICLE_PAGE_READ_TTL_MS);
         return () => {
-            unsubscribeArticle();
-            unsubscribeComments();
-            unsubscribeReactions();
+            isMounted = false;
+            window.clearInterval(refreshInterval);
         };
     }, [id]);
+
+    const qComments = id
+        ? query(collection(db, 'articleComments'), where('articleId', '==', id), orderBy('timestamp', 'desc'))
+        : null;
+    const qReactions = id
+        ? query(collection(db, 'articleReactions'), where('articleId', '==', id))
+        : null;
+
+    const refreshComments = async () => {
+        if (!id || !qComments) return;
+        try {
+            const snap = await readFirestoreWithGuard(
+                `articlePage:${id}:comments:manual`,
+                () => getDocs(qComments),
+                { ttlMs: 10_000 }
+            );
+            setComments(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        } catch (err) {
+            handleFirestoreError(err, OperationType.GET, 'articleComments');
+        }
+    };
+
+    const refreshReactions = async () => {
+        if (!id || !qReactions) return;
+        try {
+            const snap = await readFirestoreWithGuard(
+                `articlePage:${id}:reactions:manual`,
+                () => getDocs(qReactions),
+                { ttlMs: 10_000 }
+            );
+            setReactions(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        } catch (err) {
+            handleFirestoreError(err, OperationType.GET, 'articleReactions');
+        }
+    };
 
     const handlePostComment = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user || !newComment.trim()) return;
         try {
-            await addDoc(collection(db, 'articleComments'), {
+            const commentContent = newComment.trim();
+            const docRef = await addDoc(collection(db, 'articleComments'), {
                 articleId: id,
                 authorId: user.uid,
                 authorName: userProfile?.username || 'Anonymous',
                 authorAvatar: userProfile?.avatar || '',
-                content: newComment.trim(),
+                content: commentContent,
                 timestamp: serverTimestamp()
             });
+            setComments((prev) => [
+                {
+                    id: docRef.id,
+                    articleId: id,
+                    authorId: user.uid,
+                    authorName: userProfile?.username || 'Anonymous',
+                    authorAvatar: userProfile?.avatar || '',
+                    content: commentContent,
+                    timestamp: new Date()
+                },
+                ...prev
+            ]);
             setNewComment('');
         } catch (err) {
             handleFirestoreError(err, OperationType.CREATE, 'articleComments');
+        } finally {
+            refreshComments().catch(() => undefined);
         }
     };
 
@@ -74,9 +136,12 @@ export const ArticlePage = () => {
         if (!isConfirmDeleteOpen.commentId) return;
         try {
             await deleteDoc(doc(db, 'articleComments', isConfirmDeleteOpen.commentId));
+            setComments((prev) => prev.filter((comment) => comment.id !== isConfirmDeleteOpen.commentId));
             setIsConfirmDeleteOpen({isOpen: false, commentId: null});
         } catch (err) {
             handleFirestoreError(err, OperationType.DELETE, `articleComments/${isConfirmDeleteOpen.commentId}`);
+        } finally {
+            refreshComments().catch(() => undefined);
         }
     };
 
@@ -86,15 +151,19 @@ export const ArticlePage = () => {
             const existingReaction = reactions.find(r => r.userId === user.uid && r.reaction === reactionType);
             if (existingReaction) {
                 await deleteDoc(doc(db, 'articleReactions', existingReaction.id));
+                setReactions((prev) => prev.filter((reaction) => reaction.id !== existingReaction.id));
             } else {
-                await addDoc(collection(db, 'articleReactions'), {
+                const docRef = await addDoc(collection(db, 'articleReactions'), {
                     articleId: id,
                     userId: user.uid,
                     reaction: reactionType
                 });
+                setReactions((prev) => [...prev, { id: docRef.id, articleId: id, userId: user.uid, reaction: reactionType }]);
             }
         } catch (err) {
             handleFirestoreError(err, OperationType.CREATE, 'articleReactions');
+        } finally {
+            refreshReactions().catch(() => undefined);
         }
     };
 
