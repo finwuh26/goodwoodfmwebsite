@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { Navigate, useNavigate, useParams, Link } from 'react-router-dom';
 import { doc, getDoc, updateDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
+import { toast } from 'react-hot-toast';
 import { ArrowLeft, Save, Send, Image as ImageIcon, Tag, Info, ExternalLink, CheckCircle, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { ImageUpload } from '../components/ImageUpload';
@@ -64,7 +65,7 @@ export const ArticleWriter = () => {
 
     const handleSave = async (status: string, preventRedirect = false) => {
         if (!form.title.trim()) {
-            if (!preventRedirect) alert("Title is required.");
+            if (!preventRedirect) toast.error("Title is required.");
             return;
         }
         
