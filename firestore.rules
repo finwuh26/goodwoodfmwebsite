@@ -104,7 +104,7 @@ service cloud.firestore {
     // ===============================================================
 
     function isValidUser(data) {
-      return hasOnlyAllowedFields(['uid', 'username', 'email', 'avatar', 'bannerGradient', 'role', 'bio', 'createdAt', 'isVerified', 'badges', 'reputationScore', 'avatarHistory', 'lastActive', 'favoriteSong', 'twoFactorEnabled']) &&
+      return hasOnlyAllowedFields(['uid', 'username', 'email', 'avatar', 'bannerGradient', 'role', 'bio', 'createdAt', 'isVerified', 'badges', 'reputationScore', 'avatarHistory', 'lastActive', 'favoriteSong', 'twoFactorEnabled', 'credits', 'purchasedItems', 'activeRing', 'activeNameIcon', 'redeemedCodes']) &&
              data.uid == request.auth.uid &&
              data.username is string && data.username.size() >= 3 && data.username.size() <= 30 &&
              isValidEmail(data.email) &&
@@ -118,6 +118,11 @@ service cloud.firestore {
              (!('avatarHistory' in data) || data.avatarHistory is list) &&
              (!('lastActive' in data) || data.lastActive is timestamp) &&
              (!('twoFactorEnabled' in data) || data.twoFactorEnabled is bool) &&
+             (!('credits' in data) || data.credits is number) &&
+             (!('purchasedItems' in data) || data.purchasedItems is list) &&
+             (!('activeRing' in data) || data.activeRing == null || data.activeRing is string) &&
+             (!('activeNameIcon' in data) || data.activeNameIcon == null || data.activeNameIcon is string) &&
+             (!('redeemedCodes' in data) || data.redeemedCodes is list) &&
              (!('favoriteSong' in data) || data.favoriteSong == null || (
                data.favoriteSong is map &&
                data.favoriteSong.keys().hasOnly(['title', 'artist', 'art', 'url']) &&
