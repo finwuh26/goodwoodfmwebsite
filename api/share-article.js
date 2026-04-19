@@ -65,7 +65,7 @@ const getFirestoreDocument = async (articleId) => {
   const envDatabaseId = normalizeDatabaseId(
     process.env.FIRESTORE_DATABASE_ID || process.env.VITE_FIRESTORE_DATABASE_ID || ''
   );
-  const configDatabaseId = config.firestoreDatabaseId?.trim() || '';
+  const configDatabaseId = normalizeDatabaseId(config.firestoreDatabaseId || '');
   const isProduction = process.env.VERCEL_ENV
     ? process.env.VERCEL_ENV === 'production'
     : process.env.NODE_ENV === 'production';
