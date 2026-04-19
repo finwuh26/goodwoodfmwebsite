@@ -26,6 +26,10 @@ interface UserProfile {
   avatarHistory?: string[];
   twoFactorEnabled?: boolean;
   favoriteSong?: string;
+  credits?: number;
+  purchasedItems?: string[];
+  activeRing?: string;
+  redeemedCodes?: string[];
 }
 
 interface AuthContextType {
