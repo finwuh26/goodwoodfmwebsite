@@ -77,8 +77,22 @@ export const Home = () => {
               {
                   id: 'fallback-3',
                   title: 'STAY CONNECTED WITH OUR COMMUNITY',
-                  topic: 'Join Discord',
-                  link: 'https://discord.gg/goodwoodfm',
+                  topic: 'discord.gg/goodwood',
+                  link: 'https://discord.gg/goodwood',
+                  active: true
+              },
+              {
+                  id: 'fallback-4',
+                  title: 'DISCOVER NEW SOUNDS EVERY DAY',
+                  topic: 'Listen Now',
+                  link: '#/schedule',
+                  active: true
+              },
+              {
+                  id: 'fallback-5',
+                  title: 'DIVE INTO THE LATEST STORIES',
+                  topic: 'Read Articles',
+                  link: '#/community/articles',
                   active: true
               }
         ];
@@ -173,7 +187,13 @@ export const Home = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="w-full h-44 sm:h-56 rounded-lg overflow-hidden relative mb-10 sm:mb-12 group cursor-pointer border border-goodwood-border shadow-2xl"
-            onClick={() => window.open(activeBanner.link, activeBanner.link?.startsWith('#') ? '_self' : '_blank')}
+            onClick={() => {
+                let url = activeBanner.link;
+                if (url && !url.startsWith('http') && !url.startsWith('#') && !url.startsWith('/')) {
+                    url = 'https://' + url;
+                }
+                window.open(url, activeBanner.link?.startsWith('#') || activeBanner.link?.startsWith('/') ? '_self' : '_blank');
+            }}
           >
               <div className="absolute inset-0 bg-goodwood-dark mix-blend-overlay z-0" />
               {activeBanner.image ? (
