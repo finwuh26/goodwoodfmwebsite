@@ -6,9 +6,8 @@ import firebaseConfig from './firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
 
-// Allow overriding the Firestore database via an env variable so a persistent
-// production database (set in Vercel environment settings) is used instead of
-// AI Studio temporary databases.
+const FALLBACK_FIRESTORE_DATABASE_ID = 'radio';
+
 const normalizeFirestoreDatabaseId = (databaseId?: string): string | undefined => {
   const trimmedDatabaseId = databaseId?.trim();
   return trimmedDatabaseId && trimmedDatabaseId.length > 0
@@ -21,28 +20,19 @@ const isAiStudioDatabaseId = (databaseId?: string) =>
 
 const envFirestoreDatabaseId = normalizeFirestoreDatabaseId(import.meta.env.VITE_FIRESTORE_DATABASE_ID);
 const configFirestoreDatabaseId = normalizeFirestoreDatabaseId(firebaseConfig.firestoreDatabaseId);
-const isProductionBuild = import.meta.env.PROD;
-const shouldBypassAiStudioFallback =
-  isProductionBuild && !envFirestoreDatabaseId && isAiStudioDatabaseId(configFirestoreDatabaseId);
-const firestoreDatabaseId = shouldBypassAiStudioFallback
-  ? undefined
-  : (envFirestoreDatabaseId ?? configFirestoreDatabaseId);
+const selectedFirestoreDatabaseId =
+  envFirestoreDatabaseId ?? configFirestoreDatabaseId ?? FALLBACK_FIRESTORE_DATABASE_ID;
+const firestoreDatabaseId = isAiStudioDatabaseId(selectedFirestoreDatabaseId)
+  ? FALLBACK_FIRESTORE_DATABASE_ID
+  : selectedFirestoreDatabaseId;
 
-if (shouldBypassAiStudioFallback) {
+if (isAiStudioDatabaseId(selectedFirestoreDatabaseId)) {
   console.warn(
-    'Ignoring firebase-applet-config.json AI Studio Firestore database in production. Using default Firestore database; set VITE_FIRESTORE_DATABASE_ID to a persistent database ID.'
+    `Ignoring AI Studio Firestore database ID "${selectedFirestoreDatabaseId}" and using "${FALLBACK_FIRESTORE_DATABASE_ID}" instead.`
   );
 }
 
-if (!shouldBypassAiStudioFallback && !envFirestoreDatabaseId && isAiStudioDatabaseId(configFirestoreDatabaseId)) {
-  console.warn(
-    'Using firebase-applet-config.json AI Studio Firestore database. Set VITE_FIRESTORE_DATABASE_ID to a persistent database ID for production.'
-  );
-}
-
-export const db = firestoreDatabaseId
-  ? getFirestore(app, firestoreDatabaseId)
-  : getFirestore(app);
+export const db = getFirestore(app, firestoreDatabaseId);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 

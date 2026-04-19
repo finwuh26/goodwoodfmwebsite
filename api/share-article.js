@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const MAX_OG_DESCRIPTION_LENGTH = 280;
+const FALLBACK_FIRESTORE_DATABASE_ID = 'radio';
 
 const escapeHtml = (value = '') =>
   value
@@ -62,17 +63,18 @@ const getFirestoreDocument = async (articleId) => {
   const configRaw = await readFile(configPath, 'utf8');
   const config = JSON.parse(configRaw);
 
-  // Prefer server var, but fall back to VITE_FIRESTORE_DATABASE_ID because this project
-  // commonly sets the Firestore DB only via Vercel envs used at frontend build time.
-  const envDatabaseId = (
-    process.env.FIRESTORE_DATABASE_ID || process.env.VITE_FIRESTORE_DATABASE_ID || ''
-  ).trim();
+  const envDatabaseId = (process.env.FIRESTORE_DATABASE_ID || process.env.VITE_FIRESTORE_DATABASE_ID || '').trim();
   const configDatabaseId = (config.firestoreDatabaseId || '').trim();
-  const isProduction = process.env.VERCEL_ENV
-    ? process.env.VERCEL_ENV === 'production'
-    : process.env.NODE_ENV === 'production';
-  const bypassAiStudio = isProduction && !envDatabaseId && /^ai-studio-/i.test(configDatabaseId);
-  const databaseId = bypassAiStudio ? '(default)' : (envDatabaseId || configDatabaseId || '(default)');
+  const selectedDatabaseId = envDatabaseId || configDatabaseId || FALLBACK_FIRESTORE_DATABASE_ID;
+  const databaseId = /^ai-studio-/i.test(selectedDatabaseId)
+    ? FALLBACK_FIRESTORE_DATABASE_ID
+    : selectedDatabaseId;
+
+  if (/^ai-studio-/i.test(selectedDatabaseId)) {
+    console.warn(
+      `Ignoring AI Studio Firestore database ID "${selectedDatabaseId}" and using "${FALLBACK_FIRESTORE_DATABASE_ID}" instead.`
+    );
+  }
 
   const encodedArticleId = encodeURIComponent(articleId);
   const endpoint = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(config.projectId)}/databases/${encodeURIComponent(databaseId)}/documents/articles/${encodedArticleId}?key=${encodeURIComponent(config.apiKey)}`;
