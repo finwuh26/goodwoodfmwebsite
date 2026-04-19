@@ -32,6 +32,10 @@ const stripMarkdown = (value = '') =>
   );
 
 const getString = (fields, key) => fields?.[key]?.stringValue || '';
+const normalizeDatabaseId = (value) => {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : '';
+};
 
 const buildOrigin = (req) => {
   const host = req.headers.host || 'localhost:3000';
@@ -58,7 +62,9 @@ const getFirestoreDocument = async (articleId) => {
   const configRaw = await readFile(configPath, 'utf8');
   const config = JSON.parse(configRaw);
 
-  const envDatabaseId = (process.env.FIRESTORE_DATABASE_ID || '').trim();
+  const envDatabaseId = normalizeDatabaseId(
+    process.env.FIRESTORE_DATABASE_ID || process.env.VITE_FIRESTORE_DATABASE_ID || ''
+  );
   const configDatabaseId = config.firestoreDatabaseId?.trim() || '';
   const isProduction = process.env.VERCEL_ENV
     ? process.env.VERCEL_ENV === 'production'
@@ -86,7 +92,8 @@ export default async function handler(req, res) {
     return res.status(405).send('Method not allowed');
   }
 
-  const articleId = typeof req.query?.id === 'string' ? req.query.id.trim() : '';
+  const articleIdParam = Array.isArray(req.query?.id) ? req.query.id[0] : req.query?.id;
+  const articleId = typeof articleIdParam === 'string' ? articleIdParam.trim() : '';
   const origin = buildOrigin(req);
   const fallbackTarget = `${origin}/#/content`;
 
