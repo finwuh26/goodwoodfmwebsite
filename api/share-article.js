@@ -49,7 +49,7 @@ const getFirestoreDocument = async (articleId) => {
   const configRaw = await readFile(configPath, 'utf8');
   const config = JSON.parse(configRaw);
 
-  const envDatabaseId = (process.env.FIRESTORE_DATABASE_ID || process.env.VITE_FIRESTORE_DATABASE_ID || '').trim();
+  const envDatabaseId = (process.env.FIRESTORE_DATABASE_ID || '').trim();
   const configDatabaseId = config.firestoreDatabaseId?.trim() || '';
   const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
   const bypassAiStudio = isProduction && !envDatabaseId && /^ai-studio-/i.test(configDatabaseId);

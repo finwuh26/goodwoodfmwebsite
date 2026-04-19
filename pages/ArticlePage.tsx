@@ -102,7 +102,10 @@ export const ArticlePage = () => {
         if (!id) return;
         const shareUrl = `${window.location.origin}/share/article/${id}`;
         try {
-            if (!navigator.clipboard?.writeText) throw new Error('Clipboard API unavailable');
+            if (!navigator.clipboard?.writeText) {
+                toast.error('Unable to copy share link');
+                return;
+            }
             await navigator.clipboard.writeText(shareUrl);
             toast.success('Share link copied');
         } catch {
