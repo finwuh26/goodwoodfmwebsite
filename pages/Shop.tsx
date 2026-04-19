@@ -5,6 +5,7 @@ import { doc, updateDoc, increment, getDoc, arrayUnion, writeBatch } from 'fireb
 import { toast } from 'react-hot-toast';
 import { ShoppingBag, Coins, KeyRound, Check, Star } from 'lucide-react';
 import { SHOP_ITEMS, ShopItem } from '../src/shopItems';
+import { getNameIconOption } from '../src/nameIcons';
 import { motion } from 'motion/react';
 import clsx from 'clsx';
 import { Navigate } from 'react-router-dom';
@@ -15,7 +16,7 @@ export const Shop: React.FC = () => {
     const [redeemCode, setRedeemCode] = useState('');
     const [redeeming, setRedeeming] = useState(false);
     const [confirmItem, setConfirmItem] = useState<ShopItem | null>(null);
-    const [activeTab, setActiveTab] = useState<'banner' | 'ring'>('banner');
+    const [activeTab, setActiveTab] = useState<'banner' | 'ring' | 'nameIcon'>('banner');
 
     if (!userProfile) return <Navigate to="/" />;
 
@@ -106,6 +107,7 @@ export const Shop: React.FC = () => {
             let updateField = '';
             if (item.type === 'banner') updateField = 'bannerGradient';
             if (item.type === 'ring') updateField = 'activeRing';
+            if (item.type === 'nameIcon') updateField = 'activeNameIcon';
 
             await updateDoc(doc(db, 'users', userProfile.uid), {
                 [updateField]: item.value
@@ -123,6 +125,7 @@ export const Shop: React.FC = () => {
             let updateField = '';
             if (type === 'banner') updateField = 'bannerGradient';
             if (type === 'ring') updateField = 'activeRing';
+            if (type === 'nameIcon') updateField = 'activeNameIcon';
 
             await updateDoc(doc(db, 'users', userProfile.uid), {
                 [updateField]: null
@@ -138,12 +141,14 @@ export const Shop: React.FC = () => {
     const tabs = [
         { id: 'banner', label: 'Banners' },
         { id: 'ring', label: 'Profile Rings' },
+        { id: 'nameIcon', label: 'User Icons' },
     ] as const;
 
     // Determine currently equipped value based on activeTab
     const getEquippedValue = (type: string) => {
         if (type === 'banner') return userProfile.bannerGradient;
         if (type === 'ring') return userProfile.activeRing;
+        if (type === 'nameIcon') return userProfile.activeNameIcon;
         return null;
     };
 
@@ -248,6 +253,21 @@ export const Shop: React.FC = () => {
                                                 </div>
                                             </div>
                                         )}
+                                        {item.type === 'nameIcon' && (
+                                            <div className="w-full h-20 rounded-lg shadow-inner bg-[#0f1014] flex items-center justify-center">
+                                                {(() => {
+                                                    const iconOption = getNameIconOption(item.value);
+                                                    if (!iconOption) return null;
+                                                    const Icon = iconOption.icon;
+                                                    return (
+                                                        <div className="flex items-center gap-2">
+                                                            <Icon size={24} className={iconOption.colorClass} />
+                                                            <span className="text-white font-black text-xl uppercase tracking-widest">{userProfile.username || 'Username'}</span>
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </div>
+                                        )}
 
                                         <div className="flex-1">
                                             <h3 className="text-white font-bold text-sm tracking-wide">{item.name}</h3>
@@ -318,19 +338,34 @@ export const Shop: React.FC = () => {
                                  <div className={clsx("w-full h-20 rounded-lg shadow-inner", "bg-gradient-to-r", confirmItem.value)} />
                              )}
                              {confirmItem.type === 'ring' && (
-                                 <div className="w-full h-20 rounded-lg shadow-inner bg-[#0f1014] flex items-center justify-center">
-                                     <div className={clsx("relative w-10 h-10 rounded-full shrink-0 transition-shadow duration-300", confirmItem.value, "ring-2")}>
-                                         <div className="w-full h-full rounded-full border-[3px] border-[#0f1014] overflow-hidden bg-goodwood-dark">
-                                             {userProfile.avatar ? (
+                                  <div className="w-full h-20 rounded-lg shadow-inner bg-[#0f1014] flex items-center justify-center">
+                                      <div className={clsx("relative w-10 h-10 rounded-full shrink-0 transition-shadow duration-300", confirmItem.value, "ring-2")}>
+                                          <div className="w-full h-full rounded-full border-[3px] border-[#0f1014] overflow-hidden bg-goodwood-dark">
+                                              {userProfile.avatar ? (
                                                  <img src={userProfile.avatar} alt="Preview" className="w-full h-full object-cover" />
                                              ) : (
                                                  <div className="w-full h-full flex items-center justify-center text-white/50 text-[10px] font-bold">PFP</div>
                                              )}
-                                         </div>
-                                     </div>
-                                 </div>
-                             )}
-                        </div>
+                                          </div>
+                                      </div>
+                                  </div>
+                              )}
+                              {confirmItem.type === 'nameIcon' && (
+                                  <div className="w-full h-20 rounded-lg shadow-inner bg-[#0f1014] flex items-center justify-center">
+                                      {(() => {
+                                          const iconOption = getNameIconOption(confirmItem.value);
+                                          if (!iconOption) return null;
+                                          const Icon = iconOption.icon;
+                                          return (
+                                              <div className="flex items-center gap-2">
+                                                  <Icon size={24} className={iconOption.colorClass} />
+                                                  <span className="text-white font-black text-xl uppercase tracking-widest">{userProfile.username || 'Username'}</span>
+                                              </div>
+                                          );
+                                      })()}
+                                  </div>
+                              )}
+                         </div>
                         <div className="flex gap-4 pt-4">
                             <button onClick={() => setConfirmItem(null)} className="flex-1 bg-goodwood-dark hover:bg-white/5 border border-goodwood-border text-white px-4 py-3 rounded-xl font-bold transition-colors">
                                 Cancel

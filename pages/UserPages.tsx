@@ -18,6 +18,7 @@ import Cropper from 'react-easy-crop';
 import { AVAILABLE_BADGES } from '../components/BadgeSelector';
 import { useRadio } from '../context/RadioContext';
 import { normalizeAzuraIdentity } from '../utils/azuraIdentity';
+import { getNameIconOption } from '../src/nameIcons';
 
 const getCroppedImg = async (imageSrc: string, pixelCrop: any): Promise<Blob> => {
     const image = new Image();
@@ -189,6 +190,7 @@ export const ProfilePage = () => {
     );
     const visibleBadges = Array.from(new Set(Array.isArray(userProfile.badges) ? userProfile.badges : []))
         .filter((badgeId) => !(badgeId === 'owner' && userProfile.role === 'owner'));
+    const activeNameIcon = getNameIconOption(userProfile.activeNameIcon);
 
     return (
         <div className={clsx("min-h-screen", userProfile.activeProfileBg ? `bg-gradient-to-br ${userProfile.activeProfileBg}` : "")}>
@@ -248,6 +250,7 @@ export const ProfilePage = () => {
                     </div>
                     <div className="mb-4">
                         <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter drop-shadow-2xl flex items-center gap-3 max-w-full [overflow-wrap:anywhere]">
+                            {activeNameIcon && <activeNameIcon.icon size={40} className={activeNameIcon.colorClass} />}
                             {userProfile.username}
                             {userProfile.isVerified && (
                                 <svg className="w-8 h-8 text-blue-400" viewBox="0 0 24 24" fill="currentColor">

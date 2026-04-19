@@ -1,6 +1,6 @@
 export interface ShopItem {
     id: string;
-    type: 'banner' | 'ring';
+    type: 'banner' | 'ring' | 'nameIcon';
     name: string;
     price: number;
     value: string;
@@ -20,4 +20,11 @@ export const SHOP_ITEMS: ShopItem[] = [
     { id: 'ring_crimson', type: 'ring', name: 'Crimson Ring', price: 50, value: 'ring-red-500', description: 'Fierce red profile ring.' },
     { id: 'ring_gold', type: 'ring', name: 'Golden Aura', price: 300, value: 'ring-yellow-400 shadow-[0_0_25px_6px_rgba(250,204,21,0.6)]', description: 'A glowing golden aura.' },
     { id: 'ring_void', type: 'ring', name: 'The Void', price: 500, value: 'ring-purple-900 shadow-[0_0_30px_8px_rgba(88,28,135,0.8)] animate-pulse', description: 'A dark, pulsating void ring.' },
+
+    // USERNAME ICONS
+    { id: 'icon_star', type: 'nameIcon', name: 'Star Prefix', price: 120, value: 'star', description: 'Adds a glowing star before your username.' },
+    { id: 'icon_crown', type: 'nameIcon', name: 'Crown Prefix', price: 220, value: 'crown', description: 'A regal crown icon before your username.' },
+    { id: 'icon_gem', type: 'nameIcon', name: 'Gem Prefix', price: 180, value: 'gem', description: 'A bright gem icon before your username.' },
+    { id: 'icon_sparkles', type: 'nameIcon', name: 'Sparkles Prefix', price: 200, value: 'sparkles', description: 'Adds sparkling flair before your username.' },
+    { id: 'icon_flame', type: 'nameIcon', name: 'Flame Prefix', price: 260, value: 'flame', description: 'A fiery icon to lead your username.' },
 ];
