@@ -262,17 +262,7 @@ export const StaffDashboard = () => {
                     operationType: OperationType.GET,
                     path: 'staffDashboard:lowPriorityPolling',
                     authInfo: {
-                        userId: user?.uid,
-                        email: user?.email ?? null,
-                        emailVerified: user?.emailVerified,
-                        isAnonymous: user?.isAnonymous,
-                        tenantId: user?.tenantId ?? null,
-                        providerInfo: user?.providerData.map(provider => ({
-                            providerId: provider.providerId,
-                            displayName: provider.displayName,
-                            email: provider.email,
-                            photoUrl: provider.photoURL
-                        })) || []
+                        userId: user?.uid
                     }
                 }));
             }
