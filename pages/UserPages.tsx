@@ -3,7 +3,7 @@ import { useParams, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
     doc, onSnapshot, updateDoc, collection, query, orderBy, 
-    addDoc, serverTimestamp, deleteDoc, writeBatch, where, getDocs 
+    addDoc, serverTimestamp, deleteDoc, writeBatch, where, getDocs, limit
 } from 'firebase/firestore';
 import { getAuth, sendPasswordResetEmail, deleteUser } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -11,7 +11,7 @@ import { db, storage, handleFirestoreError, OperationType } from '../firebase';
 import { toast } from 'react-hot-toast';
 import { formatDate } from '../utils';
 import { UserAvatar } from '../components/UserAvatar';
-import { User as UserIcon, Settings, Shield, Clock, Calendar, Heart, MessageSquare, Star, LogOut, Trash2, Upload, X, Check, Image as ImageIcon, Music } from 'lucide-react';
+import { User as UserIcon, Settings, Shield, Clock, Calendar, Heart, MessageSquare, Star, LogOut, Trash2, Upload, X, Check, Image as ImageIcon, Music, FileText } from 'lucide-react';
 import { motion } from 'motion/react';
 import clsx from 'clsx';
 import Cropper from 'react-easy-crop';
@@ -60,6 +60,7 @@ export const ProfilePage = () => {
     const [posts, setPosts] = useState<any[]>([]);
     const [wallComments, setWallComments] = useState<any[]>([]);
     const [reputationLogs, setReputationLogs] = useState<any[]>([]);
+    const [latestArticle, setLatestArticle] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'activity' | 'wall' | 'posts' | 'reputation'>('activity');
     const [newComment, setNewComment] = useState('');
@@ -98,6 +99,43 @@ export const ProfilePage = () => {
             unsubscribeLikes();
             unsubscribeComments();
             unsubscribeReputation();
+        };
+    }, [uid]);
+
+    useEffect(() => {
+        if (!uid) {
+            setLatestArticle(null);
+            return;
+        }
+
+        let isMounted = true;
+        const fetchLatestArticle = async () => {
+            try {
+                const qArticles = query(
+                    collection(db, 'articles'),
+                    where('authorId', '==', uid),
+                    where('status', '==', 'published'),
+                    orderBy('date', 'desc'),
+                    limit(1)
+                );
+                const snapshot = await getDocs(qArticles);
+                if (!isMounted) return;
+                if (snapshot.empty) {
+                    setLatestArticle(null);
+                    return;
+                }
+                const latestDoc = snapshot.docs[0];
+                setLatestArticle({ id: latestDoc.id, ...latestDoc.data() });
+            } catch (err) {
+                if (!isMounted) return;
+                setLatestArticle(null);
+                handleFirestoreError(err, OperationType.GET, 'articles');
+            }
+        };
+
+        fetchLatestArticle();
+        return () => {
+            isMounted = false;
         };
     }, [uid]);
 
@@ -274,6 +312,30 @@ export const ProfilePage = () => {
                             </div>
                         </div>
                     </div>
+
+                    {latestArticle && (
+                        <div className="bg-goodwood-card border border-goodwood-border rounded-2xl p-4 shadow-xl">
+                            <div className="flex items-center gap-2 mb-3">
+                                <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Most Recent Article</h3>
+                                <div className="h-px bg-goodwood-border flex-1" />
+                            </div>
+                            <Link to={`/article/${latestArticle.id}`} className="block rounded-xl border border-goodwood-border bg-goodwood-dark hover:bg-goodwood-card-hover transition-colors overflow-hidden">
+                                <div className="flex items-center min-h-16">
+                                    <div className="w-20 h-16 shrink-0 bg-emerald-900/30 border-r border-goodwood-border overflow-hidden flex items-center justify-center">
+                                        {latestArticle.image ? (
+                                            <img src={latestArticle.image} alt={latestArticle.title} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <FileText size={18} className="text-white/60" />
+                                        )}
+                                    </div>
+                                    <div className="px-3 py-2 min-w-0 flex-1">
+                                        <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1">Latest Article</p>
+                                        <p className="text-sm font-black uppercase italic tracking-tight text-white truncate">{latestArticle.title}</p>
+                                    </div>
+                                </div>
+                            </Link>
+                        </div>
+                    )}
 
                     {isOwnProfile && (
                         <Link to="/settings" className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white py-4 rounded-xl font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
