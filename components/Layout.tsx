@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, deleteDoc, onSnapshot, doc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { makeLikeReadKey, readFirestoreWithGuard, seedFirestoreReadCache } from '../utils/firestoreReadGuards';
+import { toast } from 'react-hot-toast';
 
 import { Marquee } from './Marquee';
 
@@ -218,7 +219,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             createdAt: serverTimestamp(),
             department: 'Radio'
         });
-        alert("Your request has been sent!");
+        toast.success("Your request has been sent!");
         setShowRequestModal(false);
         setRequestMessage('');
     } catch (err) {
@@ -874,7 +875,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                           try {
                               if (isSignup) {
                                   if (username.length < 3 || username.length > 30) {
-                                      alert('Username must be between 3 and 30 characters after trimming spaces.');
+                                      toast.error('Username must be between 3 and 30 characters after trimming spaces.');
                                       return;
                                   }
                                   if (signupWithEmail) await signupWithEmail(email, password, username);
@@ -883,7 +884,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                               }
                              setShowLogin(false);
                          } catch (err: any) {
-                             alert(err.message);
+                             toast.error(err.message);
                          }
                      }}>
                          <div className="space-y-3 mb-4">
