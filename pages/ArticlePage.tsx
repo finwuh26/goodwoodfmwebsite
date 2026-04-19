@@ -158,7 +158,7 @@ export const ArticlePage = () => {
                     userId: user.uid,
                     reaction: reactionType
                 });
-                setReactions((prev) => [...prev, { id: docRef.id, articleId: id, userId: user.uid, reaction: reactionType }]);
+                setReactions((prev) => [...prev, { id: docRef.id, articleId: id, userId: user.uid, reaction: reactionType, timestamp: Timestamp.now() }]);
             }
         } catch (err) {
             handleFirestoreError(err, OperationType.CREATE, 'articleReactions');
