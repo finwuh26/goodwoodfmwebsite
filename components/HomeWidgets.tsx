@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Award, Users, ExternalLink, MessageSquare } from 'lucide-react';
 import { motion } from 'motion/react';
-import { collection, onSnapshot, query, limit, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, limit, orderBy } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { useRadio } from '../context/RadioContext';
 import { normalizeAzuraIdentity } from '../utils/azuraIdentity';
+import { readFirestoreWithGuard } from '../utils/firestoreReadGuards';
 
 const RECENT_ACTIVITY_QUERY_LIMIT = 25;
 const ONLINE_WINDOW_MS = 7 * 60 * 1000;
+const HOME_WIDGETS_READ_TTL_MS = 5 * 60 * 1000;
 
 const toDate = (value: any): Date | null => {
     if (!value) return null;
@@ -49,20 +51,27 @@ export const StaffOfTheMonth = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        let isMounted = true;
         const STAFF_ROLES = ['staff', 'dj', 'journalist', 'manager', 'admin', 'owner'];
         // Fetch the top 50 users by reputationScore; filter client-side for staff roles
         // (Firestore requires a composite index for a where+orderBy, so we filter after fetch)
         const q = query(collection(db, 'users'), orderBy('reputationScore', 'desc'), limit(50));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        readFirestoreWithGuard(
+            'homeWidgets:staffOfTheMonth',
+            () => getDocs(q),
+            { ttlMs: HOME_WIDGETS_READ_TTL_MS }
+        ).then((snapshot) => {
+            if (!isMounted) return;
             const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
             const topStaff = users.find((u: any) => STAFF_ROLES.includes(u.role)) || null;
             setStaffMember(topStaff);
             setLoading(false);
-        }, (err) => {
+        }).catch((err) => {
+            if (!isMounted) return;
             setLoading(false);
             handleFirestoreError(err, OperationType.GET, 'users');
         });
-        return () => unsubscribe();
+        return () => { isMounted = false; };
     }, []);
 
     if (loading) return (
@@ -129,11 +138,20 @@ export const PartnersWidget = () => {
     const [partners, setPartners] = useState<any[]>([]);
 
     useEffect(() => {
+        let isMounted = true;
         const q = query(collection(db, 'partners'));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        readFirestoreWithGuard(
+            'homeWidgets:partners',
+            () => getDocs(q),
+            { ttlMs: HOME_WIDGETS_READ_TTL_MS }
+        ).then((snapshot) => {
+            if (!isMounted) return;
             setPartners(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        }, (err) => handleFirestoreError(err, OperationType.GET, 'partners'));
-        return () => unsubscribe();
+        }).catch((err) => {
+            if (!isMounted) return;
+            handleFirestoreError(err, OperationType.GET, 'partners');
+        });
+        return () => { isMounted = false; };
     }, []);
 
     const colors = [
@@ -188,8 +206,14 @@ export const RecentlyActiveWidget = () => {
     const isLive = Boolean(radioData?.live?.is_live);
 
     useEffect(() => {
+        let isMounted = true;
         const q = query(collection(db, 'users'), limit(RECENT_ACTIVITY_QUERY_LIMIT));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        readFirestoreWithGuard(
+            'homeWidgets:recentlyActive',
+            () => getDocs(q),
+            { ttlMs: HOME_WIDGETS_READ_TTL_MS }
+        ).then((snapshot) => {
+            if (!isMounted) return;
             const usersList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as any);
             // Filter distinct users by username to prevent showing multiple of the same person
             const uniqueUsers = Array.from(new Map(usersList.map((u: any) => [u.username || u.id, u])).values()) as any[];
@@ -199,8 +223,11 @@ export const RecentlyActiveWidget = () => {
                 return bTs - aTs;
             });
             setActiveStaff(sortedUsers.slice(0, 15));
-        }, (err) => handleFirestoreError(err, OperationType.GET, 'users'));
-        return () => unsubscribe();
+        }).catch((err) => {
+            if (!isMounted) return;
+            handleFirestoreError(err, OperationType.GET, 'users');
+        });
+        return () => { isMounted = false; };
     }, []);
 
     if (activeStaff.length === 0) return (

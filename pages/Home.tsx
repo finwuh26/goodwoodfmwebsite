@@ -7,9 +7,12 @@ import { FileText, User, Clock, ChevronRight, History, Radio, ExternalLink } fro
 
 import { motion } from 'motion/react';
 import { useRadio } from '../context/RadioContext';
-import { collection, onSnapshot, query, orderBy, limit, where } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { useAuth } from '../context/AuthContext';
+import { readFirestoreWithGuard } from '../utils/firestoreReadGuards';
+
+const HOME_PAGE_READ_TTL_MS = 5 * 60 * 1000;
 
 export const Home = () => {
   const { radioData } = useRadio();
@@ -21,19 +24,41 @@ export const Home = () => {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
   useEffect(() => {
+    let isMounted = true;
     const qArticles = query(collection(db, 'articles'), where('status', '==', 'published'), orderBy('date', 'desc'), limit(5));
-    const unsubscribe = onSnapshot(qArticles, (snapshot) => {
+    readFirestoreWithGuard(
+      'home:articles',
+      () => getDocs(qArticles),
+      { ttlMs: HOME_PAGE_READ_TTL_MS }
+    ).then((snapshot) => {
+      if (!isMounted) return;
       setArticles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    }, (err) => handleFirestoreError(err, OperationType.GET, 'articles'));
+    }).catch((err) => {
+      if (!isMounted) return;
+      handleFirestoreError(err, OperationType.GET, 'articles');
+    });
 
     const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
     const qSchedule = query(collection(db, 'schedule'), where('day', '==', today), orderBy('time', 'asc'));
-    const sunsubscribe = onSnapshot(qSchedule, (snapshot) => {
+    readFirestoreWithGuard(
+      `home:schedule:${today}`,
+      () => getDocs(qSchedule),
+      { ttlMs: HOME_PAGE_READ_TTL_MS }
+    ).then((snapshot) => {
+      if (!isMounted) return;
       setSchedule(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    }, (err) => handleFirestoreError(err, OperationType.GET, 'schedule'));
+    }).catch((err) => {
+      if (!isMounted) return;
+      handleFirestoreError(err, OperationType.GET, 'schedule');
+    });
 
     const qBanners = query(collection(db, 'banners'), where('active', '==', true));
-    const bunsubscribe = onSnapshot(qBanners, (snapshot) => {
+    readFirestoreWithGuard(
+      'home:banners:active',
+      () => getDocs(qBanners),
+      { ttlMs: HOME_PAGE_READ_TTL_MS }
+    ).then((snapshot) => {
+      if (!isMounted) return;
         const fallbacks = [
               {
                   id: 'fallback-1',
@@ -64,12 +89,13 @@ export const Home = () => {
       } else {
           setBanners(fallbacks);
       }
-    }, (err) => handleFirestoreError(err, OperationType.GET, 'banners'));
+    }).catch((err) => {
+      if (!isMounted) return;
+      handleFirestoreError(err, OperationType.GET, 'banners');
+    });
 
     return () => {
-      unsubscribe();
-      sunsubscribe();
-      bunsubscribe();
+      isMounted = false;
     };
   }, []);
 

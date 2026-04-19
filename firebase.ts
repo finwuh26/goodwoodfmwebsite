@@ -21,19 +21,12 @@ const isAiStudioDatabaseId = (databaseId?: string) =>
 
 const envFirestoreDatabaseId = normalizeFirestoreDatabaseId(import.meta.env.VITE_FIRESTORE_DATABASE_ID);
 const configFirestoreDatabaseId = normalizeFirestoreDatabaseId(firebaseConfig.firestoreDatabaseId);
-const shouldIgnoreConfigDatabase =
-  !envFirestoreDatabaseId && isAiStudioDatabaseId(configFirestoreDatabaseId);
+const firestoreDatabaseId = envFirestoreDatabaseId ?? configFirestoreDatabaseId;
 
-if (shouldIgnoreConfigDatabase) {
+if (!envFirestoreDatabaseId && isAiStudioDatabaseId(configFirestoreDatabaseId)) {
   console.warn(
-    'Ignoring firebase-applet-config.json Firestore database because it points to an AI Studio temporary database. Set VITE_FIRESTORE_DATABASE_ID to force a specific Firestore database.'
+    'Using firebase-applet-config.json AI Studio Firestore database. Set VITE_FIRESTORE_DATABASE_ID to a persistent database ID for production.'
   );
-}
-
-let firestoreDatabaseId = envFirestoreDatabaseId;
-
-if (!firestoreDatabaseId && !shouldIgnoreConfigDatabase) {
-  firestoreDatabaseId = configFirestoreDatabaseId;
 }
 
 export const db = firestoreDatabaseId
