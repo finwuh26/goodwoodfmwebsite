@@ -257,7 +257,14 @@ export const StaffDashboard = () => {
                     setRedeemCodes([]);
                 }
             } catch (err) {
-                handleFirestoreError(err, OperationType.GET, 'staffDashboard:lowPriorityPolling');
+                console.error('Non-fatal Firestore polling error:', {
+                    error: err,
+                    operationType: OperationType.GET,
+                    path: 'staffDashboard:lowPriorityPolling',
+                    authInfo: {
+                        userId: user?.uid
+                    }
+                });
             }
         };
 
