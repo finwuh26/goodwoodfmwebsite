@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
-import { readFirestoreWithGuard } from '../utils/firestoreReadGuards';
 
 interface UserAvatarProps {
   userId: string;
@@ -17,12 +16,10 @@ interface UserAvatarData {
 
 interface SharedUserAvatarListener {
   data: UserAvatarData | null;
-  lastUpdatedAt: number;
-  loadingPromise: Promise<void> | null;
   subscribers: Set<(data: UserAvatarData | null) => void>;
+  unsubscribe: (() => void) | null;
 }
 
-const USER_AVATAR_CACHE_TTL_MS = 10 * 60 * 1000;
 const sharedUserAvatarListeners = new Map<string, SharedUserAvatarListener>();
 
 const subscribeToSharedUserAvatar = (
@@ -34,49 +31,57 @@ const subscribeToSharedUserAvatar = (
   if (!entry) {
     entry = {
       data: null,
-      lastUpdatedAt: 0,
-      loadingPromise: null,
-      subscribers: new Set()
+      subscribers: new Set(),
+      unsubscribe: null
     };
     sharedUserAvatarListeners.set(userId, entry);
   }
 
   entry.subscribers.add(callback);
 
-  // Immediate cache hit prevents duplicate mount bursts from triggering extra reads.
-  if (entry.data && entry.lastUpdatedAt > 0 && Date.now() - entry.lastUpdatedAt < USER_AVATAR_CACHE_TTL_MS) {
+  // If already loaded, immediately notify the new subscriber
+  if (entry.data) {
     callback(entry.data);
   }
 
-  const shouldRefresh = !entry.data || Date.now() - entry.lastUpdatedAt >= USER_AVATAR_CACHE_TTL_MS;
-  if (shouldRefresh && !entry.loadingPromise) {
-    entry.loadingPromise = readFirestoreWithGuard(
-      `userAvatar:${userId}`,
-      () => getDoc(doc(db, 'users', userId)),
-      { ttlMs: USER_AVATAR_CACHE_TTL_MS }
-    ).then((docSnap) => {
-      const data = docSnap.exists() ? docSnap.data() : null;
-      entry!.data = docSnap.exists()
-        ? {
-            avatar: (data?.avatar as string) || null,
-            username: (data?.username as string) || null
-          }
-        : null;
-      entry!.lastUpdatedAt = Date.now();
-      entry!.subscribers.forEach((subscriber) => subscriber(entry!.data));
-    }).catch((err) => {
-      console.warn(`Failed to read avatar for user ${userId}`, err);
-    }).finally(() => {
-      const current = sharedUserAvatarListeners.get(userId);
-      if (!current) return;
-      current.loadingPromise = null;
-    });
+  // If this is the first subscriber, start the onSnapshot listener
+  if (!entry.unsubscribe) {
+    entry.unsubscribe = onSnapshot(
+      doc(db, 'users', userId),
+      (docSnap) => {
+        const docData = docSnap.exists() ? docSnap.data() : null;
+        const newData = docSnap.exists()
+          ? {
+              avatar: (docData?.avatar as string) || null,
+              username: (docData?.username as string) || null
+            }
+          : null;
+        
+        const currentEntry = sharedUserAvatarListeners.get(userId);
+        if (currentEntry) {
+          currentEntry.data = newData;
+          currentEntry.subscribers.forEach((sub) => sub(newData));
+        }
+      },
+      (err) => {
+        console.warn(`Failed to read avatar for user ${userId}`, err);
+      }
+    );
   }
 
   return () => {
     const current = sharedUserAvatarListeners.get(userId);
     if (!current) return;
+    
     current.subscribers.delete(callback);
+    
+    // If no more subscribers, clean up the listener to save memory
+    if (current.subscribers.size === 0) {
+      if (current.unsubscribe) {
+        current.unsubscribe();
+      }
+      sharedUserAvatarListeners.delete(userId);
+    }
   };
 };
 
@@ -104,12 +109,11 @@ export const UserAvatar = ({ userId, fallbackAvatar, fallbackName, className }: 
     return () => unsubscribe();
   }, [userId, fallbackAvatar, fallbackName]);
 
-  // If the fallback avatar explicitly changes, and we haven't loaded the real one yet, try to adopt it.
   useEffect(() => {
       if (fallbackAvatar && !avatar) {
           setAvatar(fallbackAvatar);
       }
-  }, [fallbackAvatar]);
+  }, [fallbackAvatar, avatar]);
 
   if (avatar) {
     return <img src={avatar} alt="Avatar" className={`object-cover border-none ${className}`} />;
