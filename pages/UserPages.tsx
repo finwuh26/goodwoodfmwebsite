@@ -162,6 +162,32 @@ export const ProfilePage = () => {
         }
     };
 
+    const handleDeleteComment = async (commentId: string) => {
+        if (!currentUser || !uid) return;
+        const comment = wallComments.find((c) => c.id === commentId);
+        if (!comment) return;
+
+        const canDelete =
+            comment.authorId === currentUser.uid ||
+            comment.targetUserId === currentUser.uid ||
+            currentUser.role === 'admin' ||
+            currentUser.role === 'owner';
+        if (!canDelete) {
+            toast.error('You do not have permission to delete this comment.');
+            return;
+        }
+
+        if (!window.confirm('Delete this comment? This action cannot be undone.')) return;
+
+        try {
+            await deleteDoc(doc(db, 'profileComments', commentId));
+            toast.success('Comment deleted.');
+        } catch (err) {
+            console.error('Failed to delete profile comment:', err);
+            toast.error('Failed to delete comment. Please try again.');
+        }
+    };
+
     if (loading) return (
         <div className="flex items-center justify-center min-h-[400px]">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>

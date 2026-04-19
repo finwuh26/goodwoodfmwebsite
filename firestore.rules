@@ -85,6 +85,12 @@ service cloud.firestore {
         (request.auth.token.email == "radiodjmra@gmail.com" && request.auth.token.email_verified == true));
     }
 
+    function canWriteArticles() {
+      return isAuthenticated() &&
+        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'staff', 'owner', 'manager', 'journalist']) ||
+        (request.auth.token.email == "radiodjmra@gmail.com" && request.auth.token.email_verified == true));
+    }
+
     function isValidEmail(email) {
       return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
     }
@@ -220,14 +226,14 @@ service cloud.firestore {
 
     match /articles/{articleId} {
       allow read: if true;
-      allow create: if isStaff() && isValidArticle(request.resource.data) && request.resource.data.authorId == request.auth.uid;
-      allow update: if isStaff() && isValidArticle(request.resource.data) && (
+      allow create: if canWriteArticles() && isValidArticle(request.resource.data) && request.resource.data.authorId == request.auth.uid;
+      allow update: if canWriteArticles() && isValidArticle(request.resource.data) && (
         resource.data.authorId == request.auth.uid || 
         isAdmin() || 
         (resource.data.status == 'idea' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['authorId', 'authorName', 'status']) && request.resource.data.authorId == request.auth.uid) ||
         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'managerFeedback']))
       );
-      allow delete: if isAdmin() || (isStaff() && resource.data.authorId == request.auth.uid);
+      allow delete: if isAdmin() || (canWriteArticles() && resource.data.authorId == request.auth.uid);
     }
 
     match /staff/{staffId} {
