@@ -227,7 +227,7 @@ service cloud.firestore {
       );
       allow update: if isAuthenticated() && (
         (isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role && request.resource.data.get('isVerified', false) == resource.data.get('isVerified', false) && request.resource.data.get('badges', []) == resource.data.get('badges', [])) ||
-        (isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastActive']) && request.resource.data.lastActive is timestamp) ||
+        (isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastActive']) && request.resource.data.lastActive is timestamp && request.resource.data.lastActive <= request.time && request.resource.data.lastActive >= request.time - duration.value(1, 'd')) ||
         isAdmin()
       );
       allow delete: if isAdmin();
