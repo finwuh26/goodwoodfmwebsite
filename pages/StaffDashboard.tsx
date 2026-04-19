@@ -208,7 +208,7 @@ export const StaffDashboard = () => {
                 setPartners(partnersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
                 setBanners(bannersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
                 setReputationLogs(logsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-                if (codesSnap) {
+                if (includeCodes && codesSnap) {
                     setRedeemCodes(codesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
                 } else {
                     setRedeemCodes([]);

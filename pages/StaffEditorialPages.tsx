@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { addDoc, collection, deleteDoc, doc, getDoc, limit, onSnapshot, query, serverTimestamp, updateDoc, where } from 'firebase/firestore';
-import { ArrowLeft, CheckCircle, Clock, ExternalLink, FileText, Layers, Search, Shield, Trash2, Zap } from 'lucide-react';
+import { addDoc, collection, deleteDoc, doc, increment, limit, onSnapshot, query, serverTimestamp, updateDoc, where } from 'firebase/firestore';
+import { ArrowLeft, CheckCircle, ExternalLink, FileText, Layers, Search, Shield, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { useAuth } from '../context/AuthContext';
@@ -235,7 +235,10 @@ export const EditorialQueuePage = () => {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ articleId }),
     });
-    if (!response.ok) throw new Error('Failed to notify article publication');
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`Failed to notify article publication (${response.status}): ${body || 'no response body'}`);
+    }
   };
 
   const review = async (art: any, approved: boolean) => {
@@ -251,12 +254,7 @@ export const EditorialQueuePage = () => {
           source: 'Editorial Queue',
           timestamp: serverTimestamp()
         });
-        const userRef = doc(db, 'users', art.authorId);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          const currentScore = userSnap.data().reputationScore || 0;
-          await updateDoc(userRef, { reputationScore: currentScore + 50 });
-        }
+        await updateDoc(doc(db, 'users', art.authorId), { reputationScore: increment(50) });
         toast.success('Article approved and published');
         return;
       }
@@ -301,4 +299,3 @@ export const EditorialQueuePage = () => {
     </StaffEditorialShell>
   );
 };
-
