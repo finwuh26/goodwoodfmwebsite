@@ -228,8 +228,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       artwork
     });
 
-    mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
-
     mediaSession.setActionHandler('play', () => setIsPlaying(true));
     mediaSession.setActionHandler('pause', () => setIsPlaying(false));
     mediaSession.setActionHandler('stop', () => setIsPlaying(false));
@@ -239,7 +237,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       mediaSession?.setActionHandler('pause', null);
       mediaSession?.setActionHandler('stop', null);
     };
-  }, [albumArt, isPlaying, mediaArtist, mediaTitle, setIsPlaying]);
+  }, [albumArt, mediaArtist, mediaTitle, setIsPlaying]);
 
   const handleLike = async () => {
     if (!userProfile) {
