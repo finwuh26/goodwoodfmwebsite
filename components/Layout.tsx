@@ -142,6 +142,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const bgImage = radioData?.now_playing?.song?.art || "";
   const songTitle = radioData?.now_playing?.song?.title || "Loading...";
   const songArtist = radioData?.now_playing?.song?.artist || "Goodwood FM";
+  const hasTrackMetadata = songTitle !== "Loading..." && songTitle.trim().length > 0;
+  const mediaTitle = hasTrackMetadata ? songTitle : "Live Radio";
+  const mediaArtist = hasTrackMetadata ? songArtist : "Goodwood FM";
   const isLive = radioData?.live?.is_live || false;
   const streamerName = radioData?.live?.streamer_name || "";
   const nextSong = radioData?.playing_next?.song;
@@ -203,6 +206,38 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       unsubscribe();
     };
   }, [userProfile, songTitle, songArtist]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.title = hasTrackMetadata ? `${songTitle} — ${songArtist}` : 'Goodwood FM';
+  }, [hasTrackMetadata, songTitle, songArtist]);
+
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !('mediaSession' in navigator) || typeof MediaMetadata === 'undefined') return;
+
+    const artwork = albumArt
+      ? [{ src: albumArt, sizes: '512x512', type: 'image/jpeg' }]
+      : undefined;
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: mediaTitle,
+      artist: mediaArtist,
+      album: 'Goodwood FM',
+      artwork
+    });
+
+    navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+
+    navigator.mediaSession.setActionHandler('play', () => setIsPlaying(true));
+    navigator.mediaSession.setActionHandler('pause', () => setIsPlaying(false));
+    navigator.mediaSession.setActionHandler('stop', () => setIsPlaying(false));
+
+    return () => {
+      navigator.mediaSession.setActionHandler('play', null);
+      navigator.mediaSession.setActionHandler('pause', null);
+      navigator.mediaSession.setActionHandler('stop', null);
+    };
+  }, [albumArt, isPlaying, mediaArtist, mediaTitle, setIsPlaying]);
 
   const handleLike = async () => {
     if (!userProfile) {
