@@ -213,26 +213,30 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   }, [hasTrackMetadata, songTitle, songArtist]);
 
   useEffect(() => {
-    if (typeof navigator === 'undefined' || !('mediaSession' in navigator) || typeof MediaMetadata === 'undefined') return;
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') return;
+    const mediaSession = 'mediaSession' in navigator ? navigator.mediaSession : null;
+    if (!mediaSession || !('MediaMetadata' in window)) return;
+    const MediaMetadataConstructor = window.MediaMetadata;
 
     const artwork = albumArt
       ? [{ src: albumArt, sizes: '512x512', type: 'image/jpeg' }]
       : undefined;
 
-    navigator.mediaSession.metadata = new MediaMetadata({
+    mediaSession.metadata = new MediaMetadataConstructor({
       title: mediaTitle,
       artist: mediaArtist,
       album: 'Goodwood FM',
       artwork
     });
 
-    navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+    mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
 
-    navigator.mediaSession.setActionHandler('play', () => setIsPlaying(true));
-    navigator.mediaSession.setActionHandler('pause', () => setIsPlaying(false));
-    navigator.mediaSession.setActionHandler('stop', () => setIsPlaying(false));
+    mediaSession.setActionHandler('play', () => setIsPlaying(true));
+    mediaSession.setActionHandler('pause', () => setIsPlaying(false));
+    mediaSession.setActionHandler('stop', () => setIsPlaying(false));
 
     return () => {
+      if (!('mediaSession' in navigator)) return;
       navigator.mediaSession.setActionHandler('play', null);
       navigator.mediaSession.setActionHandler('pause', null);
       navigator.mediaSession.setActionHandler('stop', null);
