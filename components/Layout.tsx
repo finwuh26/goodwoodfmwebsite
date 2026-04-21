@@ -214,15 +214,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof navigator === 'undefined') return;
-    const mediaSession = 'mediaSession' in navigator ? navigator.mediaSession : null;
+    const mediaSession = 'mediaSession' in navigator ? navigator.mediaSession : undefined;
     if (!mediaSession || !('MediaMetadata' in window)) return;
-    const MediaMetadataConstructor = window.MediaMetadata;
 
     const artwork = albumArt
       ? [{ src: albumArt, sizes: '512x512', type: 'image/jpeg' }]
       : undefined;
 
-    mediaSession.metadata = new MediaMetadataConstructor({
+    mediaSession.metadata = new window.MediaMetadata({
       title: mediaTitle,
       artist: mediaArtist,
       album: 'Goodwood FM',
@@ -236,9 +235,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     mediaSession.setActionHandler('stop', () => setIsPlaying(false));
 
     return () => {
-      mediaSession.setActionHandler('play', null);
-      mediaSession.setActionHandler('pause', null);
-      mediaSession.setActionHandler('stop', null);
+      mediaSession?.setActionHandler('play', null);
+      mediaSession?.setActionHandler('pause', null);
+      mediaSession?.setActionHandler('stop', null);
     };
   }, [albumArt, isPlaying, mediaArtist, mediaTitle, setIsPlaying]);
 
