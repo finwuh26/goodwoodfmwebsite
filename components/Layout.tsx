@@ -236,10 +236,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     mediaSession.setActionHandler('stop', () => setIsPlaying(false));
 
     return () => {
-      if (!('mediaSession' in navigator)) return;
-      navigator.mediaSession.setActionHandler('play', null);
-      navigator.mediaSession.setActionHandler('pause', null);
-      navigator.mediaSession.setActionHandler('stop', null);
+      mediaSession.setActionHandler('play', null);
+      mediaSession.setActionHandler('pause', null);
+      mediaSession.setActionHandler('stop', null);
     };
   }, [albumArt, isPlaying, mediaArtist, mediaTitle, setIsPlaying]);
 
