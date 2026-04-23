@@ -1,11 +1,13 @@
 #!/usr/bin/env node
-import { initializeApp, applicationDefault } from 'firebase-admin/app';
+import { initializeApp, applicationDefault, cert } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { getDatabase } from 'firebase-admin/database';
 
 const projectId = process.env.FIREBASE_PROJECT_ID;
 const databaseURL = process.env.FIREBASE_DATABASE_URL;
 const firestoreDatabaseId = process.env.FIRESTORE_DATABASE_ID;
+const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 const overwrite = process.argv.includes('--overwrite');
 
 if (!projectId) {
@@ -16,7 +18,14 @@ if (!databaseURL) {
 }
 
 initializeApp({
-  credential: applicationDefault(),
+  credential:
+    clientEmail && privateKey
+      ? cert({
+          projectId,
+          clientEmail,
+          privateKey: privateKey.replace(/\\n/g, '\n'),
+        })
+      : applicationDefault(),
   projectId,
   databaseURL,
 });
