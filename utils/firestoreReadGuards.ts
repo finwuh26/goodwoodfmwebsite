@@ -47,8 +47,9 @@ export const readFirestoreWithGuard = async <T>(
 
   const readPromise = reader()
     .then((value) => {
-      lastNetworkReadAt.set(key, Date.now());
-      readCache.set(key, { value, cachedAt: Date.now() });
+      const readAt = Date.now();
+      lastNetworkReadAt.set(key, readAt);
+      readCache.set(key, { value, cachedAt: readAt });
       return value;
     })
     .catch((error) => {
