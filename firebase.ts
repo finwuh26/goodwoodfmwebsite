@@ -49,6 +49,7 @@ export function handleFirestoreError(
   path: string | null,
   options: HandleFirestoreErrorOptions = {}
 ) {
+  const { rethrow = true } = options;
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
@@ -69,7 +70,7 @@ export function handleFirestoreError(
   }
   console.error('Firestore Error: ', JSON.stringify(errInfo));
   const wrappedError = new Error(JSON.stringify(errInfo));
-  if (options.rethrow === false) {
+  if (!rethrow) {
     return wrappedError;
   }
   throw wrappedError;
