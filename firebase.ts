@@ -39,7 +39,17 @@ export interface FirestoreErrorInfo {
   }
 }
 
-export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+interface HandleFirestoreErrorOptions {
+  rethrow?: boolean;
+}
+
+export function handleFirestoreError(
+  error: unknown,
+  operationType: OperationType,
+  path: string | null,
+  options: HandleFirestoreErrorOptions = {}
+) {
+  const { rethrow = true } = options;
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
@@ -59,5 +69,9 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     path
   }
   console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  const wrappedError = new Error(JSON.stringify(errInfo));
+  if (!rethrow) {
+    return wrappedError;
+  }
+  throw wrappedError;
 }

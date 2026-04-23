@@ -45,14 +45,15 @@ export const readFirestoreWithGuard = async <T>(
     throw new Error(`Firestore read throttled for key "${key}"`);
   }
 
-  lastNetworkReadAt.set(key, now);
-
   const readPromise = reader()
     .then((value) => {
-      readCache.set(key, { value, cachedAt: Date.now() });
+      const readAt = Date.now();
+      lastNetworkReadAt.set(key, readAt);
+      readCache.set(key, { value, cachedAt: readAt });
       return value;
     })
     .catch((error) => {
+      lastNetworkReadAt.delete(key);
       if (cached) {
         console.warn(`Firestore read failed for key "${key}", serving cached value.`, error);
         return cached.value;

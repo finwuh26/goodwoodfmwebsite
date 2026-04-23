@@ -13,6 +13,10 @@ const RECENT_ACTIVITY_QUERY_LIMIT = 25;
 const ONLINE_WINDOW_MS = 7 * 60 * 1000;
 const HOME_WIDGETS_READ_TTL_MS = 5 * 60 * 1000;
 
+const reportReadError = (error: unknown, path: string) => {
+    handleFirestoreError(error, OperationType.GET, path, { rethrow: false });
+};
+
 const toDate = (value: any): Date | null => {
     if (!value) return null;
     if (value?.seconds) return new Date(value.seconds * 1000);
@@ -71,7 +75,7 @@ export const StaffOfTheMonth = () => {
         }).catch((err) => {
             if (!isMounted) return;
             setLoading(false);
-            handleFirestoreError(err, OperationType.GET, 'users');
+            reportReadError(err, 'users');
         });
         return () => { isMounted = false; };
     }, []);
@@ -151,7 +155,7 @@ export const PartnersWidget = () => {
             setPartners(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         }).catch((err) => {
             if (!isMounted) return;
-            handleFirestoreError(err, OperationType.GET, 'partners');
+            reportReadError(err, 'partners');
         });
         return () => { isMounted = false; };
     }, []);
@@ -227,7 +231,7 @@ export const RecentlyActiveWidget = () => {
             setActiveStaff(sortedUsers.slice(0, 15));
         }).catch((err) => {
             if (!isMounted) return;
-            handleFirestoreError(err, OperationType.GET, 'users');
+            reportReadError(err, 'users');
         });
         return () => { isMounted = false; };
     }, []);
