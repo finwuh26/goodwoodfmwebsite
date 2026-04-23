@@ -1,0 +1,131 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "users": {
+      ".indexOn": ["email", "role", "username", "lastActive", "reputationScore"],
+      "$userId": {
+        ".read": true,
+        ".write": "auth != null && ((auth.uid === $userId && (newData.child('uid').val() === auth.uid || !data.exists())) || root.child('users/' + auth.uid + '/role').val() in ['admin', 'owner', 'manager'] || (auth.token.email === 'radiodjmra@gmail.com' && auth.token.email_verified === true))",
+        ".validate": "newData.hasChildren(['uid', 'username', 'email', 'role']) && newData.child('uid').isString() && newData.child('uid').val() === $userId && newData.child('username').isString() && newData.child('username').val().length >= 3 && newData.child('username').val().length <= 30 && newData.child('email').isString() && newData.child('role').isString()"
+      }
+    },
+
+    "articles": {
+      ".read": true,
+      ".indexOn": ["authorId", "status", "date", "category"],
+      "$articleId": {
+        ".write": "auth != null && ((root.child('users/' + auth.uid + '/role').val() in ['admin', 'staff', 'owner', 'manager', 'journalist']) || (auth.token.email === 'radiodjmra@gmail.com' && auth.token.email_verified === true))",
+        ".validate": "newData.hasChildren(['title', 'content', 'authorId', 'authorName', 'status']) && newData.child('title').isString() && newData.child('content').isString() && newData.child('authorId').isString() && newData.child('authorName').isString() && newData.child('status').isString()"
+      }
+    },
+
+    "staff": {
+      ".read": true,
+      "$staffId": {
+        ".write": "auth != null && ((root.child('users/' + auth.uid + '/role').val() in ['admin', 'owner', 'manager']) || (auth.token.email === 'radiodjmra@gmail.com' && auth.token.email_verified === true))"
+      }
+    },
+
+    "applications": {
+      ".indexOn": ["uid", "status", "createdAt"],
+      "$applicationId": {
+        ".read": "auth != null && ((root.child('users/' + auth.uid + '/role').val() in ['admin', 'staff', 'owner', 'manager']) || (auth.token.email === 'radiodjmra@gmail.com' && auth.token.email_verified === true))",
+        ".write": "auth != null && (( !data.exists() ) || (root.child('users/' + auth.uid + '/role').val() in ['admin', 'owner', 'manager']) || (auth.token.email === 'radiodjmra@gmail.com' && auth.token.email_verified === true))"
+      }
+    },
+
+    "enquiries": {
+      ".indexOn": ["createdAt", "department", "type"],
+      "$enquiryId": {
+        ".read": "auth != null && ((root.child('users/' + auth.uid + '/role').val() in ['admin', 'staff', 'owner', 'manager']) || (auth.token.email === 'radiodjmra@gmail.com' && auth.token.email_verified === true))",
+        ".write": "auth != null && (( !data.exists() ) || (root.child('users/' + auth.uid + '/role').val() in ['admin', 'owner', 'manager']) || (auth.token.email === 'radiodjmra@gmail.com' && auth.token.email_verified === true))"
+      }
+    },
+
+    "tracks": {
+      ".read": true,
+      "$trackId": {
+        ".write": "auth != null && ((root.child('users/' + auth.uid + '/role').val() in ['admin', 'owner', 'manager']) || (auth.token.email === 'radiodjmra@gmail.com' && auth.token.email_verified === true))"
+      }
+    },
+
+    "schedule": {
+      ".read": true,
+      ".indexOn": ["day", "time", "status", "djId", "claimedBy"],
+      "$scheduleId": {
+        ".write": "auth != null && ((root.child('users/' + auth.uid + '/role').val() in ['admin', 'owner', 'manager']) || (auth.token.email === 'radiodjmra@gmail.com' && auth.token.email_verified === true) || ((root.child('users/' + auth.uid + '/role').val() in ['staff', 'dj']) && newData.child('claimedBy').val() === auth.uid))"
+      }
+    },
+
+    "reputationLogs": {
+      ".read": true,
+      ".indexOn": ["userId", "timestamp"],
+      "$logId": {
+        ".write": "auth != null && ((root.child('users/' + auth.uid + '/role').val() in ['admin', 'owner', 'manager']) || (auth.token.email === 'radiodjmra@gmail.com' && auth.token.email_verified === true))"
+      }
+    },
+
+    "settings": {
+      ".read": true,
+      "$key": {
+        ".write": "auth != null && ((root.child('users/' + auth.uid + '/role').val() in ['admin', 'owner', 'manager']) || (auth.token.email === 'radiodjmra@gmail.com' && auth.token.email_verified === true))"
+      }
+    },
+
+    "partners": {
+      ".read": true,
+      "$partnerId": {
+        ".write": "auth != null && ((root.child('users/' + auth.uid + '/role').val() in ['admin', 'owner', 'manager', 'staff']) || (auth.token.email === 'radiodjmra@gmail.com' && auth.token.email_verified === true))"
+      }
+    },
+
+    "banners": {
+      ".read": true,
+      ".indexOn": ["active"],
+      "$bannerId": {
+        ".write": "auth != null && ((root.child('users/' + auth.uid + '/role').val() in ['admin', 'owner', 'manager', 'staff']) || (auth.token.email === 'radiodjmra@gmail.com' && auth.token.email_verified === true))"
+      }
+    },
+
+    "likes": {
+      ".read": true,
+      ".indexOn": ["userId", "songTitle", "songArtist", "timestamp"],
+      "$likeId": {
+        ".write": "auth != null && ((!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && data.child('userId').val() === auth.uid))"
+      }
+    },
+
+    "profileComments": {
+      ".read": true,
+      ".indexOn": ["targetUserId", "authorId", "timestamp", "parentCommentId"],
+      "$commentId": {
+        ".write": "auth != null && ((!data.exists() && newData.child('authorId').val() === auth.uid) || (data.exists() && (data.child('authorId').val() === auth.uid || data.child('targetUserId').val() === auth.uid || root.child('users/' + auth.uid + '/role').val() in ['admin', 'owner', 'manager'])))"
+      }
+    },
+
+    "articleComments": {
+      ".read": true,
+      ".indexOn": ["articleId", "authorId", "timestamp", "parentCommentId"],
+      "$commentId": {
+        ".write": "auth != null && ((!data.exists() && newData.child('authorId').val() === auth.uid) || (data.exists() && (data.child('authorId').val() === auth.uid || root.child('users/' + auth.uid + '/role').val() in ['admin', 'owner', 'manager'])))"
+      }
+    },
+
+    "articleReactions": {
+      ".read": true,
+      ".indexOn": ["articleId", "userId"],
+      "$reactionId": {
+        ".write": "auth != null && ((!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && data.child('userId').val() === auth.uid))"
+      }
+    },
+
+    "redeemCodes": {
+      ".read": "auth != null && ((root.child('users/' + auth.uid + '/role').val() in ['admin', 'owner', 'manager']) || (auth.token.email === 'radiodjmra@gmail.com' && auth.token.email_verified === true))",
+      "$codeId": {
+        ".write": "auth != null && ((root.child('users/' + auth.uid + '/role').val() in ['admin', 'owner', 'manager']) || (auth.token.email === 'radiodjmra@gmail.com' && auth.token.email_verified === true))"
+      }
+    }
+  }
+}

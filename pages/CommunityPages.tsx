@@ -3,7 +3,7 @@ import { STAFF } from '../constants';
 import { Heart, Trophy, Medal, Crown, Shield, Star, User, Search } from 'lucide-react';
 import clsx from 'clsx';
 import { Link } from 'react-router-dom';
-import { collection, query, orderBy, limit, where, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, limit, where, getDocs } from '../realtimeFirestoreCompat';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { readFirestoreWithGuard } from '../utils/firestoreReadGuards';
 

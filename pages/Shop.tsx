@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db, handleFirestoreError, OperationType } from '../firebase';
-import { doc, updateDoc, increment, getDoc, arrayUnion, writeBatch, runTransaction } from 'firebase/firestore';
+import { doc, updateDoc, increment, getDoc, arrayUnion, writeBatch, runTransaction } from '../realtimeFirestoreCompat';
 import { toast } from 'react-hot-toast';
 import { ShoppingBag, Coins, KeyRound, Check, Star } from 'lucide-react';
 import { SHOP_ITEMS, ShopItem } from '../src/shopItems';

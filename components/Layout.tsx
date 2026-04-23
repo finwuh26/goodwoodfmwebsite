@@ -8,7 +8,7 @@ import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useRadio } from '../context/RadioContext';
 import { useAuth } from '../context/AuthContext';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, deleteDoc, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, deleteDoc, onSnapshot, doc, updateDoc } from '../realtimeFirestoreCompat';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { makeLikeReadKey, readFirestoreWithGuard, seedFirestoreReadCache } from '../utils/firestoreReadGuards';
 import { toast } from 'react-hot-toast';

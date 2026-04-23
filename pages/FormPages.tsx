@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Send, Mail, Briefcase, Mic, Edit3, MessageSquare, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from '../realtimeFirestoreCompat';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage, handleFirestoreError, OperationType } from '../firebase';
 import { useAuth } from '../context/AuthContext';

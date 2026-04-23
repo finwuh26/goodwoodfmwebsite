@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { addDoc, collection, deleteDoc, doc, increment, limit, onSnapshot, query, serverTimestamp, updateDoc, where } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, increment, limit, onSnapshot, query, serverTimestamp, updateDoc, where } from '../realtimeFirestoreCompat';
 import { ArrowLeft, CheckCircle, ExternalLink, FileText, Layers, Search, Shield, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { db, handleFirestoreError, OperationType } from '../firebase';

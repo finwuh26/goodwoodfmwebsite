@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { 
     doc, onSnapshot, updateDoc, collection, query, orderBy, 
     addDoc, serverTimestamp, deleteDoc, where, getDocs, limit
-} from 'firebase/firestore';
+} from '../realtimeFirestoreCompat';
 import { getAuth, sendPasswordResetEmail, deleteUser } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage, handleFirestoreError, OperationType } from '../firebase';

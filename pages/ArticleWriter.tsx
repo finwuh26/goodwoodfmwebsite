@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navigate, useNavigate, useParams, Link } from 'react-router-dom';
-import { doc, getDoc, updateDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, addDoc, collection, serverTimestamp } from '../realtimeFirestoreCompat';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { toast } from 'react-hot-toast';
 import { ArrowLeft, Save, Send, Image as ImageIcon, Tag, Info, ExternalLink, CheckCircle, Loader2 } from 'lucide-react';

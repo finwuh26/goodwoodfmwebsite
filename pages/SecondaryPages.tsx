@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Calendar, User, Users, Clock, FileText, Music, Star, Heart, Settings, Shield, Code, Headphones, Twitter, Instagram, Facebook, Youtube, Twitch, Radio, ChevronDown } from 'lucide-react';
 import { StaffMember } from '../types';
 import clsx from 'clsx';
-import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, where } from '../realtimeFirestoreCompat';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { formatDate, getDatesForThisWeek } from '../utils';
 import { UserAvatar } from '../components/UserAvatar';

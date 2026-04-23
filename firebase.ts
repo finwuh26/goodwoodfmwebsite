@@ -1,41 +1,13 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
+import { getDatabase } from 'firebase/database';
 import { getStorage } from 'firebase/storage';
 import firebaseConfig from './firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
-
-const FALLBACK_FIRESTORE_DATABASE_ID = 'radio';
-
-const normalizeFirestoreDatabaseId = (databaseId?: string): string | undefined => {
-  const trimmedDatabaseId = databaseId?.trim();
-  return trimmedDatabaseId && trimmedDatabaseId.length > 0
-    ? trimmedDatabaseId
-    : undefined;
-};
-
-const isAiStudioDatabaseId = (databaseId?: string) =>
-  Boolean(databaseId && /^ai-studio-/i.test(databaseId));
-
-const envFirestoreDatabaseId = normalizeFirestoreDatabaseId(import.meta.env.VITE_FIRESTORE_DATABASE_ID);
-const configFirestoreDatabaseId = normalizeFirestoreDatabaseId(firebaseConfig.firestoreDatabaseId);
-const selectedFirestoreDatabaseId =
-  envFirestoreDatabaseId ?? configFirestoreDatabaseId ?? FALLBACK_FIRESTORE_DATABASE_ID;
-const firestoreDatabaseId = isAiStudioDatabaseId(selectedFirestoreDatabaseId)
-  ? FALLBACK_FIRESTORE_DATABASE_ID
-  : selectedFirestoreDatabaseId;
-
-if (isAiStudioDatabaseId(selectedFirestoreDatabaseId)) {
-  console.warn(
-    `Ignoring AI Studio Firestore database ID "${selectedFirestoreDatabaseId}" and using "${FALLBACK_FIRESTORE_DATABASE_ID}" instead.`
-  );
-}
-
-// Initialize Firestore with offline persistence to save reads and improve loading speed
-export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
-}, firestoreDatabaseId);
+const databaseUrl = import.meta.env.VITE_FIREBASE_DATABASE_URL || (firebaseConfig as { databaseURL?: string }).databaseURL;
+export const db = databaseUrl ? getDatabase(app, databaseUrl) : getDatabase(app);
+export const realtimeDb = db;
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 
