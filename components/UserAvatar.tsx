@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot } from '../realtimeFirestoreCompat';
 import { db } from '../firebase';
 
 interface UserAvatarProps {

@@ -7,7 +7,7 @@ import { FileText, User, Clock, ChevronRight, History, Radio, ExternalLink } fro
 
 import { motion } from 'motion/react';
 import { useRadio } from '../context/RadioContext';
-import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, where } from '../realtimeFirestoreCompat';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { useAuth } from '../context/AuthContext';
 import { readFirestoreWithGuard } from '../utils/firestoreReadGuards';

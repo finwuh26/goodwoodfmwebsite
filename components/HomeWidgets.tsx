@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Shield, Award, Users, ExternalLink, MessageSquare } from 'lucide-react';
 import { motion } from 'motion/react';
-import { collection, getDocs, query, limit, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, limit, orderBy } from '../realtimeFirestoreCompat';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { useRadio } from '../context/RadioContext';
 import { normalizeAzuraIdentity } from '../utils/azuraIdentity';

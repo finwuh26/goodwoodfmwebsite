@@ -9,7 +9,7 @@ import {
   signInWithEmailAndPassword,
   updateProfile
 } from 'firebase/auth';
-import { doc, onSnapshot, setDoc, serverTimestamp, updateDoc, Timestamp } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, serverTimestamp, updateDoc, Timestamp } from '../realtimeFirestoreCompat';
 import { auth, db, handleFirestoreError, OperationType } from '../firebase';
 import { LEGAL_NOTICE_REASON, LEGAL_NOTICE_VERSION } from '../constants';
 

@@ -1,4 +1,4 @@
-import type { QuerySnapshot } from 'firebase/firestore';
+import type { QuerySnapshot } from '../realtimeFirestoreCompat';
 
 export const FIRESTORE_MIN_READ_INTERVAL_MS = 10_000;
 
