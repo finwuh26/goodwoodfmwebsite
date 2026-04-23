@@ -14,9 +14,7 @@ const ONLINE_WINDOW_MS = 7 * 60 * 1000;
 const HOME_WIDGETS_READ_TTL_MS = 5 * 60 * 1000;
 
 const reportReadError = (error: unknown, path: string) => {
-    try {
-        handleFirestoreError(error, OperationType.GET, path);
-    } catch {}
+    handleFirestoreError(error, OperationType.GET, path, { rethrow: false });
 };
 
 const toDate = (value: any): Date | null => {
