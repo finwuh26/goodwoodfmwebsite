@@ -28,6 +28,13 @@ View your app in AI Studio: https://ai.studio/apps/8344bcaa-0bfd-4b39-8a01-5d144
    `npm run migrate:firestore-to-realtime`
    Add `-- --overwrite` to clear Realtime Database root before import
 7. Deploy `database.rules.json` to your Realtime Database rules in Firebase Console (or via Firebase CLI)
+   - Important: keep `rules.users[".read"] = true` so collection reads on `/users` are allowed (required by dashboard/member list queries).
 8. Set `DISCORD_ARTICLE_WEBHOOK_URL` in server environment variables to enable protected Discord notifications when articles are approved/published
 9. Run the app:
    `npm run dev`
+
+## Firestore -> Realtime Database sync notes
+
+- This repo includes a manual one-time migration script (`npm run migrate:firestore-to-realtime`).
+- It does **not** include continuous/automatic sync from Firestore to Realtime Database.
+- Re-run migration after Firestore changes when you need refreshed Realtime Database data.

@@ -4,6 +4,7 @@
     ".write": false,
 
     "users": {
+      ".read": true,
       ".indexOn": ["email", "role", "username", "lastActive", "reputationScore"],
       "$userId": {
         ".read": true,
